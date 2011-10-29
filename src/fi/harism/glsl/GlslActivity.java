@@ -22,6 +22,8 @@ public class GlslActivity extends Activity {
 		super.onCreate(savedInstanceState);
 
 		mGLSurfaceView = new GLSurfaceView(this);
+		mGLSurfaceView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR
+				| GLSurfaceView.DEBUG_LOG_GL_CALLS);
 		mGLSurfaceView.setEGLContextClientVersion(2);
 
 		mGlslRenderer = new GlslRenderer(this);

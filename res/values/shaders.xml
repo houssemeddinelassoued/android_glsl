@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="shader_vertex">
+	<string name="shader_vertex__">
 		uniform mat4 uMVPMatrix;
 		attribute vec4 aPosition;
 		attribute vec2 aTextureCoord;
@@ -12,15 +12,74 @@
 			vTextureCoord = aTextureCoord;
 		}
     </string>
-    
-    <string name="shader_fragment">
-        precision mediump float;
-        varying vec2 vTextureCoord;
+
+	<string name="shader_fragment__">
+		precision mediump float;
+		varying vec2 vTextureCoord;
         uniform sampler2D sTexture;
         
         void main() {
 			gl_FragColor = texture2D(sTexture, vTextureCoord);
 		}	
     </string>
+    
+    <string name="shader_vertex">
+		uniform mat4 uMVPMatrix;
+		
+		attribute vec3 aMovVector;
+		attribute vec3 aRotVector;
+		attribute float aScaleFloat;
+		
+		attribute vec4 aPosition;
+		attribute vec3 aColor;
+		
+		varying vec3 vColor;
+		
+		void main() {
+			mat4 scaleMat = mat4(	aScaleFloat, 0, 0 ,0,
+									0, aScaleFloat, 0, 0,
+									0, 0, aScaleFloat, 0,
+									0, 0, 0, 1 );
+			
+			vec3 rotRadians = radians(aRotVector);
+			float rotSin = sin(rotRadians.x);
+			float rotCos = cos(rotRadians.x);
+			mat4 rotXMat = mat4(	1, 0, 0, 0,
+									0, rotCos, rotSin, 0,
+									0, -rotSin, rotCos, 0,
+									0, 0, 0, 1 );
+			rotSin = sin(rotRadians.y);
+			rotCos = cos(rotRadians.y);
+			mat4 rotYMat = mat4(	rotCos, 0, -rotSin, 0,
+									0, 1, 0, 0,
+									rotSin, 0, rotCos, 0,
+									0, 0, 0, 1 );
+			rotSin = sin(rotRadians.z);
+			rotCos = cos(rotRadians.z);
+			mat4 rotZMat = mat4(	rotCos, rotSin, 0, 0,
+									-rotSin, rotCos, 0, 0,
+									0, 0, 1, 0,
+									0, 0, 0, 1 );
+			
+			mat4 movMat = mat4(		1, 0, 0, 0,
+									0, 1, 0, 0,
+									0, 0, 1, 0,
+									aMovVector.x, aMovVector.y, aMovVector.z, 1 );
+									
+			mat4 rotMat = rotXMat * rotYMat * rotZMat;
+			gl_Position = uMVPMatrix * (movMat * (rotMat * (scaleMat * aPosition)));
+			vColor = aColor;
+		}
+    </string>
+    
+    <string name="shader_fragment">
+        precision mediump float;
+        varying vec3 vColor;
+        
+        void main() {
+			gl_FragColor = vec4(vColor, 1);
+		}	
+    </string>
+        
     
 </resources>
