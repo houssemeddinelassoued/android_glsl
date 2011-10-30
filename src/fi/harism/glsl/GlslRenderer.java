@@ -17,10 +17,10 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 	private float mFPS = 0f;
 	private long mLastRenderTime = 0;
 
-	private GlslWorld mGlslWorld;
+	private GlslScene mGlslScene;
 
 	public GlslRenderer(Context context) {
-		mGlslWorld = new GlslWorld(context);
+		mGlslScene = new GlslScene(context);
 	}
 
 	public float getFPS() {
@@ -30,13 +30,13 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 	@Override
 	public void onDrawFrame(GL10 glUnused) {
 
-		mGlslWorld.onDrawFrame(mViewMatrix, mProjectionMatrix);
+		mGlslScene.draw(mViewMatrix, mProjectionMatrix);
 
 		long time = SystemClock.uptimeMillis();
 		if (mLastRenderTime != 0) {
 			long diff = time - mLastRenderTime;
 			mFPS = 1000f / diff;
-			mGlslWorld.updateScene(diff / 1000f);
+			mGlslScene.update(diff / 1000f);
 		}
 		mLastRenderTime = time;
 
@@ -53,7 +53,8 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 
 	@Override
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
-		mGlslWorld.onSurfaceCreated();
+		mGlslScene.init();
+
 		mLastRenderTime = SystemClock.uptimeMillis();
 		Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
 				0.0f);
