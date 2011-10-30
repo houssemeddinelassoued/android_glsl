@@ -1,29 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<string name="shader_vertex__">
-		uniform mat4 uMVPMatrix;
-		attribute vec4 aPosition;
-		attribute vec2 aTextureCoord;
-		varying vec2 vTextureCoord;
-		
-		void main() {
-			gl_Position = uMVPMatrix * aPosition;
-			vTextureCoord = aTextureCoord;
-		}
-    </string>
-
-	<string name="shader_fragment__">
-		precision mediump float;
-		varying vec2 vTextureCoord;
-        uniform sampler2D sTexture;
-        
-        void main() {
-			gl_FragColor = texture2D(sTexture, vTextureCoord);
-		}	
-    </string>
-    
-    <string name="shader_vertex">
+    <string name="shader_main_vertex">
 		uniform mat4 uViewMatrix;
 		uniform mat4 uProjectionMatrix;
 		
@@ -60,8 +38,8 @@
 		}
     </string>
     
-    <string name="shader_fragment">
-        precision mediump float;
+    <string name="shader_main_fragment">
+	    precision mediump float;
         varying vec3 vColor;
         
         void main() {

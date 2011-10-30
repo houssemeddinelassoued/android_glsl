@@ -7,7 +7,7 @@ import fi.harism.glsl.object.Cubes;
 
 public class GlslScene {
 
-	private static final int CUBE_SCROLLER_COUNT = 50;
+	private static final int CUBE_SCROLLER_COUNT = 500;
 	private static final int CUBE_ARCH_COUNT = 10;
 	private static final float CUBE_SCROLLER_NEAR = 20f;
 	private static final float CUBE_SCROLLER_FAR = -20f;
@@ -54,26 +54,22 @@ public class GlslScene {
 	}
 
 	public void draw(float[] viewMatrix, float[] projectionMatrix) {
-		
+
 		GLES20.glClearColor(0.4f, 0.5f, 0.6f, 1.0f);
-		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);		
-		
+		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glFrontFace(GLES20.GL_CCW);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 		GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
-		
 		GLES20.glUseProgram(mShader.getProgram());
-		
-		GLES20.glUniformMatrix4fv(
-				mShader.getHandle("uViewMatrix"), 1, false,
+
+		GLES20.glUniformMatrix4fv(mShader.getHandle("uViewMatrix"), 1, false,
 				viewMatrix, 0);
-		
-		
-		GLES20.glUniformMatrix4fv(
-				mShader.getHandle("uProjectionMatrix"), 1, false,
-				projectionMatrix, 0);
+
+		GLES20.glUniformMatrix4fv(mShader.getHandle("uProjectionMatrix"), 1,
+				false, projectionMatrix, 0);
 
 		mCubes.setPositionAttrib(mShader.getHandle("aPosition"));
 		mCubes.setColorAttrib(mShader.getHandle("aColor"));
@@ -93,11 +89,12 @@ public class GlslScene {
 
 			mCubes.drawArrays();
 		}
-		
+
 	}
 
 	public void init() {
-		mShader.loadProgram(R.string.shader_vertex, R.string.shader_fragment);
+		mShader.loadProgram(R.string.shader_main_vertex,
+				R.string.shader_main_fragment);
 		mShader.addHandle("uProjectionMatrix");
 		mShader.addHandle("uViewMatrix");
 		mShader.addHandle("uRotationMatrix");

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<string name="shader_blur_vertex">
+		attribute vec4 aPosition;
+		attribute vec2 aTextureCoord;
+		varying vec2 vTextureCoord;
+		
+		void main() {
+			gl_Position = aPosition;
+			vTextureCoord = aTextureCoord;
+		}
+    </string>
+
+	<string name="shader_blur_fragment">
+	    precision mediump float;
+		varying vec2 vTextureCoord;
+        uniform sampler2D sTexture;
+        		
+        void main() {
+			gl_FragColor = texture2D(sTexture, vTextureCoord) * 0.4;
+			
+			gl_FragColor += texture2D(sTexture, vTextureCoord + vec2(0.01, 0.0)) * 0.2;
+			gl_FragColor += texture2D(sTexture, vTextureCoord - vec2(0.01, 0.0)) * 0.2;
+			
+			gl_FragColor += texture2D(sTexture, vTextureCoord + vec2(0.02, 0.0)) * 0.1;
+			gl_FragColor += texture2D(sTexture, vTextureCoord - vec2(0.02, 0.0)) * 0.1;
+		}
+    </string>
+    
+</resources>

@@ -16,27 +16,6 @@ public class GlslShader {
 		mShaderHandleMap = new HashMap<String, Integer>();
 	}
 
-	public int getProgram() {
-		return mProgram;
-	}
-
-	public int getHandle(String name) {
-		if (mShaderHandleMap.containsKey(name)) {
-			return mShaderHandleMap.get(name);
-		}
-		return -1;
-	}
-
-	public void loadProgram(int vertexId, int fragmentId) {
-		if (mProgram != 0) {
-			GLES20.glDeleteProgram(mProgram);
-			mProgram = 0;
-		}
-		String vertexSource = mContext.getString(vertexId);
-		String fragmentSource = mContext.getString(fragmentId);
-		mProgram = GlslUtils.createProgram(vertexSource, fragmentSource);
-	}
-
 	public void addHandle(String name) {
 		int handle = GLES20.glGetAttribLocation(mProgram, name);
 		if (handle == -1) {
@@ -47,5 +26,26 @@ public class GlslShader {
 					+ name);
 		}
 		mShaderHandleMap.put(name, handle);
+	}
+
+	public int getHandle(String name) {
+		if (mShaderHandleMap.containsKey(name)) {
+			return mShaderHandleMap.get(name);
+		}
+		return -1;
+	}
+
+	public int getProgram() {
+		return mProgram;
+	}
+
+	public void loadProgram(int vertexId, int fragmentId) {
+		if (mProgram != 0) {
+			GLES20.glDeleteProgram(mProgram);
+			mProgram = 0;
+		}
+		String vertexSource = mContext.getString(vertexId);
+		String fragmentSource = mContext.getString(fragmentId);
+		mProgram = GlslUtils.createProgram(vertexSource, fragmentSource);
 	}
 }
