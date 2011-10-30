@@ -10,9 +10,10 @@ import android.opengl.GLES20;
 public class GlslWorld {
 
 	private static final int FLOAT_SIZE_BYTES = 4;
-	private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 6 * FLOAT_SIZE_BYTES;
+	private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 9 * FLOAT_SIZE_BYTES;
 	private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
 	private static final int TRIANGLE_VERTICES_DATA_COL_OFFSET = 3;
+	private static final int TRIANGLE_VERTICES_DATA_NORMAL_OFFSET = 6;
 
 	private static final float[][] mCubeVertices = {
 			// X, Y, Z
@@ -27,27 +28,45 @@ public class GlslWorld {
 			{ 1f, 0f, 0f }, { 0f, 1f, 0f }, { 0f, 0f, 1f }, { 0f, 1f, 1f },
 			{ 1f, 0f, 1f }, { 1f, 1f, 0f } };
 
+	private static final float[][] mCubeNormals = {
+			// X, Y, Z
+			{ 1f, 0, 0 }, { -1f, 0, 0 }, { 0, 1f, 0 }, { 0, -1f, 0 },
+			{ 0, 0, 1f }, { 0, 0, -1f } };
+
 	private static final int[][][] mCubeIndices = {
 			// { vertice indices }, { color index }
-			{ { 3, 2, 0 }, { 0 } }, { { 0, 2, 1 }, { 0 } },
-			{ { 6, 7, 5 }, { 0 } }, { { 5, 7, 4 }, { 0 } },
-			{ { 7, 3, 4 }, { 1 } }, { { 4, 3, 0 }, { 1 } },
-			{ { 2, 6, 1 }, { 1 } }, { { 1, 6, 5 }, { 1 } },
-			{ { 0, 1, 4 }, { 2 } }, { { 4, 1, 5 }, { 2 } },
-			{ { 7, 6, 3 }, { 2 } }, { { 3, 6, 2 }, { 2 } } };
+			{ { 3, 2, 0 }, { 0 }, { 4 } }, { { 0, 2, 1 }, { 0 }, { 4 } },
+			{ { 6, 7, 5 }, { 0 }, { 5 } }, { { 5, 7, 4 }, { 0 }, { 5 } },
+			{ { 7, 3, 4 }, { 1 }, { 1 } }, { { 4, 3, 0 }, { 1 }, { 1 } },
+			{ { 2, 6, 1 }, { 1 }, { 0 } }, { { 1, 6, 5 }, { 1 }, { 0 } },
+			{ { 0, 1, 4 }, { 2 }, { 2 } }, { { 4, 1, 5 }, { 2 }, { 2 } },
+			{ { 7, 6, 3 }, { 2 }, { 3 } }, { { 3, 6, 2 }, { 2 }, { 3 } } };
 
 	private FloatBuffer mTriangleVertices;
 	private Context mContext;
 
 	private int mProgram;
-	private int maScaleFloatHandle;
-	private int maMovVectorHandle;
-	private int maRotVectorHandle;
-	private int muMVPMatrixHandle;
+
+	private int muViewMatrixHandle;
+	private int muProjectionMatrixHandle;
+
+	private int muTranslateVectorHandle;
+	private int muRotationMatrixHandle;
+	private int muScaleFloatHandle;
 	private int maPositionHandle;
 	private int maColorHandle;
+	private int maNormalHandle;
 
-	private CubeData[] mCubeData = new CubeData[100];
+	private static final int CUBE_SCROLLER_COUNT = 50;
+	private static final int CUBE_CURVE_COUNT = 10;
+
+	private static final float CUBE_SCROLLER_NEAR = 20f;
+	private static final float CUBE_SCROLLER_FAR = -20f;
+
+	private CubeData[] mCubeData = new CubeData[CUBE_SCROLLER_COUNT
+			+ CUBE_CURVE_COUNT];
+
+	private float[] mRotateMatrix = new float[16];
 
 	public GlslWorld(Context context) {
 		mContext = context;
@@ -60,28 +79,51 @@ public class GlslWorld {
 		mTriangleVertices.position(0);
 		for (int idx = 0; idx < mCubeIndices.length; ++idx) {
 			int colorIndex = mCubeIndices[idx][1][0];
+			int normalIndex = mCubeIndices[idx][2][0];
 			for (int pidx = 0; pidx < 3; ++pidx) {
 				int posIndex = mCubeIndices[idx][0][pidx];
 				mTriangleVertices.put(mCubeVertices[posIndex]);
 				mTriangleVertices.put(mCubeColors[colorIndex]);
+				mTriangleVertices.put(mCubeNormals[normalIndex]);
 			}
 		}
 		mTriangleVertices.position(0);
 
-		mCubeData[0] = new CubeData();
-		for (int idx = 1; idx < mCubeData.length; ++idx) {
-			mCubeData[idx] = new CubeData();
-			mCubeData[idx].mMovX = (float) (8 * Math.random() - 4);
-			mCubeData[idx].mMovZ = (float) (8 * Math.random() - 4);
-			mCubeData[idx].mScale = (float) (.3f * Math.random() + .1f);
-			mCubeData[idx].mRotDX = (float) (2 * Math.random() - 1);
-			mCubeData[idx].mRotDY = (float) (2 * Math.random() - 1);
-			mCubeData[idx].mRotDZ = (float) (2 * Math.random() - 1);
+		for (int idx = 0; idx < CUBE_SCROLLER_COUNT; ++idx) {
+			CubeData cubeData = new CubeData();
+			mCubeData[idx] = cubeData;
+
+			cubeData.mScale = (float) (.3f * Math.random() + .3f);
+			for (int r = 0; r < 3; ++r) {
+				cubeData.mRotate[r] = (float) (360 * Math.random());
+				cubeData.mRotateD[r] = (float) (180 * Math.random() - 90);
+			}
+			cubeData.mTranslate[0] = (float) (2 * Math.random() - 1);
+			cubeData.mTranslate[1] = (float) (2 * Math.random() - 1);
+			cubeData.mTranslate[2] = (float) Math.random()
+					* (CUBE_SCROLLER_NEAR - CUBE_SCROLLER_FAR)
+					- CUBE_SCROLLER_NEAR;
+			cubeData.mTranslateD[2] = (float) (4 * Math.random() + 1);
+		}
+
+		for (int idx = CUBE_SCROLLER_COUNT; idx < mCubeData.length; ++idx) {
+			CubeData cubeData = new CubeData();
+			mCubeData[idx] = cubeData;
+
+			double t = Math.PI * (idx - CUBE_SCROLLER_COUNT)
+					/ (CUBE_CURVE_COUNT - 1);
+
+			cubeData.mScale = (float) (.6f * Math.random() + .3f);
+			for (int r = 0; r < 3; ++r) {
+				cubeData.mRotate[r] = (float) (360 * Math.random());
+			}
+			cubeData.mTranslate[0] = (float) (2 * Math.cos(t));
+			cubeData.mTranslate[1] = (float) (2 * Math.sin(t));
 		}
 
 	}
 
-	public void onDrawFrame(float[] worldMatrix) {
+	public void onDrawFrame(float[] viewMatrix, float[] projectionMatrix) {
 		GLES20.glClearColor(0.4f, 0.5f, 0.6f, 1.0f);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
@@ -97,6 +139,11 @@ public class GlslWorld {
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
 		GLES20.glEnableVertexAttribArray(maColorHandle);
 
+		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_NORMAL_OFFSET);
+		GLES20.glVertexAttribPointer(maNormalHandle, 3, GLES20.GL_FLOAT, false,
+				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+		GLES20.glEnableVertexAttribArray(maNormalHandle);
+
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glFrontFace(GLES20.GL_CCW);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
@@ -104,37 +151,17 @@ public class GlslWorld {
 
 		for (int idx = 0; idx < mCubeData.length; ++idx) {
 			CubeData cubeData = mCubeData[idx];
+			GlslUtils.setRotateM(mRotateMatrix, cubeData.mRotate);
 
-			cubeData.mRotX += cubeData.mRotDX;
-			while (cubeData.mRotX < 0f) {
-				cubeData.mRotX += 360f;
-			}
-			while (cubeData.mRotX > 360f) {
-				cubeData.mRotX -= 360f;
-			}
-			cubeData.mRotY += cubeData.mRotDY;
-			while (cubeData.mRotY < 0f) {
-				cubeData.mRotY += 360f;
-			}
-			while (cubeData.mRotY > 360f) {
-				cubeData.mRotY -= 360f;
-			}
-			cubeData.mRotZ += cubeData.mRotDZ;
-			while (cubeData.mRotZ < 0f) {
-				cubeData.mRotZ += 360f;
-			}
-			while (cubeData.mRotZ > 360f) {
-				cubeData.mRotZ -= 360f;
-			}
-
-			GLES20.glVertexAttrib1f(maScaleFloatHandle, cubeData.mScale);
-			GLES20.glVertexAttrib3f(maMovVectorHandle, cubeData.mMovX,
-					cubeData.mMovY, cubeData.mMovZ);
-			GLES20.glVertexAttrib3f(maRotVectorHandle, cubeData.mRotX,
-					cubeData.mRotY, cubeData.mRotZ);
-
-			GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, worldMatrix,
+			GLES20.glUniformMatrix4fv(muViewMatrixHandle, 1, false, viewMatrix,
 					0);
+			GLES20.glUniformMatrix4fv(muProjectionMatrixHandle, 1, false,
+					projectionMatrix, 0);
+			GLES20.glUniformMatrix4fv(muRotationMatrixHandle, 1, false,
+					mRotateMatrix, 0);
+			GLES20.glUniform3fv(muTranslateVectorHandle, 1,
+					cubeData.mTranslate, 0);
+			GLES20.glUniform1f(muScaleFloatHandle, cubeData.mScale);
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, mCubeIndices.length * 3);
 		}
 	}
@@ -157,43 +184,75 @@ public class GlslWorld {
 			throw new RuntimeException(
 					"Could not get attrib location for aColor");
 		}
-		maScaleFloatHandle = GLES20
-				.glGetAttribLocation(mProgram, "aScaleFloat");
-		if (maScaleFloatHandle == -1) {
+		maNormalHandle = GLES20.glGetAttribLocation(mProgram, "aNormal");
+		if (maNormalHandle == -1) {
 			throw new RuntimeException(
-					"Could not get attrib location for aScaleFloat");
+					"Could not get attrib location for aNormal");
 		}
-		maRotVectorHandle = GLES20.glGetAttribLocation(mProgram, "aRotVector");
-		if (maRotVectorHandle == -1) {
+		muViewMatrixHandle = GLES20.glGetUniformLocation(mProgram,
+				"uViewMatrix");
+		if (muViewMatrixHandle == -1) {
 			throw new RuntimeException(
-					"Could not get attrib location for aRotVector");
+					"Could not get attrib location for uViewMatrix");
 		}
-		maMovVectorHandle = GLES20.glGetAttribLocation(mProgram, "aMovVector");
-		if (maMovVectorHandle == -1) {
+		muProjectionMatrixHandle = GLES20.glGetUniformLocation(mProgram,
+				"uProjectionMatrix");
+		if (muProjectionMatrixHandle == -1) {
 			throw new RuntimeException(
-					"Could not get attrib location for aMovVector");
+					"Could not get attrib location for uProjectionMatrix");
+		}
+		muRotationMatrixHandle = GLES20.glGetUniformLocation(mProgram,
+				"uRotationMatrix");
+		if (muRotationMatrixHandle == -1) {
+			throw new RuntimeException(
+					"Could not get attrib location for uRotationMatrix");
+		}
+		muTranslateVectorHandle = GLES20.glGetUniformLocation(mProgram,
+				"uTranslateVector");
+		if (muTranslateVectorHandle == -1) {
+			throw new RuntimeException(
+					"Could not get attrib location for uTranslateVector");
+		}
+		muScaleFloatHandle = GLES20.glGetUniformLocation(mProgram,
+				"uScaleFloat");
+		if (muScaleFloatHandle == -1) {
+			throw new RuntimeException(
+					"Could not get attrib location for uScaleFloat");
 		}
 
-		muMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
-		if (muMVPMatrixHandle == -1) {
-			throw new RuntimeException(
-					"Could not get attrib location for uMVPMatrix");
+	}
+
+	public void updateScene(float timeDiff) {
+		for (int i = 0; i < mCubeData.length; ++i) {
+			CubeData cube = mCubeData[i];
+			for (int j = 0; j < 3; ++j) {
+				cube.mTranslate[j] += timeDiff * cube.mTranslateD[j];
+				while (cube.mTranslate[j] < CUBE_SCROLLER_FAR) {
+					cube.mTranslate[j] += CUBE_SCROLLER_NEAR
+							- CUBE_SCROLLER_FAR;
+				}
+				while (cube.mTranslate[j] > CUBE_SCROLLER_NEAR) {
+					cube.mTranslate[j] -= CUBE_SCROLLER_NEAR
+							- CUBE_SCROLLER_FAR;
+				}
+
+				cube.mRotate[j] += timeDiff * cube.mRotateD[j];
+				while (cube.mRotate[j] < 0f) {
+					cube.mRotate[j] += 360f;
+				}
+				while (cube.mRotate[j] > 360f) {
+					cube.mRotate[j] -= 360f;
+				}
+			}
 		}
 	}
 
 	private class CubeData {
-		public float mMovX = 0;
-		public float mMovY = 0;
-		public float mMovZ = 0;
-
 		public float mScale = 1f;
-
-		public float mRotX = 0;
-		public float mRotY = 0;
-		public float mRotZ = 0;
-		public float mRotDX = 0;
-		public float mRotDY = 0;
-		public float mRotDZ = 0;
+		private float[] mTranslate = new float[3];
+		private float[] mTranslateD = new float[3];
+		private float[] mRotate = new float[3];
+		private float[] mRotateD = new float[3];
 	}
 
 }

@@ -24,51 +24,39 @@
     </string>
     
     <string name="shader_vertex">
-		uniform mat4 uMVPMatrix;
+		uniform mat4 uViewMatrix;
+		uniform mat4 uProjectionMatrix;
 		
-		attribute vec3 aMovVector;
-		attribute vec3 aRotVector;
-		attribute float aScaleFloat;
+		uniform mat4 uRotationMatrix;
+		uniform vec3 uTranslateVector;
+		uniform float uScaleFloat;
 		
 		attribute vec4 aPosition;
 		attribute vec3 aColor;
+		attribute vec4 aNormal;
 		
 		varying vec3 vColor;
 		
 		void main() {
-			mat4 scaleMat = mat4(	aScaleFloat, 0, 0 ,0,
-									0, aScaleFloat, 0, 0,
-									0, 0, aScaleFloat, 0,
-									0, 0, 0, 1 );
+			vec4 position = uRotationMatrix * aPosition;
 			
-			vec3 rotRadians = radians(aRotVector);
-			float rotSin = sin(rotRadians.x);
-			float rotCos = cos(rotRadians.x);
-			mat4 rotXMat = mat4(	1, 0, 0, 0,
-									0, rotCos, rotSin, 0,
-									0, -rotSin, rotCos, 0,
-									0, 0, 0, 1 );
-			rotSin = sin(rotRadians.y);
-			rotCos = cos(rotRadians.y);
-			mat4 rotYMat = mat4(	rotCos, 0, -rotSin, 0,
-									0, 1, 0, 0,
-									rotSin, 0, rotCos, 0,
-									0, 0, 0, 1 );
-			rotSin = sin(rotRadians.z);
-			rotCos = cos(rotRadians.z);
-			mat4 rotZMat = mat4(	rotCos, rotSin, 0, 0,
-									-rotSin, rotCos, 0, 0,
-									0, 0, 1, 0,
-									0, 0, 0, 1 );
+			position.x *= uScaleFloat;
+			position.y *= uScaleFloat;
+			position.z *= uScaleFloat;
 			
-			mat4 movMat = mat4(		1, 0, 0, 0,
-									0, 1, 0, 0,
-									0, 0, 1, 0,
-									aMovVector.x, aMovVector.y, aMovVector.z, 1 );
-									
-			mat4 rotMat = rotXMat * rotYMat * rotZMat;
-			gl_Position = uMVPMatrix * (movMat * (rotMat * (scaleMat * aPosition)));
+			position.x += uTranslateVector.x;
+			position.y += uTranslateVector.y;
+			position.z += uTranslateVector.z;
+			
+			gl_Position = uProjectionMatrix * uViewMatrix * position;
+			
+			vec4 rotNormal = /* uViewMatrix */ uRotationMatrix * aNormal;
+			rotNormal.w = 0.0;
+			rotNormal = normalize(rotNormal);
 			vColor = aColor;
+			vColor.r *= rotNormal.z;
+			vColor.g *= rotNormal.z;
+			vColor.b *= rotNormal.z;
 		}
     </string>
     
@@ -77,9 +65,8 @@
         varying vec3 vColor;
         
         void main() {
-			gl_FragColor = vec4(vColor, 1);
-		}	
-    </string>
-        
+			gl_FragColor = vec4(vColor, 1.0);
+		}
+    </string>    
     
 </resources>

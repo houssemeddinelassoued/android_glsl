@@ -1,6 +1,7 @@
 package fi.harism.glsl;
 
 import android.opengl.GLES20;
+import android.opengl.Matrix;
 import android.util.Log;
 
 public class GlslUtils {
@@ -47,6 +48,44 @@ public class GlslUtils {
 			}
 		}
 		return shader;
+	}
+
+	public static final void setPerspectiveM(float[] m, float fovy,
+			float aspect, float zNear, float zFar) {
+		float cota = (float) (1.0 / Math.tan(fovy * Math.PI / 360));
+		Matrix.setIdentityM(m, 0);
+		m[0] = cota / aspect;
+		m[5] = cota;
+		m[10] = (zNear - zFar) / (zFar - zNear);
+		m[11] = -1;
+		m[14] = (2 * zFar * zNear) / (zNear - zFar);
+		m[15] = 0;
+	}
+
+	public static final void setRotateM(float[] m, float[] r) {
+
+		double toRadians = Math.PI * 2 / 360;
+		float sin0 = (float) Math.sin(r[0] * toRadians);
+		float cos0 = (float) Math.cos(r[0] * toRadians);
+		float sin1 = (float) Math.sin(r[1] * toRadians);
+		float cos1 = (float) Math.cos(r[1] * toRadians);
+		float sin2 = (float) Math.sin(r[2] * toRadians);
+		float cos2 = (float) Math.cos(r[2] * toRadians);
+
+		Matrix.setIdentityM(m, 0);
+
+		m[0] = cos1 * cos2;
+		m[1] = cos1 * sin2;
+		m[2] = -sin1;
+
+		m[4] = (-cos0 * sin2) + (sin0 * sin1 * cos2);
+		m[5] = (cos0 * cos2) + (sin0 * sin1 * sin2);
+		m[6] = sin0 * cos1;
+
+		m[8] = (sin0 * sin2) + (cos0 * sin1 * cos2);
+		m[9] = (-sin0 * cos2) + (cos0 * sin1 * sin2);
+		m[10] = cos0 * cos1;
+
 	}
 
 }

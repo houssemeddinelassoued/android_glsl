@@ -11,8 +11,7 @@ import android.os.SystemClock;
 
 public class GlslRenderer implements GLSurfaceView.Renderer {
 
-	private float[] mWorldMatrix = new float[16];
-	private float[] mProjMatrix = new float[16];
+	private float[] mProjectionMatrix = new float[16];
 	private float[] mViewMatrix = new float[16];
 
 	private float mFPS = 0f;
@@ -30,12 +29,15 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 
 	@Override
 	public void onDrawFrame(GL10 glUnused) {
-		Matrix.multiplyMM(mWorldMatrix, 0, mProjMatrix, 0, mViewMatrix, 0);
-		mGlslWorld.onDrawFrame(mWorldMatrix);
+
+		mGlslWorld.onDrawFrame(mViewMatrix, mProjectionMatrix);
 
 		long time = SystemClock.uptimeMillis();
-		long diff = time - mLastRenderTime;
-		mFPS = 1000f / diff;
+		if (mLastRenderTime != 0) {
+			long diff = time - mLastRenderTime;
+			mFPS = 1000f / diff;
+			mGlslWorld.updateScene(diff / 1000f);
+		}
 		mLastRenderTime = time;
 
 		Matrix.rotateM(mViewMatrix, 0, 1f, 0f, 1f, 0f);
@@ -45,14 +47,16 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 	public void onSurfaceChanged(GL10 glUnused, int width, int height) {
 		GLES20.glViewport(0, 0, width, height);
 		float ratio = (float) width / height;
-		Matrix.frustumM(mProjMatrix, 0, -ratio, ratio, -1, 1, 3, 100);
+		// Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 3, 100);
+		GlslUtils.setPerspectiveM(mProjectionMatrix, 45f, ratio, .1f, 100f);
 	}
 
 	@Override
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
 		mGlslWorld.onSurfaceCreated();
 		mLastRenderTime = SystemClock.uptimeMillis();
-		Matrix.setLookAtM(mViewMatrix, 0, 0, 3, 5, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+		Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
+				0.0f);
 	}
 
 }
