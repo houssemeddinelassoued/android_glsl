@@ -2,6 +2,7 @@ package fi.harism.glsl;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.opengl.Matrix;
 import fi.harism.glsl.object.Cube;
 import fi.harism.glsl.object.Cubes;
 
@@ -13,7 +14,11 @@ public class GlslScene {
 	private static final float CUBE_SCROLLER_FAR = -20f;
 	private Cubes mCubes;
 
-	private float[] mRotateMatrix = new float[16];
+	private float[] mTempMatrix = new float[16];
+	private float[] mModelMatrix = new float[16];
+	private float[] mModelViewMatrix = new float[16];
+	private float[] mModelViewProjectionMatrix = new float[16];
+	private float[] mNormalMatrix = new float[16];
 
 	private GlslShader mShader;
 
@@ -65,27 +70,31 @@ public class GlslScene {
 
 		GLES20.glUseProgram(mShader.getProgram());
 
-		GLES20.glUniformMatrix4fv(mShader.getHandle("uViewMatrix"), 1, false,
-				viewMatrix, 0);
-
-		GLES20.glUniformMatrix4fv(mShader.getHandle("uProjectionMatrix"), 1,
-				false, projectionMatrix, 0);
-
 		mCubes.setPositionAttrib(mShader.getHandle("aPosition"));
 		mCubes.setColorAttrib(mShader.getHandle("aColor"));
 		mCubes.setNormalAttrib(mShader.getHandle("aNormal"));
 
-		int uRotation = mShader.getHandle("uRotationMatrix");
-		int uTranslate = mShader.getHandle("uTranslateVector");
-		int uScale = mShader.getHandle("uScaleFloat");
-
 		for (int idx = 0; idx < mCubes.getSize(); ++idx) {
 			Cube cube = mCubes.getCube(idx);
-			GlslUtils.setRotateM(mRotateMatrix, cube.mRotation);
+			
+			GlslUtils.setRotateM(mModelMatrix, cube.mRotation);
+			Matrix.scaleM(mModelMatrix, 0, cube.mScaling, cube.mScaling, cube.mScaling);
+			Matrix.setIdentityM(mTempMatrix, 0);
+			Matrix.translateM(mTempMatrix, 0, cube.mPosition[0], cube.mPosition[1], cube.mPosition[2]);
+			Matrix.multiplyMM(mModelMatrix, 0, mTempMatrix, 0, mModelMatrix, 0);
+			
+			Matrix.multiplyMM(mModelViewMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
+			
+			Matrix.invertM(mTempMatrix, 0, mModelViewMatrix, 0);
+			Matrix.transposeM(mNormalMatrix, 0, mTempMatrix, 0);
+			
+			Matrix.multiplyMM(mModelViewProjectionMatrix, 0, projectionMatrix, 0, mModelViewMatrix, 0);
+			
+			GLES20.glUniformMatrix4fv(mShader.getHandle("uMVPMatrix"), 1, false,
+					mModelViewProjectionMatrix, 0);
 
-			GLES20.glUniformMatrix4fv(uRotation, 1, false, mRotateMatrix, 0);
-			GLES20.glUniform3fv(uTranslate, 1, cube.mPosition, 0);
-			GLES20.glUniform1f(uScale, cube.mScaling);
+			GLES20.glUniformMatrix4fv(mShader.getHandle("uNormalMatrix"), 1,
+					false, mNormalMatrix, 0);
 
 			mCubes.drawArrays();
 		}
@@ -95,11 +104,8 @@ public class GlslScene {
 	public void init() {
 		mShader.loadProgram(R.string.shader_main_vertex,
 				R.string.shader_main_fragment);
-		mShader.addHandle("uProjectionMatrix");
-		mShader.addHandle("uViewMatrix");
-		mShader.addHandle("uRotationMatrix");
-		mShader.addHandle("uScaleFloat");
-		mShader.addHandle("uTranslateVector");
+		mShader.addHandle("uMVPMatrix");
+		mShader.addHandle("uNormalMatrix");
 		mShader.addHandle("aPosition");
 		mShader.addHandle("aNormal");
 		mShader.addHandle("aColor");

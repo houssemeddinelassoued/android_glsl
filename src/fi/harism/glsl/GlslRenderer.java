@@ -44,8 +44,8 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 
 		float ratio = (float) mGlslFramebuffer.getWidth()
 				/ mGlslFramebuffer.getHeight();
-		// Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 3, 100);
-		GlslUtils.setPerspectiveM(mProjectionMatrix, 45f, ratio, .1f, 100f);
+		//Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 3, 20);
+		GlslUtils.setPerspectiveM(mProjectionMatrix, 45f, ratio, 1f, 20f);
 
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,
 				mGlslFramebuffer.getFramebufferId());
@@ -77,7 +77,7 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 		if (!mResetFramebuffers) {
 			mGlslFramebuffer.reset();
 		}
-		mGlslFramebuffer.create(width / 4, height / 4);
+		mGlslFramebuffer.create(width, height);
 	}
 
 	@Override

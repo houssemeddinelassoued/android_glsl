@@ -47,8 +47,8 @@ public class GlslFilters {
 	}
 
 	public void init() {
-		mShader.loadProgram(R.string.shader_copy_vertex,
-				R.string.shader_copy_fragment);
+		mShader.loadProgram(R.string.shader_blur_vertex,
+				R.string.shader_blur_fragment);
 		mShader.addHandle("aPosition");
 		mShader.addHandle("aTextureCoord");
 	}

@@ -2,48 +2,45 @@
 <resources>
 
     <string name="shader_main_vertex">
-		uniform mat4 uViewMatrix;
-		uniform mat4 uProjectionMatrix;
-		
-		uniform mat4 uRotationMatrix;
-		uniform vec3 uTranslateVector;
-		uniform float uScaleFloat;
+		uniform mat4 uMVPMatrix;
+		uniform mat4 uNormalMatrix;
 		
 		attribute vec4 aPosition;
-		attribute vec3 aColor;
+		attribute vec4 aColor;
 		attribute vec4 aNormal;
 		
-		varying vec3 vColor;
+		varying vec4 vColor;
 		
 		void main() {
-			vec4 position = uRotationMatrix * aPosition;
-			
-			position.x *= uScaleFloat;
-			position.y *= uScaleFloat;
-			position.z *= uScaleFloat;
-			
-			position.x += uTranslateVector.x;
-			position.y += uTranslateVector.y;
-			position.z += uTranslateVector.z;
-			
-			gl_Position = uProjectionMatrix * uViewMatrix * position;
-			
-			vec4 rotNormal = /* uViewMatrix */ uRotationMatrix * aNormal;
-			rotNormal.w = 0.0;
-			rotNormal = normalize(rotNormal);
+			gl_Position = uMVPMatrix * vec4(aPosition.xyz, 1.0);
+			vec4 normal = uNormalMatrix * aNormal;
+			normal.w = 0.0;
+			normal = normalize(normal);
 			vColor = aColor;
-			vColor.r *= rotNormal.z;
-			vColor.g *= rotNormal.z;
-			vColor.b *= rotNormal.z;
+			vColor.r *= normal.z;
+			vColor.g *= normal.z;
+			vColor.b *= normal.z;
+			vColor.a = gl_Position.z / gl_Position.w;
 		}
+		
+				
     </string>
     
     <string name="shader_main_fragment">
 	    precision mediump float;
-        varying vec3 vColor;
+        varying vec4 vColor;
         
         void main() {
-			gl_FragColor = vec4(vColor, 1.0);
+        
+            
+			gl_FragColor = vColor;
+			
+			/*
+			if (gl_FragColor.a &gt; 0.4) {
+				gl_FragColor = vec4(1.0);
+			}
+			*/
+			
 		}
     </string>    
     

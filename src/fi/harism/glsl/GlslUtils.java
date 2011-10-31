@@ -52,13 +52,29 @@ public class GlslUtils {
 
 	public static final void setPerspectiveM(float[] m, float fovy,
 			float aspect, float zNear, float zFar) {
-		float cota = (float) (1.0 / Math.tan(fovy * Math.PI / 360));
+
 		Matrix.setIdentityM(m, 0);
-		m[0] = cota / aspect;
-		m[5] = cota;
-		m[10] = (zNear - zFar) / (zFar - zNear);
+
+		float xymax = zNear * (float) Math.tan(fovy * Math.PI / 360);
+		float ymin = -xymax;
+		float xmin = -xymax;
+
+		float width = xymax - xmin;
+		float height = xymax - ymin;
+
+		float depth = zFar - zNear;
+		float q = -(zFar + zNear) / depth;
+		float qn = -2 * (zFar * zNear) / depth;
+
+		float w = 2 * zNear / width;
+		w = w / aspect;
+		float h = 2 * zNear / height;
+
+		m[0] = w;
+		m[5] = h;
+		m[10] = q;
 		m[11] = -1;
-		m[14] = (2 * zFar * zNear) / (zNear - zFar);
+		m[14] = qn;
 		m[15] = 0;
 	}
 
