@@ -12,3 +12,6 @@ http://www.khronos.org/opengles/sdk/docs/man/
 
 - Lots of OpenGL examples<br>
 http://evanw.github.com/glfx.js/
+
+- Bokeh dof ideas etc..<br>
+http://publications.dice.se/

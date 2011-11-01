@@ -21,26 +21,20 @@
         void main() {
         	gl_FragColor = texture2D(sTexture0, vTextureCoord);
         	
-        	gl_FragColor.a = pow(gl_FragColor.a, 4.0);
-        	gl_FragColor.a = abs(gl_FragColor.a - 0.5) * 2.0;
-        	
-        	float A = 1.0;
-        	float fLen = 30.0;
-        	float fPlane = 150.0;
+        	float A = 3.0;
+        	float fLen = 2.0;
+        	float fPlane = 20.0;
         	float zNear = 1.0;
         	float zFar = 20.0;
         	
         	float cocScale = (A * fLen * fPlane * (zFar- zNear)) / ((fPlane - fLen) * zNear *zFar);
-        	float cocBias = (A * fLen * (zNear - fPlane)) / ((fPlane * fLen) * zNear);
-        	/*
+        	float cocBias = (A * fLen * (zNear - fPlane)) / ((fPlane + fLen) * zNear);
         	gl_FragColor.a = abs(gl_FragColor.a * cocScale + cocBias);
-        	*/
+        	gl_FragColor.a = clamp(gl_FragColor.a, 1.0 / 256.0, 1.0);
         	
         	float power = pow(10.0, 0.3);
         	gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(power));
-        	
         	gl_FragColor.rgb *= gl_FragColor.a;
-        	gl_FragColor.a = clamp(gl_FragColor.a, 1.0 / 256.0, 1.0);
         }
     </string>
     
