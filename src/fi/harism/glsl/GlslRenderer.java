@@ -23,12 +23,14 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 	private GlslFilters mGlslFilters;
 
 	private boolean mResetFramebuffers = true;
-	private GlslFramebuffer mGlslFramebuffer;
+	private GlslFramebuffer mGlslFramebufferScreen;
+	private GlslFramebuffer mGlslFramebufferScreenHalf;
 
 	public GlslRenderer(Context context) {
 		mGlslScene = new GlslScene(context);
 		mGlslFilters = new GlslFilters(context);
-		mGlslFramebuffer = new GlslFramebuffer();
+		mGlslFramebufferScreen = new GlslFramebuffer();
+		mGlslFramebufferScreenHalf = new GlslFramebuffer();
 
 		mLastRenderTime = SystemClock.uptimeMillis();
 		Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
@@ -50,9 +52,8 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 
 		float rot = 360f * (SystemClock.uptimeMillis() % 6000L) / 6000;
 		Matrix.rotateM(mViewMatrix, 0, rot, 0f, 1f, 0f);
-		GLES20.glViewport(0, 0, mWidth, mHeight);
 
-		mGlslFramebuffer.useTexture("screen1");
+		mGlslFramebufferScreen.useTexture("tex1");
 		mGlslScene.draw(mViewMatrix, mProjectionMatrix);
 
 		/*
@@ -63,10 +64,15 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 		 * mGlslFilters.copy(mGlslFramebuffer.getTexture("screen2"));
 		 */
 
-		mGlslFilters.bokeh(mGlslFramebuffer, "screen1", "screen2", mWidth,
-				mHeight);
+		mGlslFramebufferScreenHalf.useTexture("tex3");
+		mGlslFilters.copy(mGlslFramebufferScreen.getTexture("tex1"));
+
+		mGlslFilters.bokeh(mGlslFramebufferScreenHalf, "tex3", "tex3",
+				mWidth / 2, mHeight / 2);
+
+		GLES20.glViewport(0, 0, mWidth, mHeight);
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-		mGlslFilters.copy(mGlslFramebuffer.getTexture("screen2"));
+		mGlslFilters.copy(mGlslFramebufferScreenHalf.getTexture("tex3"));
 
 		long time = SystemClock.uptimeMillis();
 		if (mLastRenderTime != 0) {
@@ -83,13 +89,16 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 		mWidth = width;
 		mHeight = height;
 		if (!mResetFramebuffers) {
-			mGlslFramebuffer.reset();
+			mGlslFramebufferScreen.reset();
+			mGlslFramebufferScreenHalf.reset();
 		}
-		mGlslFramebuffer.create(width, height);
-		mGlslFramebuffer.addTexture("screen1", width, height);
-		mGlslFramebuffer.addTexture("screen2", width, height);
-		mGlslFramebuffer.addTexture("bokeh1", width, height);
-		mGlslFramebuffer.addTexture("bokeh2", width, height);
+		mGlslFramebufferScreen.init(width, height);
+		mGlslFramebufferScreen.addTexture("tex1");
+		mGlslFramebufferScreen.addTexture("tex2");
+		mGlslFramebufferScreenHalf.init(width / 2, height / 2);
+		mGlslFramebufferScreenHalf.addTexture("tex1");
+		mGlslFramebufferScreenHalf.addTexture("tex2");
+		mGlslFramebufferScreenHalf.addTexture("tex3");
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import android.opengl.GLES20;
 
 public class GlslFramebuffer {
 
+	private int mWidth, mHeight;
 	private int mFramebufferHandle;
 	private int mRenderbufferHandle;
 	private HashMap<String, Integer> mTextureHandleMap;
@@ -14,7 +15,7 @@ public class GlslFramebuffer {
 		mTextureHandleMap = new HashMap<String, Integer>();
 	}
 
-	public void addTexture(String name, int width, int height) {
+	public void addTexture(String name) {
 		int handle[] = { 0 };
 		GLES20.glGenTextures(1, handle, 0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, handle[0]);
@@ -28,13 +29,27 @@ public class GlslFramebuffer {
 				GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
 		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
 				GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-		GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width,
-				height, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+		GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, mWidth,
+				mHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
 
 		mTextureHandleMap.put(name, handle[0]);
 	}
 
-	public void create(int width, int height) {
+	public int getFramebufferHandle() {
+		return mFramebufferHandle;
+	}
+
+	public int getTexture(String name) {
+		if (!mTextureHandleMap.containsKey(name)) {
+			throw new RuntimeException("No texture handle " + name);
+		}
+		return mTextureHandleMap.get(name);
+	}
+
+	public void init(int width, int height) {
+		mWidth = width;
+		mHeight = height;
+
 		int handle[] = { 0 };
 		GLES20.glGenFramebuffers(1, handle, 0);
 		mFramebufferHandle = handle[0];
@@ -49,17 +64,6 @@ public class GlslFramebuffer {
 		GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,
 				GLES20.GL_DEPTH_ATTACHMENT, GLES20.GL_RENDERBUFFER,
 				mRenderbufferHandle);
-	}
-
-	public int getFramebufferHandle() {
-		return mFramebufferHandle;
-	}
-
-	public int getTexture(String name) {
-		if (!mTextureHandleMap.containsKey(name)) {
-			throw new RuntimeException("No texture handle " + name);
-		}
-		return mTextureHandleMap.get(name);
 	}
 
 	public void reset() {
@@ -81,6 +85,7 @@ public class GlslFramebuffer {
 		GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
 				GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D,
 				getTexture(name), 0);
+		GLES20.glViewport(0, 0, mWidth, mHeight);
 	}
 
 }
