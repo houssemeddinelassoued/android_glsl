@@ -8,8 +8,8 @@ import fi.harism.glsl.object.Cubes;
 
 public class GlslScene {
 
-	private static final int CUBE_SCROLLER_COUNT = 500;
-	private static final int CUBE_ARCH_COUNT = 10;
+	private static final int CUBE_SCROLLER_COUNT = 200;
+	private static final int CUBE_ARCH_COUNT = 5;
 	private static final float CUBE_SCROLLER_NEAR = 20f;
 	private static final float CUBE_SCROLLER_FAR = -20f;
 	private Cubes mCubes;
@@ -24,10 +24,18 @@ public class GlslScene {
 
 	public GlslScene(Context context) {
 		mShader = new GlslShader(context);
+		mCubes = new Cubes();
 
-		mCubes = new Cubes(CUBE_SCROLLER_COUNT + CUBE_ARCH_COUNT);
+		/*
+		 * Cube cube = mCubes.addCube(); cube.mScaling = 0.1f; cube.mPosition[0]
+		 * = 0.8f;
+		 * 
+		 * cube = mCubes.addCube(); cube.mScaling = 0.1f; cube.mPosition[0] =
+		 * -0.8f; cube.mRotation[0] = 90f;
+		 */
+
 		for (int idx = 0; idx < CUBE_SCROLLER_COUNT; ++idx) {
-			Cube cube = mCubes.getCube(idx);
+			Cube cube = mCubes.addCube();
 
 			cube.mScaling = (float) (.3f * Math.random() + .3f);
 			for (int r = 0; r < 3; ++r) {
@@ -42,11 +50,10 @@ public class GlslScene {
 			cube.mPositionD[2] = (float) (4 * Math.random() + 1);
 		}
 
-		for (int idx = CUBE_SCROLLER_COUNT; idx < mCubes.getSize(); ++idx) {
-			Cube cube = mCubes.getCube(idx);
+		for (int idx = 0; idx < CUBE_ARCH_COUNT; ++idx) {
+			Cube cube = mCubes.addCube();
 
-			double t = Math.PI * (idx - CUBE_SCROLLER_COUNT)
-					/ (CUBE_ARCH_COUNT - 1);
+			double t = Math.PI * idx / (CUBE_ARCH_COUNT - 1);
 
 			cube.mScaling = (float) (.6f * Math.random() + .3f);
 			for (int r = 0; r < 3; ++r) {
@@ -60,7 +67,7 @@ public class GlslScene {
 
 	public void draw(float[] viewMatrix, float[] projectionMatrix) {
 
-		GLES20.glClearColor(0.4f, 0.5f, 0.6f, 1.0f);
+		GLES20.glClearColor(0.2f, 0.5f, 0.6f, 1.0f);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
@@ -76,22 +83,26 @@ public class GlslScene {
 
 		for (int idx = 0; idx < mCubes.getSize(); ++idx) {
 			Cube cube = mCubes.getCube(idx);
-			
+
 			GlslUtils.setRotateM(mModelMatrix, cube.mRotation);
-			Matrix.scaleM(mModelMatrix, 0, cube.mScaling, cube.mScaling, cube.mScaling);
+			Matrix.scaleM(mModelMatrix, 0, cube.mScaling, cube.mScaling,
+					cube.mScaling);
 			Matrix.setIdentityM(mTempMatrix, 0);
-			Matrix.translateM(mTempMatrix, 0, cube.mPosition[0], cube.mPosition[1], cube.mPosition[2]);
+			Matrix.translateM(mTempMatrix, 0, cube.mPosition[0],
+					cube.mPosition[1], cube.mPosition[2]);
 			Matrix.multiplyMM(mModelMatrix, 0, mTempMatrix, 0, mModelMatrix, 0);
-			
-			Matrix.multiplyMM(mModelViewMatrix, 0, viewMatrix, 0, mModelMatrix, 0);
-			
+
+			Matrix.multiplyMM(mModelViewMatrix, 0, viewMatrix, 0, mModelMatrix,
+					0);
+
 			Matrix.invertM(mTempMatrix, 0, mModelViewMatrix, 0);
 			Matrix.transposeM(mNormalMatrix, 0, mTempMatrix, 0);
-			
-			Matrix.multiplyMM(mModelViewProjectionMatrix, 0, projectionMatrix, 0, mModelViewMatrix, 0);
-			
-			GLES20.glUniformMatrix4fv(mShader.getHandle("uMVPMatrix"), 1, false,
-					mModelViewProjectionMatrix, 0);
+
+			Matrix.multiplyMM(mModelViewProjectionMatrix, 0, projectionMatrix,
+					0, mModelViewMatrix, 0);
+
+			GLES20.glUniformMatrix4fv(mShader.getHandle("uMVPMatrix"), 1,
+					false, mModelViewProjectionMatrix, 0);
 
 			GLES20.glUniformMatrix4fv(mShader.getHandle("uNormalMatrix"), 1,
 					false, mNormalMatrix, 0);

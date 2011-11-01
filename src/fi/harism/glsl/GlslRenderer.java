@@ -42,20 +42,31 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 	@Override
 	public void onDrawFrame(GL10 glUnused) {
 
-		float ratio = (float) mGlslFramebuffer.getWidth()
-				/ mGlslFramebuffer.getHeight();
-		//Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 3, 20);
+		float ratio = (float) mWidth / mHeight;
+		// Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 3, 20);
 		GlslUtils.setPerspectiveM(mProjectionMatrix, 45f, ratio, 1f, 20f);
+		Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
+				0.0f);
 
-		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER,
-				mGlslFramebuffer.getFramebufferId());
-		GLES20.glViewport(0, 0, mGlslFramebuffer.getWidth(),
-				mGlslFramebuffer.getHeight());
+		float rot = 360f * (SystemClock.uptimeMillis() % 6000L) / 6000;
+		Matrix.rotateM(mViewMatrix, 0, rot, 0f, 1f, 0f);
+		GLES20.glViewport(0, 0, mWidth, mHeight);
+
+		mGlslFramebuffer.useTexture("screen1");
 		mGlslScene.draw(mViewMatrix, mProjectionMatrix);
 
+		/*
+		 * mGlslFramebuffer.useTexture("screen2");
+		 * mGlslFilters.blur(mGlslFramebuffer.getTexture("screen1"));
+		 * 
+		 * GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+		 * mGlslFilters.copy(mGlslFramebuffer.getTexture("screen2"));
+		 */
+
+		mGlslFilters.bokeh(mGlslFramebuffer, "screen1", "screen2", mWidth,
+				mHeight);
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-		GLES20.glViewport(0, 0, mWidth, mHeight);
-		mGlslFilters.draw(mGlslFramebuffer.getTextureId());
+		mGlslFilters.copy(mGlslFramebuffer.getTexture("screen2"));
 
 		long time = SystemClock.uptimeMillis();
 		if (mLastRenderTime != 0) {
@@ -65,19 +76,20 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 		}
 		mLastRenderTime = time;
 
-		Matrix.rotateM(mViewMatrix, 0, 1f, 0f, 1f, 0f);
 	}
 
 	@Override
 	public void onSurfaceChanged(GL10 glUnused, int width, int height) {
-
 		mWidth = width;
 		mHeight = height;
-
 		if (!mResetFramebuffers) {
 			mGlslFramebuffer.reset();
 		}
 		mGlslFramebuffer.create(width, height);
+		mGlslFramebuffer.addTexture("screen1", width, height);
+		mGlslFramebuffer.addTexture("screen2", width, height);
+		mGlslFramebuffer.addTexture("bokeh1", width, height);
+		mGlslFramebuffer.addTexture("bokeh2", width, height);
 	}
 
 	@Override
@@ -85,8 +97,6 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 		mGlslScene.init();
 		mGlslFilters.init();
 		mResetFramebuffers = true;
-		Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
-				0.0f);
 	}
 
 }

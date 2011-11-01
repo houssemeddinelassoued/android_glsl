@@ -3,6 +3,7 @@ package fi.harism.glsl.object;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Vector;
 
 import android.opengl.GLES20;
 
@@ -35,16 +36,16 @@ public class Cubes {
 	private static final int[][][] mCubeIndices = {
 			// { vertice indices }, { color index }
 			{ { 3, 2, 0 }, { 0 }, { 4 } }, { { 0, 2, 1 }, { 0 }, { 4 } },
-			{ { 6, 7, 5 }, { 0 }, { 5 } }, { { 5, 7, 4 }, { 0 }, { 5 } },
-			{ { 7, 3, 4 }, { 1 }, { 1 } }, { { 4, 3, 0 }, { 1 }, { 1 } },
-			{ { 2, 6, 1 }, { 1 }, { 0 } }, { { 1, 6, 5 }, { 1 }, { 0 } },
-			{ { 0, 1, 4 }, { 2 }, { 2 } }, { { 4, 1, 5 }, { 2 }, { 2 } },
-			{ { 7, 6, 3 }, { 2 }, { 3 } }, { { 3, 6, 2 }, { 2 }, { 3 } } };
+			{ { 6, 7, 5 }, { 1 }, { 5 } }, { { 5, 7, 4 }, { 1 }, { 5 } },
+			{ { 7, 3, 4 }, { 2 }, { 1 } }, { { 4, 3, 0 }, { 2 }, { 1 } },
+			{ { 2, 6, 1 }, { 3 }, { 0 } }, { { 1, 6, 5 }, { 3 }, { 0 } },
+			{ { 0, 1, 4 }, { 4 }, { 2 } }, { { 4, 1, 5 }, { 4 }, { 2 } },
+			{ { 7, 6, 3 }, { 5 }, { 3 } }, { { 3, 6, 2 }, { 5 }, { 3 } } };
 
 	private FloatBuffer mTriangleVertices;
-	private Cube[] mCubeArray;
+	private Vector<Cube> mCubeList;
 
-	public Cubes(int count) {
+	public Cubes() {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(3 * mCubeIndices.length
 				* TRIANGLE_VERTICES_DATA_STRIDE_BYTES);
 		mTriangleVertices = buffer.order(ByteOrder.nativeOrder())
@@ -63,22 +64,25 @@ public class Cubes {
 		}
 		mTriangleVertices.position(0);
 
-		mCubeArray = new Cube[count];
-		for (int i = 0; i < count; ++i) {
-			mCubeArray[i] = new Cube();
-		}
+		mCubeList = new Vector<Cube>();
 	}
 
 	public void drawArrays() {
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, mCubeIndices.length * 3);
 	}
+	
+	public Cube addCube() {
+		Cube cube = new Cube();
+		mCubeList.add(cube);
+		return cube;
+	}
 
 	public Cube getCube(int idx) {
-		return mCubeArray[idx];
+		return mCubeList.get(idx);
 	}
 
 	public int getSize() {
-		return mCubeArray.length;
+		return mCubeList.size();
 	}
 
 	public void setColorAttrib(int aColorHandle) {
