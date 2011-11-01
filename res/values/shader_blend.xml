@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<string name="shader_copy_vertex">
+	<string name="shader_blend_vertex">
 		attribute vec4 aPosition;
 		attribute vec2 aTextureCoord;
 		varying vec2 vTextureCoord;
@@ -12,13 +12,16 @@
 		}
     </string>
 
-	<string name="shader_copy_fragment">
+	<string name="shader_blend_fragment">
 	    precision mediump float;
         uniform sampler2D sTexture0;
+        uniform sampler2D sTexture1;
 		varying vec2 vTextureCoord;
         
         void main() {
-			gl_FragColor = texture2D(sTexture0, vTextureCoord);
+        	vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
+        	vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
+        	gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
 		}
     </string>
     

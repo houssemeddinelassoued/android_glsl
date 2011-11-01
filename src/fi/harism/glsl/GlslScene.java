@@ -8,8 +8,8 @@ import fi.harism.glsl.object.Cubes;
 
 public class GlslScene {
 
-	private static final int CUBE_SCROLLER_COUNT = 200;
-	private static final int CUBE_ARCH_COUNT = 5;
+	private static final int CUBE_SCROLLER_COUNT = 20;
+	private static final int CUBE_ARCH_COUNT = 10;
 	private static final float CUBE_SCROLLER_NEAR = 20f;
 	private static final float CUBE_SCROLLER_FAR = -20f;
 	private Cubes mCubes;
@@ -26,18 +26,19 @@ public class GlslScene {
 		mShader = new GlslShader(context);
 		mCubes = new Cubes();
 
-		/*
-		 * Cube cube = mCubes.addCube(); cube.mScaling = 0.1f; cube.mPosition[0]
-		 * = 0.8f;
-		 * 
-		 * cube = mCubes.addCube(); cube.mScaling = 0.1f; cube.mPosition[0] =
-		 * -0.8f; cube.mRotation[0] = 90f;
-		 */
+		Cube cube = mCubes.addCube();
+		cube.mScaling = 1f;
+		cube.mPosition[0] = 5f;
+
+		cube = mCubes.addCube();
+		cube.mScaling = 1f;
+		cube.mPosition[0] = -5f;
+		cube.mRotation[0] = 90f;
 
 		for (int idx = 0; idx < CUBE_SCROLLER_COUNT; ++idx) {
-			Cube cube = mCubes.addCube();
+			cube = mCubes.addCube();
 
-			cube.mScaling = (float) (.3f * Math.random() + .3f);
+			cube.mScaling = (float) (.4f * Math.random() + .8f);
 			for (int r = 0; r < 3; ++r) {
 				cube.mRotation[r] = (float) (360 * Math.random());
 				cube.mRotationD[r] = (float) (180 * Math.random() - 90);
@@ -51,16 +52,16 @@ public class GlslScene {
 		}
 
 		for (int idx = 0; idx < CUBE_ARCH_COUNT; ++idx) {
-			Cube cube = mCubes.addCube();
+			cube = mCubes.addCube();
 
 			double t = Math.PI * idx / (CUBE_ARCH_COUNT - 1);
 
-			cube.mScaling = (float) (.6f * Math.random() + .3f);
+			cube.mScaling = (float) (.6f * Math.random() + .6f);
 			for (int r = 0; r < 3; ++r) {
 				cube.mRotation[r] = (float) (360 * Math.random());
 			}
-			cube.mPosition[0] = (float) (2 * Math.cos(t));
-			cube.mPosition[1] = (float) (2 * Math.sin(t));
+			cube.mPosition[0] = (float) (3 * Math.cos(t));
+			cube.mPosition[1] = (float) (3 * Math.sin(t));
 		}
 
 	}

@@ -12,16 +12,50 @@
 		}
     </string>
     
-    <string name="shader_bokeh_pow_fragment">
+    <string name="shader_bokeh_in_fragment">
 	    precision mediump float;
   		uniform sampler2D sTexture0;
   		uniform float uPower;
         varying vec2 vTextureCoord;
         
         void main() {
-        	vec4 color = texture2D(sTexture0, vTextureCoord);
-        	color = pow(color, vec4(uPower));
-        	gl_FragColor = color;
+        	gl_FragColor = texture2D(sTexture0, vTextureCoord);
+        	
+        	gl_FragColor.a = pow(gl_FragColor.a, 4.0);
+        	gl_FragColor.a = abs(gl_FragColor.a - 0.5) * 2.0;
+        	
+        	float A = 1.0;
+        	float fLen = 30.0;
+        	float fPlane = 150.0;
+        	float zNear = 1.0;
+        	float zFar = 20.0;
+        	
+        	float cocScale = (A * fLen * fPlane * (zFar- zNear)) / ((fPlane - fLen) * zNear *zFar);
+        	float cocBias = (A * fLen * (zNear - fPlane)) / ((fPlane * fLen) * zNear);
+        	/*
+        	gl_FragColor.a = abs(gl_FragColor.a * cocScale + cocBias);
+        	*/
+        	
+        	float power = pow(10.0, 0.3);
+        	gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(power));
+        	
+        	gl_FragColor.rgb *= gl_FragColor.a;
+        	gl_FragColor.a = clamp(gl_FragColor.a, 1.0 / 256.0, 1.0);
+        }
+    </string>
+    
+    <string name="shader_bokeh_out_fragment">
+	    precision mediump float;
+  		uniform sampler2D sTexture0;
+  		uniform float uPower;
+        varying vec2 vTextureCoord;
+        
+        void main() {
+        	gl_FragColor = texture2D(sTexture0, vTextureCoord);        	
+        	gl_FragColor.rgb /= gl_FragColor.a;
+        	
+        	float power = pow(10.0, 0.3);
+        	gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1.0 / power));        	
         }
     </string>
     
@@ -33,17 +67,22 @@
 		
 		void main() {
 			gl_FragColor = vec4(0.0);
-			float total = 5.0;
-			for (float t = 0.0; t &lt;= total; t++) {
-				float percent = (t + 0.5) / total;
-				gl_FragColor += texture2D(sTexture0, vTextureCoord + uDelta0 * percent);
+			float coc0 = texture2D(sTexture0, vTextureCoord).a;
+			
+			float count = 5.0;
+			float weightSum = 0.0;
+			for (float t = 0.0; t &lt;= count; t++) {
+				float percent = coc0 * (t + 0.5) / count;
+				vec4 color = texture2D(sTexture0, vTextureCoord + uDelta0 * percent);
+				gl_FragColor += color * color.a;
+				weightSum += color.a;
 			}
-			gl_FragColor /= total;
+			gl_FragColor /= weightSum;
 		}
     </string>
-        
+    
     <string name="shader_bokeh2_fragment">
-	    precision highp float;
+	    precision mediump float;
 		uniform sampler2D sTexture0;
 		uniform sampler2D sTexture1;
 		uniform vec2 uDelta0;
@@ -51,18 +90,23 @@
 		
 		void main() {
 			gl_FragColor = vec4(0.0);
-			float total = 5.0;
-			for (float t = 0.0; t &lt;= total; t++) {
-				float percent = (t + 0.5) / total;
-				gl_FragColor += texture2D(sTexture0, vTextureCoord + uDelta0 * percent);
+			float coc0 = texture2D(sTexture0, vTextureCoord).a;
+			
+			float count = 5.0;
+			float weightSum = 0.0;
+			for (float t = 0.0; t &lt;= count; t++) {
+				float percent = coc0 * (t + 0.5) / count;
+				vec4 color = texture2D(sTexture0, vTextureCoord + uDelta0 * percent);
+				gl_FragColor += color * color.a;
+				weightSum += color.a;
 			}
-			gl_FragColor /= total;
+			gl_FragColor /= weightSum;
 			gl_FragColor = (gl_FragColor + texture2D(sTexture1, vTextureCoord)) * 0.5;
 		}
     </string>
     
     <string name="shader_bokeh3_fragment">
-	    precision highp float;
+	    precision mediump float;
 		uniform sampler2D sTexture0;
 		uniform sampler2D sTexture1;
 		uniform vec2 uDelta0;
@@ -71,17 +115,25 @@
 		
 		void main() {
 			gl_FragColor = vec4(0.0);
-			float total = 5.0;
-			for (float t = 0.0; t &lt;= total; t++) {
-				float percent = (t + 0.5) / total;
-				gl_FragColor += texture2D(sTexture0, vTextureCoord + uDelta0 * percent);
+			float coc0 = texture2D(sTexture0, vTextureCoord).a;
+			float coc1 = texture2D(sTexture1, vTextureCoord).a;
+			
+			float count = 5.0;
+			float weightSum = 0.0;
+			for (float t = 0.0; t &lt;= count; t++) {
+				float percent = coc0 * (t + 0.5) / count;
+				vec4 color = texture2D(sTexture0, vTextureCoord + uDelta0 * percent);
+				gl_FragColor += color * color.a;
+				weightSum += color.a;
 			}
-			for (float t = 0.0; t &lt;= total; t++) {
-				float percent = (t + 0.5) / total;
-				gl_FragColor += texture2D(sTexture1, vTextureCoord + uDelta1 * percent);
+			for (float t = 0.0; t &lt;= count; t++) {
+				float percent = coc0 * (t + 0.5) / count;
+				vec4 color = texture2D(sTexture1, vTextureCoord + uDelta1 * percent);
+				gl_FragColor += color * color.a;
+				weightSum += color.a;
 			}
-			gl_FragColor /= total * 2.0;
+			gl_FragColor /= weightSum;
 		}
     </string>
-        
+    
 </resources>

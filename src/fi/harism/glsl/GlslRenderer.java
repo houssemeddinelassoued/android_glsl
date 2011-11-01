@@ -45,7 +45,7 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 	public void onDrawFrame(GL10 glUnused) {
 
 		float ratio = (float) mWidth / mHeight;
-		// Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 3, 20);
+		//Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 1, 20);
 		GlslUtils.setPerspectiveM(mProjectionMatrix, 45f, ratio, 1f, 20f);
 		Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
 				0.0f);
@@ -56,23 +56,15 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 		mGlslFramebufferScreen.useTexture("tex1");
 		mGlslScene.draw(mViewMatrix, mProjectionMatrix);
 
-		/*
-		 * mGlslFramebuffer.useTexture("screen2");
-		 * mGlslFilters.blur(mGlslFramebuffer.getTexture("screen1"));
-		 * 
-		 * GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-		 * mGlslFilters.copy(mGlslFramebuffer.getTexture("screen2"));
-		 */
-
-		mGlslFramebufferScreenHalf.useTexture("tex3");
-		mGlslFilters.copy(mGlslFramebufferScreen.getTexture("tex1"));
-
-		mGlslFilters.bokeh(mGlslFramebufferScreenHalf, "tex3", "tex3",
+		mGlslFilters.bokeh(mGlslFramebufferScreen.getTexture("tex1"),
+				mGlslFramebufferScreenHalf, "tex1", "tex2", "tex3", "tex4",
 				mWidth / 2, mHeight / 2);
 
 		GLES20.glViewport(0, 0, mWidth, mHeight);
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-		mGlslFilters.copy(mGlslFramebufferScreenHalf.getTexture("tex3"));
+		//mGlslFilters.copy(mGlslFramebufferScreen.getTexture("tex1"));
+		//mGlslFilters.copy(mGlslFramebufferScreenHalf.getTexture("tex4"));
+		mGlslFilters.blend(mGlslFramebufferScreenHalf.getTexture("tex4"), mGlslFramebufferScreen.getTexture("tex1"));
 
 		long time = SystemClock.uptimeMillis();
 		if (mLastRenderTime != 0) {
@@ -99,6 +91,7 @@ public class GlslRenderer implements GLSurfaceView.Renderer {
 		mGlslFramebufferScreenHalf.addTexture("tex1");
 		mGlslFramebufferScreenHalf.addTexture("tex2");
 		mGlslFramebufferScreenHalf.addTexture("tex3");
+		mGlslFramebufferScreenHalf.addTexture("tex4");
 	}
 
 	@Override

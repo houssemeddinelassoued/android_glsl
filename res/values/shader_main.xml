@@ -23,7 +23,6 @@
 			vColor.a = gl_Position.z / gl_Position.w;
 		}
 		
-				
     </string>
     
     <string name="shader_main_fragment">
@@ -31,16 +30,10 @@
         varying vec4 vColor;
         
         void main() {
-        
-            
 			gl_FragColor = vColor;
-			
 			/*
-			if (gl_FragColor.a &gt; 0.4) {
-				gl_FragColor = vec4(1.0);
-			}
+			gl_FragColor.rgb = vec3(vColor.a);
 			*/
-			
 		}
     </string>    
     
