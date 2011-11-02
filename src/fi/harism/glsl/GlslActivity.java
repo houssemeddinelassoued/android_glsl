@@ -4,8 +4,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 
 public class GlslActivity extends Activity {
 
@@ -51,6 +54,22 @@ public class GlslActivity extends Activity {
 		mGLSurfaceView.onResume();
 		mTimer = new Timer();
 		mTimer.scheduleAtFixedRate(new FPSTimerTask(), 0, 200);
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.main, menu);
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.menu_settings:
+			startActivity(new Intent(this, SettingsActivity.class));
+			return true;
+		}
+		return false;
 	}
 
 	private class FPSTimerTask extends TimerTask {

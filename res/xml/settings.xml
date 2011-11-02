@@ -1,0 +1,40 @@
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:harism="http://schemas.android.com/apk/res/fi.harism.glsl" >
+	
+    <PreferenceCategory
+        android:title="Rendering" >
+        <CheckBoxPreference
+            android:key="@string/key_divide_screen"
+            android:title="Divide Screen"
+            android:summary="Divides screen into two - showing original rendering and filtered one." />
+        <CheckBoxPreference
+            android:key="@string/key_per_pixel_lightning"
+            android:title="Per pixel lightning"
+            android:summary="Calculates per pixel lightning." />
+        </PreferenceCategory>
+    
+    <PreferenceCategory
+        android:title="Bokeh filter" >
+        <fi.harism.glsl.SliderPreference
+            android:key="@string/key_bokeh_power"
+            android:title="Power (= %.2f)"
+            android:summary="Over saturates color values to 'emulate' hdr images."
+            harism:minValue="0"
+            harism:maxValue="1000"
+            harism:floatDivider="1000" />
+        <fi.harism.glsl.SliderPreference
+            android:key="@string/key_bokeh_radius"
+            android:title="Radius (= %d)"
+            android:summary="Blur radius."
+            harism:minValue="1"
+            harism:maxValue="20" />
+        <fi.harism.glsl.SliderPreference
+            android:key="@string/key_bokeh_steps"
+            android:title="Blur steps (= %d)"
+            android:summary="Steps during blurring."
+            harism:minValue="1"
+            harism:maxValue="10" />
+    </PreferenceCategory>
+    
+</PreferenceScreen>

@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, GlslActivity!</string>
-    <string name="app_name">Android_glsl</string>
-
+    <string name="app_name">Android_glsl</string>   
+    <string name="menu_settings">Settings</string>
+    
+    <string name="key_divide_screen">divide_screen</string>
+    <string name="key_per_pixel_lightning">per_pixel_lightning</string>
+    <string name="key_bokeh_power">bokeh_power</string>
+    <string name="key_bokeh_radius">bokeh_radius</string>
+    <string name="key_bokeh_steps">bokeh_steps</string>
+    
 </resources>
