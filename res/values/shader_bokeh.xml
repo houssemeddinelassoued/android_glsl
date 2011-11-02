@@ -66,12 +66,13 @@
 			float count = 5.0;
 			float weightSum = 0.0;			
 			vec2 delta0 = vec2(uDelta0) * (coc0 / count);
-			vec2 textureCoord = vTextureCoord + delta0 * 0.5;
+			vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
+			vec4 color0;
 			for (float t = 0.0; t &lt;= count; t++) {
-				vec4 color = texture2D(sTexture0, textureCoord);
-				gl_FragColor += color * color.a;
-				weightSum += color.a;
-				textureCoord += delta0;
+				color0 = texture2D(sTexture0, textureCoord0);
+				gl_FragColor += color0 * color0.a;
+				weightSum += color0.a;
+				textureCoord0 += delta0;
 			}
 			gl_FragColor /= weightSum;
 		}
@@ -91,12 +92,13 @@
 			float count = 5.0;
 			float weightSum = 0.0;			
 			vec2 delta0 = vec2(uDelta0) * (coc0 / count);
-			vec2 textureCoord = vTextureCoord + delta0 * 0.5;
+			vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
+			vec4 color0;
 			for (float t = 0.0; t &lt;= count; t++) {
-				vec4 color = texture2D(sTexture0, textureCoord);
-				gl_FragColor += color * color.a;
-				weightSum += color.a;
-				textureCoord += delta0;
+				color0 = texture2D(sTexture0, textureCoord0);
+				gl_FragColor += color0 * color0.a;
+				weightSum += color0.a;
+				textureCoord0 += delta0;
 			}
 			gl_FragColor /= weightSum;
 			gl_FragColor = (gl_FragColor + texture2D(sTexture1, vTextureCoord)) * 0.5;
@@ -119,19 +121,19 @@
 			float count = 5.0;
 			float weightSum = 0.0;			
 			vec2 delta0 = vec2(uDelta0) * (coc0 / count);
-			vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
-			for (float t = 0.0; t &lt;= count; t++) {
-				vec4 color = texture2D(sTexture0, textureCoord0);
-				gl_FragColor += color * color.a;
-				weightSum += color.a;
-				textureCoord0 += delta0;
-			}
 			vec2 delta1 = vec2(uDelta1) * (coc1 / count);
+			vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
 			vec2 textureCoord1 = vTextureCoord + delta1 * 0.5;
+			vec4 color0, color1;
 			for (float t = 0.0; t &lt;= count; t++) {
-				vec4 color = texture2D(sTexture1, textureCoord1);
-				gl_FragColor += color * color.a;
-				weightSum += color.a;
+				color0 = texture2D(sTexture0, textureCoord0);
+				gl_FragColor += color0 * color0.a;
+				weightSum += color0.a;
+				textureCoord0 += delta0;
+				
+				color1 = texture2D(sTexture1, textureCoord1);
+				gl_FragColor += color1 * color1.a;
+				weightSum += color1.a;
 				textureCoord1 += delta1;
 			}
 			gl_FragColor /= weightSum;
