@@ -45,18 +45,17 @@ public class GlslFilters {
 		GLES20.glUseProgram(mBlendShader.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src0);
-		
+
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-				src1);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src1);
 		GLES20.glUniform1i(mBlendShader.getHandle("sTexture1"), 1);
 
 		drawRect(mBlendShader.getHandle("aPosition"),
 				mBlendShader.getHandle("aTextureCoord"));
 	}
 
-	public void bokeh(int src, GlslFramebuffer framebuffer, String tmp1, String tmp2, String tmp3, String out,
-			int w, int h) {
+	public void bokeh(int src, GlslFramebuffer framebuffer, String tmp1,
+			String tmp2, String out, int w, int h) {
 		GLES20.glDisable(GLES20.GL_CULL_FACE);
 		GLES20.glDisable(GLES20.GL_DEPTH_TEST);
 
@@ -68,51 +67,59 @@ public class GlslFilters {
 			dir[i][0] = radius * (float) Math.sin(a) / w;
 			dir[i][1] = radius * (float) Math.cos(a) / h;
 		}
-		
+
+		String pass1 = tmp1;
+		String pass2 = tmp2;
+		String pass3 = out;
+		String pass4 = tmp1;
+
 		GLES20.glUseProgram(mBokehShaderIn.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src);
-		framebuffer.useTexture(out);
+		framebuffer.useTexture(pass1);
 		drawRect(mBokehShaderIn.getHandle("aPosition"),
 				mBokehShaderIn.getHandle("aTextureCoord"));
 
 		GLES20.glUseProgram(mBokehShader1.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, framebuffer.getTexture(out));
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
+				framebuffer.getTexture(pass1));
 		GLES20.glUniform2fv(mBokehShader1.getHandle("uDelta0"), 1, dir[0], 0);
-		framebuffer.useTexture(tmp1);
+		framebuffer.useTexture(pass2);
 		drawRect(mBokehShader1.getHandle("aPosition"),
 				mBokehShader1.getHandle("aTextureCoord"));
 
 		GLES20.glUseProgram(mBokehShader2.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, framebuffer.getTexture(out));
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
+				framebuffer.getTexture(pass1));
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-				framebuffer.getTexture(tmp1));
+				framebuffer.getTexture(pass2));
 		GLES20.glUniform1i(mBokehShader2.getHandle("sTexture1"), 1);
 		GLES20.glUniform2fv(mBokehShader2.getHandle("uDelta0"), 1, dir[1], 0);
-		framebuffer.useTexture(tmp2);
+		framebuffer.useTexture(pass3);
 		drawRect(mBokehShader2.getHandle("aPosition"),
 				mBokehShader2.getHandle("aTextureCoord"));
 
 		GLES20.glUseProgram(mBokehShader3.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-				framebuffer.getTexture(tmp1));
+				framebuffer.getTexture(pass2));
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-				framebuffer.getTexture(tmp2));
+				framebuffer.getTexture(pass3));
 		GLES20.glUniform1i(mBokehShader3.getHandle("sTexture1"), 1);
 		GLES20.glUniform2fv(mBokehShader3.getHandle("uDelta0"), 1, dir[1], 0);
 		GLES20.glUniform2fv(mBokehShader3.getHandle("uDelta1"), 1, dir[2], 0);
-		framebuffer.useTexture(tmp3);
+		framebuffer.useTexture(pass4);
 		drawRect(mBokehShader3.getHandle("aPosition"),
 				mBokehShader3.getHandle("aTextureCoord"));
 
 		GLES20.glUseProgram(mBokehShaderOut.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, framebuffer.getTexture(tmp3));
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
+				framebuffer.getTexture(pass4));
 		framebuffer.useTexture(out);
 		drawRect(mBokehShaderOut.getHandle("aPosition"),
 				mBokehShaderOut.getHandle("aTextureCoord"));
@@ -149,13 +156,13 @@ public class GlslFilters {
 		mBokehShaderIn.addHandle("aPosition");
 		mBokehShaderIn.addHandle("aTextureCoord");
 		mBokehShaderIn.addHandle("sTexture0");
-		
+
 		mBokehShaderOut.loadProgram(R.string.shader_bokeh_vertex,
 				R.string.shader_bokeh_out_fragment);
 		mBokehShaderOut.addHandle("aPosition");
 		mBokehShaderOut.addHandle("aTextureCoord");
 		mBokehShaderOut.addHandle("sTexture0");
-		
+
 		mBokehShader1.loadProgram(R.string.shader_bokeh_vertex,
 				R.string.shader_bokeh1_fragment);
 		mBokehShader1.addHandle("aPosition");
