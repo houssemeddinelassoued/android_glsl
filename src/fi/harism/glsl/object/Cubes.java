@@ -70,7 +70,7 @@ public class Cubes {
 	public void drawArrays() {
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, mCubeIndices.length * 3);
 	}
-	
+
 	public Cube addCube() {
 		Cube cube = new Cube();
 		mCubeList.add(cube);
