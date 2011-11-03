@@ -114,13 +114,10 @@ public class GlslScene {
 	}
 
 	public void init(Context ctx) {
-		mShader.loadProgram(ctx.getString(R.string.shader_main_vertex),
+		mShader.setProgram(ctx.getString(R.string.shader_main_vertex),
 				ctx.getString(R.string.shader_main_fragment));
-		mShader.addHandle("uMVPMatrix");
-		mShader.addHandle("uNormalMatrix");
-		mShader.addHandle("aPosition");
-		mShader.addHandle("aNormal");
-		mShader.addHandle("aColor");
+		mShader.addHandles("uMVPMatrix", "uNormalMatrix", "aPosition",
+				"aNormal", "aColor");
 	}
 
 	public void update(float timeDiff) {

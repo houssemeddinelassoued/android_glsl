@@ -66,51 +66,48 @@ public class GlslFilter {
 
 	private class BlendFilter {
 
-		private GlslShader mBlendShader;
+		private GlslShader mShader;
 
 		public BlendFilter() {
-			mBlendShader = new GlslShader();
+			mShader = new GlslShader();
 		}
 
 		public void draw(int src0, int src1) {
-			GLES20.glUseProgram(mBlendShader.getProgram());
+			GLES20.glUseProgram(mShader.getProgram());
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src0);
 
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src1);
-			GLES20.glUniform1i(mBlendShader.getHandle("sTexture1"), 1);
+			GLES20.glUniform1i(mShader.getHandle("sTexture1"), 1);
 
-			drawRect(mBlendShader.getHandle("aPosition"),
-					mBlendShader.getHandle("aTextureCoord"));
+			drawRect(mShader.getHandle("aPosition"),
+					mShader.getHandle("aTextureCoord"));
 		}
 
 		public void init(Context ctx) {
-			mBlendShader.loadProgram(
-					ctx.getString(R.string.shader_blend_vertex),
+			mShader.setProgram(ctx.getString(R.string.shader_blend_vertex),
 					ctx.getString(R.string.shader_blend_fragment));
-			mBlendShader.addHandle("aPosition");
-			mBlendShader.addHandle("aTextureCoord");
-			mBlendShader.addHandle("sTexture0");
-			mBlendShader.addHandle("sTexture1");
+			mShader.addHandles("aPosition", "aTextureCoord", "sTexture0",
+					"sTexture1");
 		}
 
 	}
 
 	private class BokehFilter {
 
-		private GlslShader mBokehShaderIn;
-		private GlslShader mBokehShaderOut;
-		private GlslShader mBokehShader1;
-		private GlslShader mBokehShader2;
-		private GlslShader mBokehShader3;
+		private GlslShader mShaderIn;
+		private GlslShader mShaderOut;
+		private GlslShader mShader1;
+		private GlslShader mShader2;
+		private GlslShader mShader3;
 
 		public BokehFilter() {
-			mBokehShaderIn = new GlslShader();
-			mBokehShaderOut = new GlslShader();
-			mBokehShader1 = new GlslShader();
-			mBokehShader2 = new GlslShader();
-			mBokehShader3 = new GlslShader();
+			mShaderIn = new GlslShader();
+			mShaderOut = new GlslShader();
+			mShader1 = new GlslShader();
+			mShader2 = new GlslShader();
+			mShader3 = new GlslShader();
 		}
 
 		public void draw(int src, GlslFramebuffer framebuffer, String tmp1,
@@ -130,103 +127,81 @@ public class GlslFilter {
 			String pass3 = out;
 			String pass4 = tmp1;
 
-			GLES20.glUseProgram(mBokehShaderIn.getProgram());
+			GLES20.glUseProgram(mShaderIn.getProgram());
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src);
 			framebuffer.useTexture(pass1);
-			drawRect(mBokehShaderIn.getHandle("aPosition"),
-					mBokehShaderIn.getHandle("aTextureCoord"));
+			drawRect(mShaderIn.getHandle("aPosition"),
+					mShaderIn.getHandle("aTextureCoord"));
 
-			GLES20.glUseProgram(mBokehShader1.getProgram());
+			GLES20.glUseProgram(mShader1.getProgram());
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 					framebuffer.getTexture(pass1));
-			GLES20.glUniform2fv(mBokehShader1.getHandle("uDelta0"), 1, dir[0],
-					0);
+			GLES20.glUniform2fv(mShader1.getHandle("uDelta0"), 1, dir[0], 0);
 			framebuffer.useTexture(pass2);
-			drawRect(mBokehShader1.getHandle("aPosition"),
-					mBokehShader1.getHandle("aTextureCoord"));
+			drawRect(mShader1.getHandle("aPosition"),
+					mShader1.getHandle("aTextureCoord"));
 
-			GLES20.glUseProgram(mBokehShader2.getProgram());
+			GLES20.glUseProgram(mShader2.getProgram());
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 					framebuffer.getTexture(pass1));
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 					framebuffer.getTexture(pass2));
-			GLES20.glUniform1i(mBokehShader2.getHandle("sTexture1"), 1);
-			GLES20.glUniform2fv(mBokehShader2.getHandle("uDelta0"), 1, dir[1],
-					0);
+			GLES20.glUniform1i(mShader2.getHandle("sTexture1"), 1);
+			GLES20.glUniform2fv(mShader2.getHandle("uDelta0"), 1, dir[1], 0);
 			framebuffer.useTexture(pass3);
-			drawRect(mBokehShader2.getHandle("aPosition"),
-					mBokehShader2.getHandle("aTextureCoord"));
+			drawRect(mShader2.getHandle("aPosition"),
+					mShader2.getHandle("aTextureCoord"));
 
-			GLES20.glUseProgram(mBokehShader3.getProgram());
+			GLES20.glUseProgram(mShader3.getProgram());
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 					framebuffer.getTexture(pass2));
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 					framebuffer.getTexture(pass3));
-			GLES20.glUniform1i(mBokehShader3.getHandle("sTexture1"), 1);
-			GLES20.glUniform2fv(mBokehShader3.getHandle("uDelta0"), 1, dir[1],
-					0);
-			GLES20.glUniform2fv(mBokehShader3.getHandle("uDelta1"), 1, dir[2],
-					0);
+			GLES20.glUniform1i(mShader3.getHandle("sTexture1"), 1);
+			GLES20.glUniform2fv(mShader3.getHandle("uDelta0"), 1, dir[1], 0);
+			GLES20.glUniform2fv(mShader3.getHandle("uDelta1"), 1, dir[2], 0);
 			framebuffer.useTexture(pass4);
-			drawRect(mBokehShader3.getHandle("aPosition"),
-					mBokehShader3.getHandle("aTextureCoord"));
+			drawRect(mShader3.getHandle("aPosition"),
+					mShader3.getHandle("aTextureCoord"));
 
-			GLES20.glUseProgram(mBokehShaderOut.getProgram());
+			GLES20.glUseProgram(mShaderOut.getProgram());
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 					framebuffer.getTexture(pass4));
 			framebuffer.useTexture(out);
-			drawRect(mBokehShaderOut.getHandle("aPosition"),
-					mBokehShaderOut.getHandle("aTextureCoord"));
+			drawRect(mShaderOut.getHandle("aPosition"),
+					mShaderOut.getHandle("aTextureCoord"));
 		}
 
 		public void init(Context ctx) {
-			mBokehShaderIn.loadProgram(
-					ctx.getString(R.string.shader_bokeh_vertex),
+			mShaderIn.setProgram(ctx.getString(R.string.shader_bokeh_vertex),
 					ctx.getString(R.string.shader_bokeh_in_fragment));
-			mBokehShaderIn.addHandle("aPosition");
-			mBokehShaderIn.addHandle("aTextureCoord");
-			mBokehShaderIn.addHandle("sTexture0");
+			mShaderIn.addHandles("aPosition", "aTextureCoord", "sTexture0");
 
-			mBokehShaderOut.loadProgram(
-					ctx.getString(R.string.shader_bokeh_vertex),
+			mShaderOut.setProgram(ctx.getString(R.string.shader_bokeh_vertex),
 					ctx.getString(R.string.shader_bokeh_out_fragment));
-			mBokehShaderOut.addHandle("aPosition");
-			mBokehShaderOut.addHandle("aTextureCoord");
-			mBokehShaderOut.addHandle("sTexture0");
+			mShaderOut.addHandles("aPosition", "aTextureCoord", "sTexture0");
 
-			mBokehShader1.loadProgram(
-					ctx.getString(R.string.shader_bokeh_vertex),
+			mShader1.setProgram(ctx.getString(R.string.shader_bokeh_vertex),
 					ctx.getString(R.string.shader_bokeh1_fragment));
-			mBokehShader1.addHandle("aPosition");
-			mBokehShader1.addHandle("aTextureCoord");
-			mBokehShader1.addHandle("sTexture0");
-			mBokehShader1.addHandle("uDelta0");
+			mShader1.addHandles("aPosition", "aTextureCoord", "sTexture0",
+					"uDelta0");
 
-			mBokehShader2.loadProgram(
-					ctx.getString(R.string.shader_bokeh_vertex),
+			mShader2.setProgram(ctx.getString(R.string.shader_bokeh_vertex),
 					ctx.getString(R.string.shader_bokeh2_fragment));
-			mBokehShader2.addHandle("aPosition");
-			mBokehShader2.addHandle("aTextureCoord");
-			mBokehShader2.addHandle("sTexture0");
-			mBokehShader2.addHandle("sTexture1");
-			mBokehShader2.addHandle("uDelta0");
+			mShader2.addHandles("aPosition", "aTextureCoord", "sTexture0",
+					"sTexture1", "uDelta0");
 
-			mBokehShader3.loadProgram(
-					ctx.getString(R.string.shader_bokeh_vertex),
+			mShader3.setProgram(ctx.getString(R.string.shader_bokeh_vertex),
 					ctx.getString(R.string.shader_bokeh3_fragment));
-			mBokehShader3.addHandle("aPosition");
-			mBokehShader3.addHandle("aTextureCoord");
-			mBokehShader3.addHandle("sTexture0");
-			mBokehShader3.addHandle("sTexture1");
-			mBokehShader3.addHandle("uDelta0");
-			mBokehShader3.addHandle("uDelta1");
+			mShader3.addHandles("aPosition", "aTextureCoord", "sTexture0",
+					"sTexture1", "uDelta0", "uDelta1");
 
 		}
 
@@ -234,27 +209,25 @@ public class GlslFilter {
 
 	private class CopyFilter {
 
-		private GlslShader mCopyShader;
+		private GlslShader mShader;
 
 		public CopyFilter() {
-			mCopyShader = new GlslShader();
+			mShader = new GlslShader();
 		}
 
 		public void draw(int textureId) {
-			GLES20.glUseProgram(mCopyShader.getProgram());
+			GLES20.glUseProgram(mShader.getProgram());
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
 
-			drawRect(mCopyShader.getHandle("aPosition"),
-					mCopyShader.getHandle("aTextureCoord"));
+			drawRect(mShader.getHandle("aPosition"),
+					mShader.getHandle("aTextureCoord"));
 		}
 
 		public void init(Context ctx) {
-			mCopyShader.loadProgram(ctx.getString(R.string.shader_copy_vertex),
+			mShader.setProgram(ctx.getString(R.string.shader_copy_vertex),
 					ctx.getString(R.string.shader_copy_fragment));
-			mCopyShader.addHandle("aPosition");
-			mCopyShader.addHandle("aTextureCoord");
-			mCopyShader.addHandle("sTexture0");
+			mShader.addHandles("aPosition", "aTextureCoord", "sTexture0");
 		}
 	}
 
