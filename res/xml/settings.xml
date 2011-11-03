@@ -29,7 +29,7 @@
                 android:summary="Enable / disable bokeh filter."
                 android:title="Enable" />
 
-            <fi.harism.glsl.SliderPreference
+            <fi.harism.glsl.prefs.SliderPreference
                 android:defaultValue="0.3"
                 android:dependency="@string/key_bokeh_enable"
                 android:key="@string/key_bokeh_power"
@@ -39,7 +39,7 @@
                 harism:valueMin="0.0"
                 harism:valuePrecision="0.01" />
 
-            <fi.harism.glsl.SliderPreference
+            <fi.harism.glsl.prefs.SliderPreference
                 android:defaultValue="10"
                 android:dependency="@string/key_bokeh_enable"
                 android:key="@string/key_bokeh_radius"
@@ -49,7 +49,7 @@
                 harism:valueMin="1"
                 harism:valuePrecision="1" />
 
-            <fi.harism.glsl.SliderPreference
+            <fi.harism.glsl.prefs.SliderPreference
                 android:defaultValue="5"
                 android:dependency="@string/key_bokeh_enable"
                 android:key="@string/key_bokeh_steps"

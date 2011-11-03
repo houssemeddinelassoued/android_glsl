@@ -1,7 +1,8 @@
-package fi.harism.glsl;
+package fi.harism.glsl.prefs;
 
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
+import fi.harism.glsl.R;
 
 public class SettingsActivity extends PreferenceActivity {
 

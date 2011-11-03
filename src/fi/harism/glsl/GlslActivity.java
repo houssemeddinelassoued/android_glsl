@@ -62,7 +62,8 @@ public class GlslActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.menu_settings:
-			startActivity(new Intent(this, SettingsActivity.class));
+			startActivity(new Intent(this,
+					fi.harism.glsl.prefs.SettingsActivity.class));
 			return true;
 		}
 		return false;
