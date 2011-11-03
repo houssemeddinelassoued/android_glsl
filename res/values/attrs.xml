@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <declare-styleable name="SliderPreference" >
-        <attr name="minValue" format="integer" />
-        <attr name="maxValue" format="integer" />
-        <attr name="floatDivider" format="integer" />
+    <declare-styleable name="SliderPreference">
+        <attr format="float" name="valueMax" />
+        <attr format="float" name="valueMin" />
+        <attr format="float" name="valuePrecision" />
     </declare-styleable>
-    
+
 </resources>
