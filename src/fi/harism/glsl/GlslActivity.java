@@ -84,13 +84,6 @@ public class GlslActivity extends Activity {
 		mFpsTimer.scheduleAtFixedRate(new FpsTimerTask(), 0, 200);
 	}
 
-	private class FpsTimerTask extends TimerTask {
-		@Override
-		public void run() {
-			runOnUiThread(mFpsRunnable);
-		}
-	}
-
 	private class FpsRunnable implements Runnable {
 		@Override
 		public void run() {
@@ -106,6 +99,13 @@ public class GlslActivity extends Activity {
 		}
 	}
 
+	private class FpsTimerTask extends TimerTask {
+		@Override
+		public void run() {
+			runOnUiThread(mFpsRunnable);
+		}
+	}
+
 	private class Renderer implements GLSurfaceView.Renderer {
 
 		private int mWidth, mHeight;
@@ -116,15 +116,15 @@ public class GlslActivity extends Activity {
 		private long mLastRenderTime = 0;
 
 		private GlslScene mGlslScene;
-		private GlslFilters mGlslFilters;
+		private GlslFilter mGlslFilter;
 
 		private boolean mResetFramebuffers = true;
 		private GlslFramebuffer mGlslFramebufferScreen;
 		private GlslFramebuffer mGlslFramebufferScreenHalf;
 
 		public Renderer(Context context) {
-			mGlslScene = new GlslScene(context);
-			mGlslFilters = new GlslFilters(context);
+			mGlslScene = new GlslScene();
+			mGlslFilter = new GlslFilter();
 			mGlslFramebufferScreen = new GlslFramebuffer();
 			mGlslFramebufferScreenHalf = new GlslFramebuffer();
 
@@ -149,15 +149,15 @@ public class GlslActivity extends Activity {
 			mGlslFramebufferScreen.useTexture("tex1");
 			mGlslScene.draw(mViewMatrix, mProjectionMatrix);
 
-			mGlslFilters.bokeh(mGlslFramebufferScreen.getTexture("tex1"),
+			mGlslFilter.bokeh(mGlslFramebufferScreen.getTexture("tex1"),
 					mGlslFramebufferScreenHalf, "tex1", "tex2", "tex3",
 					mWidth / 2, mHeight / 2);
 
 			GLES20.glViewport(0, 0, mWidth, mHeight);
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-			// mGlslFilters.copy(mGlslFramebufferScreen.getTexture("tex1"));
-			// mGlslFilters.copy(mGlslFramebufferScreenHalf.getTexture("tex3"));
-			mGlslFilters.blend(mGlslFramebufferScreenHalf.getTexture("tex3"),
+			// mGlslFilter.copy(mGlslFramebufferScreen.getTexture("tex1"));
+			// mGlslFilter.copy(mGlslFramebufferScreenHalf.getTexture("tex3"));
+			mGlslFilter.blend(mGlslFramebufferScreenHalf.getTexture("tex3"),
 					mGlslFramebufferScreen.getTexture("tex1"));
 
 			long time = SystemClock.uptimeMillis();
@@ -189,8 +189,8 @@ public class GlslActivity extends Activity {
 
 		@Override
 		public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
-			mGlslScene.init();
-			mGlslFilters.init();
+			mGlslScene.init(GlslActivity.this);
+			mGlslFilter.init(GlslActivity.this);
 			mResetFramebuffers = true;
 		}
 	}

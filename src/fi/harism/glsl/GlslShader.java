@@ -2,17 +2,14 @@ package fi.harism.glsl;
 
 import java.util.HashMap;
 
-import android.content.Context;
 import android.opengl.GLES20;
 
 public class GlslShader {
 
 	private int mProgram = 0;
-	private Context mContext;
 	private HashMap<String, Integer> mShaderHandleMap;
 
-	public GlslShader(Context context) {
-		mContext = context;
+	public GlslShader() {
 		mShaderHandleMap = new HashMap<String, Integer>();
 	}
 
@@ -39,13 +36,11 @@ public class GlslShader {
 		return mProgram;
 	}
 
-	public void loadProgram(int vertexId, int fragmentId) {
+	public void loadProgram(String vs, String fs) {
 		if (mProgram != 0) {
 			GLES20.glDeleteProgram(mProgram);
 			mProgram = 0;
 		}
-		String vertexSource = mContext.getString(vertexId);
-		String fragmentSource = mContext.getString(fragmentId);
-		mProgram = GlslUtils.createProgram(vertexSource, fragmentSource);
+		mProgram = GlslUtils.createProgram(vs, fs);
 	}
 }

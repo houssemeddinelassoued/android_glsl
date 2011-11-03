@@ -22,8 +22,8 @@ public class GlslScene {
 
 	private GlslShader mShader;
 
-	public GlslScene(Context context) {
-		mShader = new GlslShader(context);
+	public GlslScene() {
+		mShader = new GlslShader();
 		mCubes = new Cubes();
 
 		Cube cube = mCubes.addCube();
@@ -113,9 +113,9 @@ public class GlslScene {
 
 	}
 
-	public void init() {
-		mShader.loadProgram(R.string.shader_main_vertex,
-				R.string.shader_main_fragment);
+	public void init(Context ctx) {
+		mShader.loadProgram(ctx.getString(R.string.shader_main_vertex),
+				ctx.getString(R.string.shader_main_fragment));
 		mShader.addHandle("uMVPMatrix");
 		mShader.addHandle("uNormalMatrix");
 		mShader.addHandle("aPosition");
