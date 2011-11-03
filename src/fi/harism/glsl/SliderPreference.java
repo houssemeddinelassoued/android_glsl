@@ -16,6 +16,10 @@ public class SliderPreference extends DialogPreference {
 
 	private String mTitle;
 
+	public SliderPreference(Context context, AttributeSet attrs) {
+		this(context, attrs, 0);
+	}
+
 	public SliderPreference(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 
@@ -30,8 +34,42 @@ public class SliderPreference extends DialogPreference {
 		setDialogLayoutResource(R.layout.slider);
 	}
 
-	public SliderPreference(Context context, AttributeSet attrs) {
-		this(context, attrs, 0);
+	private void updateTitle() {
+		String title = String.format(mTitle, mValue);
+		setTitle(title);
+		setDialogTitle(title);
+		if (getDialog() != null) {
+			getDialog().setTitle(title);
+		}
+	}
+
+	@Override
+	protected void onBindDialogView(View v) {
+		super.onBindDialogView(v);
+		SeekBar seekBar = (SeekBar) v.findViewById(R.id.slider);
+		seekBar.setMax((int) ((mValueMax - mValueMin) / mValuePrecision));
+		seekBar.setProgress((int) ((mValue - mValueMin) / mValuePrecision));
+		seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar sb, int newValue,
+					boolean fromUser) {
+				mValue = (newValue * mValuePrecision) + mValueMin;
+				updateTitle();
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar sb) {
+			}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar sb) {
+			}
+		});
+	}
+
+	@Override
+	protected void onDialogClosed(boolean positiveResult) {
+		persistFloat(mValue);
 	}
 
 	@Override
@@ -48,44 +86,6 @@ public class SliderPreference extends DialogPreference {
 			mValue = (Float) defaultValue;
 		}
 		updateTitle();
-	}
-
-	@Override
-	protected void onBindDialogView(View v) {
-		super.onBindDialogView(v);
-		SeekBar seekBar = (SeekBar) v.findViewById(R.id.slider);
-		seekBar.setMax((int) ((mValueMax - mValueMin) / mValuePrecision));
-		seekBar.setProgress((int) ((mValue - mValueMin) / mValuePrecision));
-		seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-			@Override
-			public void onStopTrackingTouch(SeekBar sb) {
-			}
-
-			@Override
-			public void onStartTrackingTouch(SeekBar sb) {
-			}
-
-			@Override
-			public void onProgressChanged(SeekBar sb, int newValue,
-					boolean fromUser) {
-				mValue = (newValue * mValuePrecision) + mValueMin;
-				updateTitle();
-			}
-		});
-	}
-
-	@Override
-	protected void onDialogClosed(boolean positiveResult) {
-		persistFloat(mValue);
-	}
-
-	private void updateTitle() {
-		String title = String.format(mTitle, mValue);
-		setTitle(title);
-		setDialogTitle(title);
-		if (getDialog() != null) {
-			getDialog().setTitle(title);
-		}
 	}
 
 }

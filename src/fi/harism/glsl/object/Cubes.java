@@ -67,14 +67,14 @@ public class Cubes {
 		mCubeList = new Vector<Cube>();
 	}
 
-	public void drawArrays() {
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, mCubeIndices.length * 3);
-	}
-
 	public Cube addCube() {
 		Cube cube = new Cube();
 		mCubeList.add(cube);
 		return cube;
+	}
+
+	public void drawArrays() {
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, mCubeIndices.length * 3);
 	}
 
 	public Cube getCube(int idx) {
