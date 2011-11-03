@@ -29,6 +29,7 @@ public class GlslFramebuffer {
 				GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
 		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
 				GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+
 		GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, mWidth,
 				mHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
 
@@ -41,7 +42,7 @@ public class GlslFramebuffer {
 
 	public int getTexture(String name) {
 		if (!mTextureHandleMap.containsKey(name)) {
-			throw new RuntimeException("No texture handle " + name);
+			throw new RuntimeException("No texture handle " + name + "found.");
 		}
 		return mTextureHandleMap.get(name);
 	}
@@ -72,9 +73,8 @@ public class GlslFramebuffer {
 		handle[0] = mRenderbufferHandle;
 		GLES20.glDeleteRenderbuffers(1, handle, 0);
 
-		Integer texHandles[] = (Integer[]) mTextureHandleMap.values().toArray();
-		for (int i = 0; i < texHandles.length; ++i) {
-			handle[0] = texHandles[i];
+		for (Integer textureId : mTextureHandleMap.values()) {
+			handle[0] = textureId;
 			GLES20.glDeleteTextures(1, handle, 0);
 		}
 		mTextureHandleMap.clear();
