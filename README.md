@@ -1,8 +1,11 @@
 Intro
 =====
 
-Simple test project for testing different rendering techniques on OpenGL ES 2.0.
-This application is developed and being ran on Samsung Galaxy S2 only.
+Project for testing different OpenGL ES 2.0 rendering techniques and their performance
+on mobile devices. This application is currently developed and being ran on Samsung Galaxy S2 only.
+Also there is rather heavy development ongoing and big structural changes will occur from time
+to time. This will last until somewhat good ratio between code flexibility and readibility is found.
+Main purpose is to implement backbone for testing environment which can be extended later on.
 
 Links
 =====
