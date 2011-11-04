@@ -9,6 +9,7 @@ import javax.microedition.khronos.opengles.GL10;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -19,7 +20,7 @@ import android.util.AttributeSet;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class GlslActivity extends Activity {
+public final class GlslActivity extends Activity {
 
 	private SurfaceView mSurfaceView;
 	private Renderer mRenderer;
@@ -34,21 +35,19 @@ public class GlslActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		mRenderer = new Renderer();
 		mSurfaceView = new SurfaceView(this);
 		mSurfaceView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR
 				| GLSurfaceView.DEBUG_LOG_GL_CALLS);
 		mSurfaceView.setEGLContextClientVersion(2);
-
-		mRenderer = new Renderer(this);
 		mSurfaceView.setRenderer(mRenderer);
 		mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
-		setContentView(mSurfaceView);
-
-		mFpsRunnable = new FpsRunnable();
 		mAppName = getString(R.string.app_name);
+		mFpsRunnable = new FpsRunnable();
 
-		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+		PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
+		setContentView(mSurfaceView);
 	}
 
 	@Override
@@ -82,6 +81,8 @@ public class GlslActivity extends Activity {
 		mSurfaceView.onResume();
 		mFpsTimer = new Timer();
 		mFpsTimer.scheduleAtFixedRate(new FpsTimerTask(), 0, 200);
+		mRenderer.setPreferences(this,
+				PreferenceManager.getDefaultSharedPreferences(this));
 	}
 
 	private class FpsRunnable implements Runnable {
@@ -106,7 +107,7 @@ public class GlslActivity extends Activity {
 		}
 	}
 
-	private class Renderer implements GLSurfaceView.Renderer {
+	private final class Renderer implements GLSurfaceView.Renderer {
 
 		private int mWidth, mHeight;
 
@@ -115,18 +116,21 @@ public class GlslActivity extends Activity {
 
 		private long mLastRenderTime = 0;
 
-		private GlslScene mGlslScene;
-		private GlslFilter mGlslFilter;
+		private GlslScene mScene;
+		private GlslFilter mFilter;
 
-		private boolean mResetFramebuffers = true;
-		private GlslFramebuffer mGlslFramebufferScreen;
-		private GlslFramebuffer mGlslFramebufferScreenHalf;
+		private boolean mResetFramebuffers;
+		private GlslFramebuffer mFboScreen;
+		private GlslFramebuffer mFboScreenHalf;
 
-		public Renderer(Context context) {
-			mGlslScene = new GlslScene();
-			mGlslFilter = new GlslFilter();
-			mGlslFramebufferScreen = new GlslFramebuffer();
-			mGlslFramebufferScreenHalf = new GlslFramebuffer();
+		private boolean mDivideScreen;
+		private boolean mBokehEnabled;
+
+		public Renderer() {
+			mScene = new GlslScene();
+			mFilter = new GlslFilter();
+			mFboScreen = new GlslFramebuffer();
+			mFboScreenHalf = new GlslFramebuffer();
 
 			mLastRenderTime = SystemClock.uptimeMillis();
 			Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
@@ -146,25 +150,37 @@ public class GlslActivity extends Activity {
 			float rot = 360f * (SystemClock.uptimeMillis() % 6000L) / 6000;
 			Matrix.rotateM(mViewMatrix, 0, rot, 0f, 1f, 0f);
 
-			mGlslFramebufferScreen.useTexture("tex1");
-			mGlslScene.draw(mViewMatrix, mProjectionMatrix);
+			mFboScreen.useTexture("tex1");
+			mScene.draw(mViewMatrix, mProjectionMatrix);
 
-			mGlslFilter.bokeh(mGlslFramebufferScreen.getTexture("tex1"),
-					mGlslFramebufferScreenHalf, "tex1", "tex2", "tex3",
-					mWidth / 2, mHeight / 2);
+			if (mBokehEnabled) {
+				mFilter.bokeh(mFboScreen.getTexture("tex1"), mFboScreenHalf,
+						"tex1", "tex2", "tex3", mWidth / 2, mHeight / 2);
 
-			GLES20.glViewport(0, 0, mWidth, mHeight);
+				mFboScreen.useTexture("tex2");
+				mFilter.blend(mFboScreenHalf.getTexture("tex3"),
+						mFboScreen.getTexture("tex1"));
+			} else {
+				mFboScreen.useTexture("tex2");
+				mFilter.copy(mFboScreen.getTexture("tex1"));
+			}
+
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-			// mGlslFilter.copy(mGlslFramebufferScreen.getTexture("tex1"));
-			// mGlslFilter.copy(mGlslFramebufferScreenHalf.getTexture("tex3"));
-			mGlslFilter.blend(mGlslFramebufferScreenHalf.getTexture("tex3"),
-					mGlslFramebufferScreen.getTexture("tex1"));
+			if (mDivideScreen) {
+				GLES20.glViewport(0, 0, mWidth / 2, mHeight);
+				mFilter.copy(mFboScreen.getTexture("tex1"), 0f, 0f, .5f, 1f);
+				GLES20.glViewport(mWidth / 2, 0, mWidth / 2, mHeight);
+				mFilter.copy(mFboScreen.getTexture("tex2"), .5f, 0f, 1f, 1f);
+			} else {
+				GLES20.glViewport(0, 0, mWidth, mHeight);
+				mFilter.copy(mFboScreen.getTexture("tex2"));
+			}
 
 			long time = SystemClock.uptimeMillis();
 			if (mLastRenderTime != 0) {
 				long diff = time - mLastRenderTime;
 				mFps = 1000f / diff;
-				mGlslScene.update(diff / 1000f);
+				mScene.update(diff / 1000f);
 			}
 			mLastRenderTime = time;
 
@@ -174,28 +190,39 @@ public class GlslActivity extends Activity {
 		public void onSurfaceChanged(GL10 glUnused, int width, int height) {
 			mWidth = width;
 			mHeight = height;
-			if (!mResetFramebuffers) {
-				mGlslFramebufferScreen.reset();
-				mGlslFramebufferScreenHalf.reset();
+
+			if (mResetFramebuffers) {
+				mFboScreen.reset();
+				mFboScreenHalf.reset();
 			}
-			mGlslFramebufferScreen.init(width, height);
-			mGlslFramebufferScreen.addTexture("tex1");
-			mGlslFramebufferScreen.addTexture("tex2");
-			mGlslFramebufferScreenHalf.init(width / 2, height / 2);
-			mGlslFramebufferScreenHalf.addTexture("tex1");
-			mGlslFramebufferScreenHalf.addTexture("tex2");
-			mGlslFramebufferScreenHalf.addTexture("tex3");
+			mResetFramebuffers = true;
+
+			mFboScreen.init(width, height);
+			mFboScreen.addTexture("tex1");
+			mFboScreen.addTexture("tex2");
+			mFboScreenHalf.init(width / 2, height / 2);
+			mFboScreenHalf.addTexture("tex1");
+			mFboScreenHalf.addTexture("tex2");
+			mFboScreenHalf.addTexture("tex3");
 		}
 
 		@Override
 		public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
-			mGlslScene.init(GlslActivity.this);
-			mGlslFilter.init(GlslActivity.this);
-			mResetFramebuffers = true;
+			mScene.init(GlslActivity.this);
+			mFilter.init(GlslActivity.this);
+			mResetFramebuffers = false;
+		}
+
+		public void setPreferences(Context ctx, SharedPreferences preferences) {
+			String key = ctx.getString(R.string.key_divide_screen);
+			mDivideScreen = preferences.getBoolean(key, false);
+			key = ctx.getString(R.string.key_bokeh_enable);
+			mBokehEnabled = preferences.getBoolean(key, true);
+			mFilter.setPreferences(ctx, preferences);
 		}
 	}
 
-	private class SurfaceView extends GLSurfaceView {
+	private final class SurfaceView extends GLSurfaceView {
 
 		public SurfaceView(Context context) {
 			super(context);
