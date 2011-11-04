@@ -1,15 +1,14 @@
-package fi.harism.glsl.prefs;
+package fi.harism.glsl;
 
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
-import fi.harism.glsl.R;
 
-public class SettingsActivity extends PreferenceActivity {
+public class GlslPreferenceActivity extends PreferenceActivity {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		addPreferencesFromResource(R.xml.settings);
+		addPreferencesFromResource(R.xml.preferences);
 	}
 
 }

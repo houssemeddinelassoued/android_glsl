@@ -41,7 +41,6 @@ public class GlslActivity extends Activity {
 
 		mRenderer = new Renderer(this);
 		mSurfaceView.setRenderer(mRenderer);
-
 		mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
 		setContentView(mSurfaceView);
@@ -49,7 +48,7 @@ public class GlslActivity extends Activity {
 		mFpsRunnable = new FpsRunnable();
 		mAppName = getString(R.string.app_name);
 
-		PreferenceManager.setDefaultValues(this, R.xml.settings, false);
+		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 	}
 
 	@Override
@@ -63,7 +62,7 @@ public class GlslActivity extends Activity {
 		switch (item.getItemId()) {
 		case R.id.menu_settings:
 			startActivity(new Intent(this,
-					fi.harism.glsl.prefs.SettingsActivity.class));
+					fi.harism.glsl.GlslPreferenceActivity.class));
 			return true;
 		}
 		return false;

@@ -1,4 +1,4 @@
-package fi.harism.glsl.prefs;
+package fi.harism.glsl;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -6,9 +6,8 @@ import android.preference.DialogPreference;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.SeekBar;
-import fi.harism.glsl.R;
 
-public class SliderPreference extends DialogPreference {
+public class GlslSliderPreference extends DialogPreference {
 
 	private float mValue;
 	private float mValueMin;
@@ -17,11 +16,12 @@ public class SliderPreference extends DialogPreference {
 
 	private String mTitle;
 
-	public SliderPreference(Context context, AttributeSet attrs) {
+	public GlslSliderPreference(Context context, AttributeSet attrs) {
 		this(context, attrs, 0);
 	}
 
-	public SliderPreference(Context context, AttributeSet attrs, int defStyle) {
+	public GlslSliderPreference(Context context, AttributeSet attrs,
+			int defStyle) {
 		super(context, attrs, defStyle);
 
 		TypedArray ta = context.obtainStyledAttributes(attrs,
@@ -85,6 +85,7 @@ public class SliderPreference extends DialogPreference {
 			mValue = getPersistedFloat(0);
 		} else {
 			mValue = (Float) defaultValue;
+			persistFloat(mValue);
 		}
 		updateTitle();
 	}
