@@ -14,8 +14,8 @@
     
     <string name="shader_bokeh_in_fragment">
 	    precision mediump float;
-  		uniform sampler2D sTexture0;
   		uniform float uPower;
+  		uniform sampler2D sTexture0;
         varying vec2 vTextureCoord;
         
         void main() {
@@ -32,29 +32,27 @@
         	gl_FragColor.a = abs(gl_FragColor.a * cocScale + cocBias);
         	gl_FragColor.a = clamp(gl_FragColor.a, 1.0 / 256.0, 1.0);
         	
-        	float power = pow(10.0, 0.3);
-        	gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(power));
+        	gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(uPower));
         	gl_FragColor.rgb *= gl_FragColor.a;
         }
     </string>
     
     <string name="shader_bokeh_out_fragment">
 	    precision mediump float;
+  		uniform float uInvPower;
   		uniform sampler2D sTexture0;
-  		uniform float uPower;
         varying vec2 vTextureCoord;
         
         void main() {
-        	gl_FragColor = texture2D(sTexture0, vTextureCoord);        	
+        	gl_FragColor = texture2D(sTexture0, vTextureCoord);
         	gl_FragColor.rgb /= gl_FragColor.a;
-        	
-        	float power = pow(10.0, 0.3);
-        	gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1.0 / power));        	
+        	gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(uInvPower));
         }
     </string>
     
     <string name="shader_bokeh1_fragment">
 	    precision mediump float;
+		uniform int uSteps;
   		uniform sampler2D sTexture0;
 		uniform vec2 uDelta0;
 		varying vec2 vTextureCoord;
@@ -63,12 +61,11 @@
 			gl_FragColor = vec4(0.0);
 			float coc0 = texture2D(sTexture0, vTextureCoord).a;
 			
-			float count = 5.0;
 			float weightSum = 0.0;			
-			vec2 delta0 = vec2(uDelta0) * (coc0 / count);
+			vec2 delta0 = vec2(uDelta0) * (coc0 / float(uSteps));
 			vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
 			vec4 color0;
-			for (float t = 0.0; t &lt;= count; t++) {
+			for (int t = 0; t &lt;= uSteps; ++t) {
 				color0 = texture2D(sTexture0, textureCoord0);
 				gl_FragColor += color0 * color0.a;
 				weightSum += color0.a;
@@ -80,6 +77,7 @@
     
     <string name="shader_bokeh2_fragment">
 	    precision mediump float;
+		uniform int uSteps;
 		uniform sampler2D sTexture0;
 		uniform sampler2D sTexture1;
 		uniform vec2 uDelta0;
@@ -89,12 +87,11 @@
 			gl_FragColor = vec4(0.0);
 			float coc0 = texture2D(sTexture0, vTextureCoord).a;
 			
-			float count = 5.0;
 			float weightSum = 0.0;			
-			vec2 delta0 = vec2(uDelta0) * (coc0 / count);
+			vec2 delta0 = vec2(uDelta0) * (coc0 / float(uSteps));
 			vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
 			vec4 color0;
-			for (float t = 0.0; t &lt;= count; t++) {
+			for (int t = 0; t &lt;= uSteps; ++t) {
 				color0 = texture2D(sTexture0, textureCoord0);
 				gl_FragColor += color0 * color0.a;
 				weightSum += color0.a;
@@ -107,6 +104,7 @@
     
     <string name="shader_bokeh3_fragment">
 	    precision mediump float;
+		uniform int uSteps;
 		uniform sampler2D sTexture0;
 		uniform sampler2D sTexture1;
 		uniform vec2 uDelta0;
@@ -118,14 +116,14 @@
 			float coc0 = texture2D(sTexture0, vTextureCoord).a;
 			float coc1 = texture2D(sTexture1, vTextureCoord).a;
 			
-			float count = 5.0;
 			float weightSum = 0.0;			
-			vec2 delta0 = vec2(uDelta0) * (coc0 / count);
-			vec2 delta1 = vec2(uDelta1) * (coc1 / count);
+			vec2 delta0 = vec2(uDelta0) * (coc0 / float(uSteps));
+			vec2 delta1 = vec2(uDelta1) * (coc1 / float(uSteps));
 			vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
 			vec2 textureCoord1 = vTextureCoord + delta1 * 0.5;
+			
 			vec4 color0, color1;
-			for (float t = 0.0; t &lt;= count; t++) {
+			for (int t = 0; t &lt;= uSteps; ++t) {
 				color0 = texture2D(sTexture0, textureCoord0);
 				gl_FragColor += color0 * color0.a;
 				weightSum += color0.a;
