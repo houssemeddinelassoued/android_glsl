@@ -7,6 +7,7 @@
     <!-- Settings key names -->
     <string name="key_divide_screen">divide_screen</string>
     <string name="key_per_pixel_lightning">per_pixel_lightning</string>
+    <string name="key_reset">reset</string>
     <string name="key_bokeh_enable">bokeh_enable</string>
     <string name="key_bokeh_power">bokeh_power</string>
     <string name="key_bokeh_radius">bokeh_radius</string>

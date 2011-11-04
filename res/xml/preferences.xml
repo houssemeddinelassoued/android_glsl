@@ -6,33 +6,33 @@
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="@string/key_divide_screen"
-            android:summary="Divides screen into two - showing original rendering and filtered one."
+            android:summary="Divides screen into two - showing original renderered image and filtered one side by side"
             android:title="Divide Screen" />
 
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="@string/key_per_pixel_lightning"
-            android:summary="Calculates per pixel lightning."
+            android:summary="Calculates per pixel lightning"
             android:title="Per pixel lightning" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Filters" >
 
         <PreferenceScreen
-            android:summary="Bokeh filter settings."
+            android:summary="Bokeh filter settings"
             android:title="Bokeh filter" >
 
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:key="@string/key_bokeh_enable"
-                android:summary="Enable / disable bokeh filter."
+                android:summary="Enable / disable bokeh filter"
                 android:title="Enable" />
 
             <fi.harism.glsl.GlslSliderPreference
                 android:defaultValue="0.3"
                 android:dependency="@string/key_bokeh_enable"
                 android:key="@string/key_bokeh_power"
-                android:summary="Over exposes color values to &apos;emulate&apos; hdr images."
+                android:summary="Over exposes color values to &apos;emulate&apos; hdr images"
                 android:title="Power (= %.2f)"
                 harism:valueMax="1.0"
                 harism:valueMin="0.0"
@@ -42,7 +42,7 @@
                 android:defaultValue="10"
                 android:dependency="@string/key_bokeh_enable"
                 android:key="@string/key_bokeh_radius"
-                android:summary="Blur radius."
+                android:summary="Blur radius"
                 android:title="Radius (= %.0f)"
                 harism:valueMax="20"
                 harism:valueMin="1"
@@ -52,12 +52,21 @@
                 android:defaultValue="5"
                 android:dependency="@string/key_bokeh_enable"
                 android:key="@string/key_bokeh_steps"
-                android:summary="Steps during blurring."
+                android:summary="Steps during blurring"
                 android:title="Blur steps (= %.0f)"
                 harism:valueMax="10"
                 harism:valueMin="1"
                 harism:valuePrecision="1" />
         </PreferenceScreen>
     </PreferenceCategory>
+    
+    <PreferenceCategory android:title="Defaults values" >
 
+        <Preference
+            android:key="@string/key_reset"
+            android:summary="Resets preferences back to default values"
+            android:title="Reset preferences"
+            android:persistent="false" />
+        
+</PreferenceCategory>
 </PreferenceScreen>
