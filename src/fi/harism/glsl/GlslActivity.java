@@ -1,5 +1,6 @@
 package fi.harism.glsl;
 
+import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -10,6 +11,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -45,6 +49,25 @@ public final class GlslActivity extends Activity {
 
 		mAppName = getString(R.string.app_name);
 		mFpsRunnable = new FpsRunnable();
+
+		try {
+			PackageManager pm = getPackageManager();
+			ApplicationInfo appInfo = pm
+					.getApplicationInfo("fi.harism.glsl", 0);
+			String appFile = appInfo.sourceDir;
+			long installed = new File(appFile).lastModified();
+
+			SharedPreferences preferences = PreferenceManager
+					.getDefaultSharedPreferences(this);
+			if (installed > preferences.getLong("installed", installed)) {
+				preferences.edit().clear().putLong("installed", installed)
+						.commit();
+			} else {
+				preferences.edit().putLong("installed", installed).commit();
+			}
+		} catch (NameNotFoundException ex) {
+			// Do nothing.
+		}
 
 		PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
 		setContentView(mSurfaceView);
