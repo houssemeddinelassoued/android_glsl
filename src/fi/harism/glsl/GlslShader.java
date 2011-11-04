@@ -49,8 +49,9 @@ public class GlslShader {
 			int[] linkStatus = new int[1];
 			GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
 			if (linkStatus[0] != GLES20.GL_TRUE) {
+				String error = GLES20.glGetProgramInfoLog(program);
 				GLES20.glDeleteProgram(program);
-				throw new RuntimeException(GLES20.glGetProgramInfoLog(program));
+				throw new RuntimeException(error);
 			}
 		}
 		mProgram = program;
@@ -64,8 +65,9 @@ public class GlslShader {
 			int[] compiled = new int[1];
 			GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
 			if (compiled[0] == 0) {
+				String error = GLES20.glGetShaderInfoLog(shader);
 				GLES20.glDeleteShader(shader);
-				throw new RuntimeException(GLES20.glGetShaderInfoLog(shader));
+				throw new RuntimeException(error);
 			}
 		}
 		return shader;
