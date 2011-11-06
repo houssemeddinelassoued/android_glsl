@@ -12,14 +12,12 @@
 		varying vec4 vColor;
 		
 		void main() {
-			gl_Position = uMVPMatrix * vec4(aPosition.xyz, 1.0);
+			gl_Position = uMVPMatrix * vec4(aPosition.xyz, 1);
 			vec4 normal = uNormalMatrix * aNormal;
 			normal.w = 0.0;
 			normal = normalize(normal);
 			vColor = aColor;
-			vColor.r *= normal.z;
-			vColor.g *= normal.z;
-			vColor.b *= normal.z;
+			vColor.rgb *= abs(normal.z);
 			vColor.a = gl_Position.z / gl_Position.w;
 		}
 		
