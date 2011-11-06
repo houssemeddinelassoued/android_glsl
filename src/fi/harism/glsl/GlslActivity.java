@@ -166,7 +166,7 @@ public final class GlslActivity extends Activity {
 			float ratio = (float) mWidth / mHeight;
 			// Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 1,
 			// 20);
-			GlslUtils.setPerspectiveM(mProjectionMatrix, 45f, ratio, 1f, 20f);
+			GlslUtils.setPerspectiveM(mProjectionMatrix, 45f, ratio, 1f, 21f);
 			Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
 					0.0f);
 

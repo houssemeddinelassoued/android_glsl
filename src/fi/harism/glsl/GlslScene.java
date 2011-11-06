@@ -29,6 +29,12 @@ public class GlslScene {
 		mCubes = new Vector<GlslCube>();
 
 		GlslCube cube = new GlslCube();
+		cube.setScaling(15f);
+		cube.setColor((float) Math.random(), (float) Math.random(),
+				(float) Math.random());
+		mCubes.add(cube);
+
+		cube = new GlslCube();
 		cube.setScaling(1f);
 		cube.setPosition(5f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
@@ -85,8 +91,8 @@ public class GlslScene {
 		GLES20.glClearColor(0.1f, 0.3f, 0.5f, 1.0f);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
-		GLES20.glEnable(GLES20.GL_CULL_FACE);
-		GLES20.glFrontFace(GLES20.GL_CCW);
+		// GLES20.glEnable(GLES20.GL_CULL_FACE);
+		// GLES20.glFrontFace(GLES20.GL_CCW);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 		GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
