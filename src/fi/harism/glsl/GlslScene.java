@@ -1,11 +1,9 @@
 package fi.harism.glsl;
 
-import java.util.Vector;
-
 import android.content.Context;
 import android.opengl.GLES20;
-import android.opengl.Matrix;
 import fi.harism.glsl.object.GlslCube;
+import fi.harism.glsl.object.GlslObject;
 
 public class GlslScene {
 
@@ -14,32 +12,25 @@ public class GlslScene {
 	private static final float CUBE_SCROLLER_NEAR = 20f;
 	private static final float CUBE_SCROLLER_FAR = -20f;
 
-	private float[] mTempMatrix = new float[16];
-	private float[] mModelMatrix = new float[16];
-	private float[] mModelViewMatrix = new float[16];
-	private float[] mModelViewProjectionMatrix = new float[16];
-	private float[] mNormalMatrix = new float[16];
-
-	private Vector<GlslCube> mCubes;
-
+	private GlslObject mCubes;
 	private GlslShader mShader;
 
 	public GlslScene() {
 		mShader = new GlslShader();
-		mCubes = new Vector<GlslCube>();
+		mCubes = new GlslObject();
 
 		GlslCube cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mCubes.add(cube);
+		mCubes.addChildObject(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(1f);
 		cube.setPosition(5f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mCubes.add(cube);
+		mCubes.addChildObject(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(1f);
@@ -47,7 +38,7 @@ public class GlslScene {
 		cube.setRotation(90f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mCubes.add(cube);
+		mCubes.addChildObject(cube);
 
 		for (int idx = 0; idx < CUBE_SCROLLER_COUNT; ++idx) {
 			cube = new GlslCube();
@@ -56,17 +47,13 @@ public class GlslScene {
 			cube.setRotation((float) (360 * Math.random()),
 					(float) (360 * Math.random()),
 					(float) (360 * Math.random()));
-			cube.setRotationD((float) (180 * Math.random() - 90),
-					(float) (180 * Math.random() - 90),
-					(float) (180 * Math.random() - 90));
 			cube.setPosition((float) (2 * Math.random() - 1),
 					(float) (2 * Math.random() - 1), (float) Math.random()
 							* (CUBE_SCROLLER_NEAR - CUBE_SCROLLER_FAR)
 							- CUBE_SCROLLER_NEAR);
-			cube.setPositionD(0f, 0f, (float) (4 * Math.random() + 1));
 			cube.setColor((float) Math.random(), (float) Math.random(),
 					(float) Math.random());
-			mCubes.add(cube);
+			mCubes.addChildObject(cube);
 		}
 
 		for (int idx = 0; idx < CUBE_ARCH_COUNT; ++idx) {
@@ -82,11 +69,11 @@ public class GlslScene {
 					(float) (3 * Math.sin(t)), 0f);
 			cube.setColor((float) Math.random(), (float) Math.random(),
 					(float) Math.random());
-			mCubes.add(cube);
+			mCubes.addChildObject(cube);
 		}
 	}
 
-	public void draw(float[] viewMatrix, float[] projectionMatrix) {
+	public void draw(float[] viewM, float[] projM) {
 
 		GLES20.glClearColor(0.1f, 0.3f, 0.5f, 1.0f);
 		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
@@ -98,30 +85,13 @@ public class GlslScene {
 
 		GLES20.glUseProgram(mShader.getProgram());
 
-		for (GlslCube cube : mCubes) {
-			cube.setModelM(mModelMatrix);
-			cube.setPositionAttrib(mShader.getHandle("aPosition"));
-			cube.setColorAttrib(mShader.getHandle("aColor"));
-			cube.setNormalAttrib(mShader.getHandle("aNormal"));
+		int posId = mShader.getHandle("aPosition");
+		int normalId = mShader.getHandle("aNormal");
+		int colorId = mShader.getHandle("aColor");
+		int mvpMId = mShader.getHandle("uMVPMatrix");
+		int normalMId = mShader.getHandle("uNormalMatrix");
 
-			Matrix.multiplyMM(mModelViewMatrix, 0, viewMatrix, 0, mModelMatrix,
-					0);
-
-			Matrix.invertM(mTempMatrix, 0, mModelViewMatrix, 0);
-			Matrix.transposeM(mNormalMatrix, 0, mTempMatrix, 0);
-
-			Matrix.multiplyMM(mModelViewProjectionMatrix, 0, projectionMatrix,
-					0, mModelViewMatrix, 0);
-
-			GLES20.glUniformMatrix4fv(mShader.getHandle("uMVPMatrix"), 1,
-					false, mModelViewProjectionMatrix, 0);
-
-			GLES20.glUniformMatrix4fv(mShader.getHandle("uNormalMatrix"), 1,
-					false, mNormalMatrix, 0);
-
-			cube.drawObject();
-		}
-
+		mCubes.draw(viewM, projM, mvpMId, normalMId, posId, normalId, colorId);
 	}
 
 	public void init(Context ctx) {
@@ -132,9 +102,7 @@ public class GlslScene {
 	}
 
 	public void update(float timeDiff) {
-		for (GlslCube cube : mCubes) {
-			cube.animate(timeDiff);
-		}
+		mCubes.animate(timeDiff);
 	}
 
 }

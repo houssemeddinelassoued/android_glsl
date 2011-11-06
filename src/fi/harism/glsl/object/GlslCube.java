@@ -5,10 +5,8 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import android.opengl.GLES20;
-import android.opengl.Matrix;
-import fi.harism.glsl.GlslUtils;
 
-public final class GlslCube implements GlslObject {
+public final class GlslCube extends GlslObject {
 
 	private static final int FLOAT_SIZE_BYTES = 4;
 	private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 9 * FLOAT_SIZE_BYTES;
@@ -44,12 +42,7 @@ public final class GlslCube implements GlslObject {
 			{ { 7, 6, 3 }, { 5 }, { 3 } }, { { 3, 6, 2 }, { 5 }, { 3 } } };
 
 	private FloatBuffer mTriangleVertices;
-	private float[] mTempM;
-	private float[] mPosition = new float[3];
-	private float[] mPositionD = new float[3];
-	private float[] mRotation = new float[3];
 	private float[] mRotationD = new float[3];
-	private float mScaling;
 
 	public GlslCube() {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(3 * mCubeIndices.length
@@ -70,37 +63,35 @@ public final class GlslCube implements GlslObject {
 		}
 		mTriangleVertices.position(0);
 
-		mTempM = new float[16];
-		mPosition = new float[3];
-		mPositionD = new float[3];
-		mRotation = new float[3];
 		mRotationD = new float[3];
 	}
 
 	@Override
 	public void animate(float timeDiff) {
-		// TODO: Fixme
-		for (int j = 0; j < 3; ++j) {
-			mPosition[j] += timeDiff * mPositionD[j];
-			while (mPosition[j] < -20) {
-				mPosition[j] += 40;
-			}
-			while (mPosition[j] > 20) {
-				mPosition[j] -= 40;
-			}
-
-			mRotation[j] += timeDiff * mRotationD[j];
-			while (mRotation[j] < 0f) {
-				mRotation[j] += 360f;
-			}
-			while (mRotation[j] > 360f) {
-				mRotation[j] -= 360f;
-			}
-		}
+		// TODO: Implement me
 	}
 
 	@Override
-	public void drawObject() {
+	public void draw(float[] mvM, float[] projM, int mvpId, int projId,
+			int posId, int normalId, int colorId) {
+
+		super.draw(mvM, projM, mvpId, projId, posId, normalId, colorId);
+
+		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
+		GLES20.glVertexAttribPointer(posId, 3, GLES20.GL_FLOAT, false,
+				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+		GLES20.glEnableVertexAttribArray(posId);
+
+		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_NORMAL_OFFSET);
+		GLES20.glVertexAttribPointer(normalId, 3, GLES20.GL_FLOAT, false,
+				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+		GLES20.glEnableVertexAttribArray(normalId);
+
+		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_COL_OFFSET);
+		GLES20.glVertexAttribPointer(colorId, 3, GLES20.GL_FLOAT, false,
+				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+		GLES20.glEnableVertexAttribArray(colorId);
+
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, mCubeIndices.length * 3);
 	}
 
@@ -111,67 +102,6 @@ public final class GlslCube implements GlslObject {
 			mTriangleVertices.put(i + 1, g);
 			mTriangleVertices.put(i + 2, b);
 		}
-	}
-
-	@Override
-	public void setColorAttrib(int aColorHandle) {
-		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_COL_OFFSET);
-		GLES20.glVertexAttribPointer(aColorHandle, 3, GLES20.GL_FLOAT, false,
-				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-		GLES20.glEnableVertexAttribArray(aColorHandle);
-	}
-
-	@Override
-	public void setModelM(float[] modelM) {
-		GlslUtils.setRotateM(modelM, mRotation);
-		Matrix.scaleM(modelM, 0, mScaling, mScaling, mScaling);
-		Matrix.setIdentityM(mTempM, 0);
-		Matrix.translateM(mTempM, 0, mPosition[0], mPosition[1], mPosition[2]);
-		Matrix.multiplyMM(modelM, 0, mTempM, 0, modelM, 0);
-	}
-
-	@Override
-	public void setNormalAttrib(int aNormalHandle) {
-		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_NORMAL_OFFSET);
-		GLES20.glVertexAttribPointer(aNormalHandle, 3, GLES20.GL_FLOAT, false,
-				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-		GLES20.glEnableVertexAttribArray(aNormalHandle);
-	}
-
-	public void setPosition(float x, float y, float z) {
-		mPosition[0] = x;
-		mPosition[1] = y;
-		mPosition[2] = z;
-	}
-
-	@Override
-	public void setPositionAttrib(int aPositionHandle) {
-		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
-		GLES20.glVertexAttribPointer(aPositionHandle, 3, GLES20.GL_FLOAT,
-				false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-		GLES20.glEnableVertexAttribArray(aPositionHandle);
-	}
-
-	public void setPositionD(float dx, float dy, float dz) {
-		mPositionD[0] = dx;
-		mPositionD[1] = dy;
-		mPositionD[2] = dz;
-	}
-
-	public void setRotation(float x, float y, float z) {
-		mRotation[0] = x;
-		mRotation[1] = y;
-		mRotation[2] = z;
-	}
-
-	public void setRotationD(float dx, float dy, float dz) {
-		mRotationD[0] = dx;
-		mRotationD[1] = dy;
-		mRotationD[2] = dz;
-	}
-
-	public void setScaling(float scaling) {
-		mScaling = scaling;
 	}
 
 }
