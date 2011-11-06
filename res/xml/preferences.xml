@@ -4,13 +4,14 @@
     <PreferenceCategory android:title="Rendering" >
 
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="@string/key_divide_screen"
             android:summary="Divides screen into two - showing original renderered image and filtered one side by side"
             android:title="Divide Screen" />
 
         <CheckBoxPreference
             android:defaultValue="false"
+            android:enabled="false"
             android:key="@string/key_per_pixel_lightning"
             android:summary="Calculates per pixel lightning"
             android:title="Per pixel lightning" />
