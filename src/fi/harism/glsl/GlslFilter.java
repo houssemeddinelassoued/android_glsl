@@ -14,6 +14,7 @@ public class GlslFilter {
 	private CopyFilter mCopyFilter;
 	private BlendFilter mBlendFilter;
 	private BokehFilter mBokehFilter;
+	private MultFilter mMultFilter;
 	private FloatBuffer mTriangleVertices;
 
 	private static final float[] mCoords = { -1f, 1f, 0, 1, -1f, -1f, 0, 0, 1f,
@@ -23,6 +24,7 @@ public class GlslFilter {
 		mCopyFilter = new CopyFilter();
 		mBlendFilter = new BlendFilter();
 		mBokehFilter = new BokehFilter();
+		mMultFilter = new MultFilter();
 
 		ByteBuffer buffer = ByteBuffer.allocateDirect(mCoords.length * 4);
 		mTriangleVertices = buffer.order(ByteOrder.nativeOrder())
@@ -54,6 +56,11 @@ public class GlslFilter {
 		mCopyFilter.init(ctx);
 		mBlendFilter.init(ctx);
 		mBokehFilter.init(ctx);
+		mMultFilter.init(ctx);
+	}
+
+	public void mult(int src0, int src1) {
+		mMultFilter.draw(src0, src1);
 	}
 
 	public void setPreferences(Context ctx, SharedPreferences preferences) {
@@ -271,6 +278,32 @@ public class GlslFilter {
 					ctx.getString(R.string.shader_copy_fragment));
 			mShader.addHandles("aPosition", "aTextureCoord", "sTexture0");
 		}
+	}
+
+	private class MultFilter {
+
+		private GlslShader mShader = new GlslShader();
+
+		public void draw(int src0, int src1) {
+			GLES20.glUseProgram(mShader.getProgram());
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src0);
+
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src1);
+			GLES20.glUniform1i(mShader.getHandle("sTexture1"), 1);
+
+			drawRect(mShader.getHandle("aPosition"),
+					mShader.getHandle("aTextureCoord"));
+		}
+
+		public void init(Context ctx) {
+			mShader.setProgram(ctx.getString(R.string.shader_mult_vertex),
+					ctx.getString(R.string.shader_mult_fragment));
+			mShader.addHandles("aPosition", "aTextureCoord", "sTexture0",
+					"sTexture1");
+		}
+
 	}
 
 }
