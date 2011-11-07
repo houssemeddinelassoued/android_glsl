@@ -27,9 +27,10 @@ public class GlslObject {
 		}
 	}
 
-	public void draw(int mvpId, int projId, int posId, int normalId, int colorId) {
+	public void draw(int mvpMId, int normalMId, int posId, int normalId,
+			int colorId) {
 		for (GlslObject obj : mChildObjects) {
-			obj.draw(mvpId, normalId, posId, normalId, colorId);
+			obj.draw(mvpMId, normalMId, posId, normalId, colorId);
 		}
 	}
 
