@@ -1,36 +1,62 @@
 package fi.harism.glsl;
 
+import java.util.Vector;
+
 import android.content.Context;
-import android.opengl.GLES20;
 import fi.harism.glsl.object.GlslCube;
+import fi.harism.glsl.object.GlslLight;
 import fi.harism.glsl.object.GlslObject;
 
-public class GlslScene {
+public final class GlslScene {
 
-	private static final int CUBE_SCROLLER_COUNT = 20;
-	private static final int CUBE_ARCH_COUNT = 10;
-	private static final float CUBE_SCROLLER_NEAR = 20f;
-	private static final float CUBE_SCROLLER_FAR = -20f;
+	private GlslObject mObject;
+	private Vector<GlslLight> mLights = new Vector<GlslLight>();
 
-	private GlslObject mCubes;
-	private GlslShader mShader;
+	public void draw(int mvpMId, int normalMId, int posId, int normalId,
+			int colorId) {
+		if (mObject != null) {
+			mObject.draw(mvpMId, normalMId, posId, normalId, colorId);
+		}
+	}
 
-	public GlslScene() {
-		mShader = new GlslShader();
-		mCubes = new GlslObject();
+	public Vector<GlslLight> getLights() {
+		return mLights;
+	}
+
+	public void init(Context ctx) {
+		initCubeScene();
+	}
+
+	public void setMVP(float[] viewM, float[] projM) {
+		if (mObject != null) {
+			mObject.setMVP(viewM, projM);
+		}
+	}
+
+	public void update(float timeDiff) {
+		mObject.animate(timeDiff);
+	}
+
+	private void initCubeScene() {
+		final int CUBE_SCROLLER_COUNT = 20;
+		final int CUBE_ARCH_COUNT = 10;
+		final float CUBE_SCROLLER_NEAR = 20f;
+		final float CUBE_SCROLLER_FAR = -20f;
+
+		mObject = new GlslObject();
 
 		GlslCube cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mCubes.addChildObject(cube);
+		mObject.addChildObject(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(1f);
 		cube.setPosition(5f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mCubes.addChildObject(cube);
+		mObject.addChildObject(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(1f);
@@ -38,7 +64,7 @@ public class GlslScene {
 		cube.setRotation(90f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mCubes.addChildObject(cube);
+		mObject.addChildObject(cube);
 
 		for (int idx = 0; idx < CUBE_SCROLLER_COUNT; ++idx) {
 			cube = new GlslCube();
@@ -53,7 +79,7 @@ public class GlslScene {
 							- CUBE_SCROLLER_NEAR);
 			cube.setColor((float) Math.random(), (float) Math.random(),
 					(float) Math.random());
-			mCubes.addChildObject(cube);
+			mObject.addChildObject(cube);
 		}
 
 		for (int idx = 0; idx < CUBE_ARCH_COUNT; ++idx) {
@@ -69,41 +95,14 @@ public class GlslScene {
 					(float) (3 * Math.sin(t)), 0f);
 			cube.setColor((float) Math.random(), (float) Math.random(),
 					(float) Math.random());
-			mCubes.addChildObject(cube);
+			mObject.addChildObject(cube);
 		}
-	}
 
-	public void draw(float[] viewM, float[] projM) {
-
-		GLES20.glClearColor(0.1f, 0.3f, 0.5f, 1.0f);
-		GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-
-		// GLES20.glEnable(GLES20.GL_CULL_FACE);
-		// GLES20.glFrontFace(GLES20.GL_CCW);
-		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-		GLES20.glDepthFunc(GLES20.GL_LEQUAL);
-
-		GLES20.glUseProgram(mShader.getProgram());
-
-		int posId = mShader.getHandle("aPosition");
-		int normalId = mShader.getHandle("aNormal");
-		int colorId = mShader.getHandle("aColor");
-		int mvpMId = mShader.getHandle("uMVPMatrix");
-		int normalMId = mShader.getHandle("uNormalMatrix");
-
-		mCubes.recalculate(viewM, projM);
-		mCubes.draw(mvpMId, normalMId, posId, normalId, colorId);
-	}
-
-	public void init(Context ctx) {
-		mShader.setProgram(ctx.getString(R.string.shader_main_vertex),
-				ctx.getString(R.string.shader_main_fragment));
-		mShader.addHandles("uMVPMatrix", "uNormalMatrix", "aPosition",
-				"aNormal", "aColor");
-	}
-
-	public void update(float timeDiff) {
-		mCubes.animate(timeDiff);
+		GlslLight light = new GlslLight();
+		light.setPosition(0, 0, -5);
+		light.setDirection(0, 0, 5);
+		mLights.clear();
+		mLights.add(light);
 	}
 
 }

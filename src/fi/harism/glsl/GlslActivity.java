@@ -109,32 +109,33 @@ public final class GlslActivity extends Activity {
 
 	private final class Renderer implements GLSurfaceView.Renderer {
 
+		private static final String TEX_MAIN = "main";
+		private static final String TEX_OUT = "out";
+		private static final String TEX_BOKEH1 = "bokeh1";
+		private static final String TEX_BOKEH2 = "bokeh2";
+		private static final String TEX_BOKEH3 = "bokeh3";
+
 		private int mWidth, mHeight;
 
-		private float[] mProjectionMatrix = new float[16];
-		private float[] mViewMatrix = new float[16];
+		private float[] mProjM = new float[16];
+		private float[] mViewM = new float[16];
 
 		private long mLastRenderTime = 0;
 
-		private GlslScene mScene;
-		private GlslFilter mFilter;
+		private GlslScene mScene = new GlslScene();
+		private GlslFilter mFilter = new GlslFilter();
 
 		private boolean mResetFramebuffers;
-		private GlslFramebuffer mFboScreen;
-		private GlslFramebuffer mFboScreenHalf;
+		private GlslFramebuffer mFboScreen = new GlslFramebuffer();
+		private GlslFramebuffer mFboScreenHalf = new GlslFramebuffer();
 
 		private boolean mDivideScreen;
 		private boolean mBokehEnabled;
 
-		public Renderer() {
-			mScene = new GlslScene();
-			mFilter = new GlslFilter();
-			mFboScreen = new GlslFramebuffer();
-			mFboScreenHalf = new GlslFramebuffer();
+		private GlslShader mMainShader = new GlslShader();
 
+		public Renderer() {
 			mLastRenderTime = SystemClock.uptimeMillis();
-			Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
-					0.0f);
 		}
 
 		@Override
@@ -143,37 +144,52 @@ public final class GlslActivity extends Activity {
 			float ratio = (float) mWidth / mHeight;
 			// Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 1,
 			// 20);
-			GlslUtils.setPerspectiveM(mProjectionMatrix, 45f, ratio, 1f, 21f);
-			Matrix.setLookAtM(mViewMatrix, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f,
-					0.0f);
+			GlslUtils.setPerspectiveM(mProjM, 45f, ratio, 1f, 21f);
+			Matrix.setLookAtM(mViewM, 0, 0f, 3f, 8f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
 			float rot = 360f * (SystemClock.uptimeMillis() % 6000L) / 6000;
-			Matrix.rotateM(mViewMatrix, 0, rot, 0f, 1f, 0f);
+			Matrix.rotateM(mViewM, 0, rot, 0f, 1f, 0f);
 
-			mFboScreen.useTexture("tex1");
-			mScene.draw(mViewMatrix, mProjectionMatrix);
+			mFboScreen.useTexture(TEX_MAIN);
+			GLES20.glClearColor(0.1f, 0.3f, 0.5f, 1.0f);
+			GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT
+					| GLES20.GL_COLOR_BUFFER_BIT);
+			// GLES20.glEnable(GLES20.GL_CULL_FACE);
+			// GLES20.glFrontFace(GLES20.GL_CCW);
+			GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+			GLES20.glDepthFunc(GLES20.GL_LEQUAL);
+
+			int mvpMId = mMainShader.getHandle("uMVPMatrix");
+			int normalMId = mMainShader.getHandle("uNormalMatrix");
+			int posId = mMainShader.getHandle("aPosition");
+			int normalId = mMainShader.getHandle("aNormal");
+			int colorId = mMainShader.getHandle("aColor");
+			GLES20.glUseProgram(mMainShader.getProgram());
+			mScene.setMVP(mViewM, mProjM);
+			mScene.draw(mvpMId, normalMId, posId, normalId, colorId);
 
 			if (mBokehEnabled) {
-				mFilter.bokeh(mFboScreen.getTexture("tex1"), mFboScreenHalf,
-						"tex1", "tex2", "tex3", mWidth / 2, mHeight / 2);
+				mFilter.bokeh(mFboScreen.getTexture(TEX_MAIN), mFboScreenHalf,
+						TEX_BOKEH1, TEX_BOKEH2, TEX_BOKEH3, mWidth / 2,
+						mHeight / 2);
 
-				mFboScreen.useTexture("tex2");
-				mFilter.blend(mFboScreenHalf.getTexture("tex3"),
-						mFboScreen.getTexture("tex1"));
+				mFboScreen.useTexture(TEX_OUT);
+				mFilter.blend(mFboScreenHalf.getTexture(TEX_BOKEH3),
+						mFboScreen.getTexture(TEX_MAIN));
 			} else {
-				mFboScreen.useTexture("tex2");
-				mFilter.copy(mFboScreen.getTexture("tex1"));
+				mFboScreen.useTexture(TEX_OUT);
+				mFilter.copy(mFboScreen.getTexture(TEX_MAIN));
 			}
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 			if (mDivideScreen) {
 				GLES20.glViewport(0, 0, mWidth / 2, mHeight);
-				mFilter.copy(mFboScreen.getTexture("tex1"), 0f, 0f, .5f, 1f);
+				mFilter.copy(mFboScreen.getTexture(TEX_MAIN), 0f, 0f, .5f, 1f);
 				GLES20.glViewport(mWidth / 2, 0, mWidth / 2, mHeight);
-				mFilter.copy(mFboScreen.getTexture("tex2"), .5f, 0f, 1f, 1f);
+				mFilter.copy(mFboScreen.getTexture(TEX_OUT), .5f, 0f, 1f, 1f);
 			} else {
 				GLES20.glViewport(0, 0, mWidth, mHeight);
-				mFilter.copy(mFboScreen.getTexture("tex2"));
+				mFilter.copy(mFboScreen.getTexture(TEX_OUT));
 			}
 
 			long time = SystemClock.uptimeMillis();
@@ -198,12 +214,12 @@ public final class GlslActivity extends Activity {
 			mResetFramebuffers = true;
 
 			mFboScreen.init(width, height);
-			mFboScreen.addTexture("tex1");
-			mFboScreen.addTexture("tex2");
+			mFboScreen.addTexture(TEX_MAIN);
+			mFboScreen.addTexture(TEX_OUT);
 			mFboScreenHalf.init(width / 2, height / 2);
-			mFboScreenHalf.addTexture("tex1");
-			mFboScreenHalf.addTexture("tex2");
-			mFboScreenHalf.addTexture("tex3");
+			mFboScreenHalf.addTexture(TEX_BOKEH1);
+			mFboScreenHalf.addTexture(TEX_BOKEH2);
+			mFboScreenHalf.addTexture(TEX_BOKEH3);
 		}
 
 		@Override
@@ -211,6 +227,11 @@ public final class GlslActivity extends Activity {
 			mScene.init(GlslActivity.this);
 			mFilter.init(GlslActivity.this);
 			mResetFramebuffers = false;
+
+			mMainShader.setProgram(getString(R.string.shader_main_vertex),
+					getString(R.string.shader_main_fragment));
+			mMainShader.addHandles("uMVPMatrix", "uNormalMatrix", "aPosition",
+					"aNormal", "aColor");
 		}
 
 		public void setPreferences(Context ctx, SharedPreferences preferences) {

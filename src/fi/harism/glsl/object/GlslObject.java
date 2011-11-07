@@ -33,7 +33,7 @@ public class GlslObject {
 		}
 	}
 
-	public final void recalculate(float[] mvM, float[] projM) {
+	public final void setMVP(float[] mvM, float[] projM) {
 		GlslUtils.setRotateM(mModelM, mRotation);
 		Matrix.scaleM(mModelM, 0, mScaling, mScaling, mScaling);
 		Matrix.setIdentityM(mTempM, 0);
@@ -47,7 +47,7 @@ public class GlslObject {
 		Matrix.transposeM(mNormalM, 0, mTempM, 0);
 
 		for (GlslObject obj : mChildObjects) {
-			obj.recalculate(mModelViewM, projM);
+			obj.setMVP(mModelViewM, projM);
 		}
 	}
 
