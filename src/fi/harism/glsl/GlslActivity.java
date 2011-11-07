@@ -109,7 +109,9 @@ public final class GlslActivity extends Activity {
 
 	private final class Renderer implements GLSurfaceView.Renderer {
 
-		private static final String TEX_MAIN = "main";
+		private static final String TEX_FLAT = "flat";
+		private static final String TEX_LIGHT = "light";
+		private static final String TEX_SCENE = "main";
 		private static final String TEX_OUT = "out";
 		private static final String TEX_BOKEH1 = "bokeh1";
 		private static final String TEX_BOKEH2 = "bokeh2";
@@ -133,6 +135,7 @@ public final class GlslActivity extends Activity {
 		private boolean mBokehEnabled;
 
 		private GlslShader mMainShader = new GlslShader();
+		private GlslShader mLightShader = new GlslShader();
 
 		public Renderer() {
 			mLastRenderTime = SystemClock.uptimeMillis();
@@ -150,7 +153,7 @@ public final class GlslActivity extends Activity {
 			float rot = 360f * (SystemClock.uptimeMillis() % 6000L) / 6000;
 			Matrix.rotateM(mViewM, 0, rot, 0f, 1f, 0f);
 
-			mFboScreen.useTexture(TEX_MAIN);
+			mFboScreen.useTexture(TEX_FLAT);
 			GLES20.glClearColor(0.1f, 0.3f, 0.5f, 1.0f);
 			GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT
 					| GLES20.GL_COLOR_BUFFER_BIT);
@@ -159,32 +162,44 @@ public final class GlslActivity extends Activity {
 			GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 			GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
-			int mvpMId = mMainShader.getHandle("uMVPMatrix");
-			int normalMId = mMainShader.getHandle("uNormalMatrix");
-			int posId = mMainShader.getHandle("aPosition");
-			int normalId = mMainShader.getHandle("aNormal");
-			int colorId = mMainShader.getHandle("aColor");
+			int mainIds[] = mMainShader.getHandles("uMVPMatrix", "aPosition",
+					"aColor");
 			GLES20.glUseProgram(mMainShader.getProgram());
 			mScene.setMVP(mViewM, mProjM);
-			mScene.draw(mvpMId, normalMId, posId, normalId, colorId);
+			mScene.draw(mainIds[0], -1, mainIds[1], -1, mainIds[2]);
+
+			mFboScreen.useTexture(TEX_LIGHT);
+			GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT
+					| GLES20.GL_COLOR_BUFFER_BIT);
+
+			int lightIds[] = mLightShader.getHandles("uMVPMatrix",
+					"uNormalMatrix", "aPosition", "aNormal");
+			GLES20.glUseProgram(mLightShader.getProgram());
+			mScene.setMVP(mViewM, mProjM);
+			mScene.draw(lightIds[0], lightIds[1], lightIds[2], lightIds[3], -1);
+
+			mFboScreen.useTexture(TEX_SCENE);
+			mFilter.mult(mFboScreen.getTexture(TEX_FLAT),
+					mFboScreen.getTexture(TEX_LIGHT));
 
 			if (mBokehEnabled) {
-				mFilter.bokeh(mFboScreen.getTexture(TEX_MAIN), mFboScreenHalf,
+				mFilter.bokeh(mFboScreen.getTexture(TEX_SCENE), mFboScreenHalf,
 						TEX_BOKEH1, TEX_BOKEH2, TEX_BOKEH3, mWidth / 2,
 						mHeight / 2);
 
 				mFboScreen.useTexture(TEX_OUT);
 				mFilter.blend(mFboScreenHalf.getTexture(TEX_BOKEH3),
-						mFboScreen.getTexture(TEX_MAIN));
+						mFboScreen.getTexture(TEX_SCENE));
 			} else {
 				mFboScreen.useTexture(TEX_OUT);
-				mFilter.copy(mFboScreen.getTexture(TEX_MAIN));
+				mFilter.copy(mFboScreen.getTexture(TEX_SCENE));
 			}
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 			if (mDivideScreen) {
 				GLES20.glViewport(0, 0, mWidth / 2, mHeight);
-				mFilter.copy(mFboScreen.getTexture(TEX_MAIN), 0f, 0f, .5f, 1f);
+				mFilter.copy(mFboScreen.getTexture(TEX_SCENE), 0f, 0f, .5f, 1f);
 				GLES20.glViewport(mWidth / 2, 0, mWidth / 2, mHeight);
 				mFilter.copy(mFboScreen.getTexture(TEX_OUT), .5f, 0f, 1f, 1f);
 			} else {
@@ -214,7 +229,9 @@ public final class GlslActivity extends Activity {
 			mResetFramebuffers = true;
 
 			mFboScreen.init(width, height);
-			mFboScreen.addTexture(TEX_MAIN);
+			mFboScreen.addTexture(TEX_FLAT);
+			mFboScreen.addTexture(TEX_LIGHT);
+			mFboScreen.addTexture(TEX_SCENE);
 			mFboScreen.addTexture(TEX_OUT);
 			mFboScreenHalf.init(width / 2, height / 2);
 			mFboScreenHalf.addTexture(TEX_BOKEH1);
@@ -230,8 +247,16 @@ public final class GlslActivity extends Activity {
 
 			mMainShader.setProgram(getString(R.string.shader_main_vertex),
 					getString(R.string.shader_main_fragment));
-			mMainShader.addHandles("uMVPMatrix", "uNormalMatrix", "aPosition",
-					"aNormal", "aColor");
+			mMainShader.addHandles("uMVPMatrix", "aPosition", "aColor");
+
+			mLightShader.setProgram(getString(R.string.shader_light_vertex),
+					getString(R.string.shader_light_fragment));
+			mLightShader.addHandles("uMVPMatrix", "uNormalMatrix", /*
+																	 * "uLightPos",
+																	 * "uLightDir"
+																	 * ,
+																	 */
+			"aPosition", "aNormal");
 		}
 
 		public void setPreferences(Context ctx, SharedPreferences preferences) {

@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <string name="shader_main_vertex">
+    <string name="shader_light_vertex">
 		uniform mat4 uMVPMatrix;
+		uniform mat4 uNormalMatrix;
+		uniform vec3 uLightPos;
+		uniform vec3 uLightDir;
 		
 		attribute vec3 aPosition;
-		attribute vec3 aColor;
+		attribute vec3 aNormal;
 		
 		varying vec4 vColor;
 		
 		void main() {
 			gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
-			vColor = vec4(aColor, 1.0);
-			vColor.a = gl_Position.z / gl_Position.w;
+			vec4 normal = uNormalMatrix * vec4(aNormal, 0.0);
+			normal = normalize(vec4(normal.xyz, 0.0));
+			vColor = vec4(1.0);
+			vColor.rgb *= abs(normal.z);
 		}
-		
     </string>
     
-    <string name="shader_main_fragment">
+    <string name="shader_light_fragment">
 	    precision mediump float;
         varying vec4 vColor;
         
         void main() {
 			gl_FragColor = vColor;
-			/*
-			gl_FragColor.rgb = vec3(vColor.a);
-			*/
 		}
     </string>
     
