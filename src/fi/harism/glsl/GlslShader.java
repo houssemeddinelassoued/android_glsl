@@ -31,7 +31,7 @@ public class GlslShader {
 		if (mShaderHandleMap.containsKey(name)) {
 			return mShaderHandleMap.get(name);
 		}
-		return -1;
+		throw new RuntimeException("Attribute handle " + name + " not found.");
 	}
 
 	public final int[] getHandles(String... names) {
