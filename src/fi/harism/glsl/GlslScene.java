@@ -91,7 +91,8 @@ public class GlslScene {
 		int mvpMId = mShader.getHandle("uMVPMatrix");
 		int normalMId = mShader.getHandle("uNormalMatrix");
 
-		mCubes.draw(viewM, projM, mvpMId, normalMId, posId, normalId, colorId);
+		mCubes.recalculate(viewM, projM);
+		mCubes.draw(mvpMId, normalMId, posId, normalId, colorId);
 	}
 
 	public void init(Context ctx) {

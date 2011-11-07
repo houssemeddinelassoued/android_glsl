@@ -42,7 +42,6 @@ public final class GlslCube extends GlslObject {
 			{ { 7, 6, 3 }, { 5 }, { 3 } }, { { 3, 6, 2 }, { 5 }, { 3 } } };
 
 	private FloatBuffer mTriangleVertices;
-	private float[] mRotationD = new float[3];
 
 	public GlslCube() {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(3 * mCubeIndices.length
@@ -62,8 +61,6 @@ public final class GlslCube extends GlslObject {
 			}
 		}
 		mTriangleVertices.position(0);
-
-		mRotationD = new float[3];
 	}
 
 	@Override
@@ -72,10 +69,10 @@ public final class GlslCube extends GlslObject {
 	}
 
 	@Override
-	public void draw(float[] mvM, float[] projM, int mvpId, int projId,
-			int posId, int normalId, int colorId) {
+	public void draw(int mvpMId, int normalMId, int posId, int normalId,
+			int colorId) {
 
-		super.draw(mvM, projM, mvpId, projId, posId, normalId, colorId);
+		super.draw(mvpMId, normalMId, posId, normalId, colorId);
 
 		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
 		GLES20.glVertexAttribPointer(posId, 3, GLES20.GL_FLOAT, false,
@@ -91,6 +88,9 @@ public final class GlslCube extends GlslObject {
 		GLES20.glVertexAttribPointer(colorId, 3, GLES20.GL_FLOAT, false,
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
 		GLES20.glEnableVertexAttribArray(colorId);
+
+		GLES20.glUniformMatrix4fv(mvpMId, 1, false, getModelViewProjM(), 0);
+		GLES20.glUniformMatrix4fv(normalMId, 1, false, getNormalM(), 0);
 
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, mCubeIndices.length * 3);
 	}
