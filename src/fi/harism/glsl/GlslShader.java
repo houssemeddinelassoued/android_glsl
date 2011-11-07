@@ -34,6 +34,14 @@ public class GlslShader {
 		return -1;
 	}
 
+	public final int[] getHandles(String... names) {
+		int[] res = new int[names.length];
+		for (int i = 0; i < names.length; ++i) {
+			res[i] = getHandle(names[i]);
+		}
+		return res;
+	}
+
 	public final int getProgram() {
 		return mProgram;
 	}
