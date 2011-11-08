@@ -7,14 +7,20 @@ Also there is rather heavy development ongoing and big structural changes will o
 to time. This will last until somewhat good ratio between code flexibility and readibility is found.
 Main purpose is to implement backbone for testing environment which can be extended later on.
 
+ToDo
+====
+
+- Lightning (per-pixel & per-vertex)
+- Shadows (most likely will try shadow volumes)
+- Multiple light sources (only point lights most likely)
+- Ideas yet to come..
+
 Links
 =====
 
 - OpenGL ES man pages<br>
 http://www.khronos.org/opengles/sdk/docs/man/
-
 - Lots of OpenGL examples<br>
 http://evanw.github.com/glfx.js/
-
 - Bokeh dof ideas etc..<br>
 http://publications.dice.se/
