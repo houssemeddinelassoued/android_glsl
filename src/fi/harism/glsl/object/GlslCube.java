@@ -69,10 +69,10 @@ public final class GlslCube extends GlslObject {
 	}
 
 	@Override
-	public void draw(int mvpMId, int normalMId, int posId, int normalId,
-			int colorId) {
+	public void draw(int mvId, int mvpMId, int normalMId, int posId,
+			int normalId, int colorId) {
 
-		super.draw(mvpMId, normalMId, posId, normalId, colorId);
+		super.draw(mvId, mvpMId, normalMId, posId, normalId, colorId);
 
 		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
 		GLES20.glVertexAttribPointer(posId, 3, GLES20.GL_FLOAT, false,
@@ -89,6 +89,7 @@ public final class GlslCube extends GlslObject {
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
 		GLES20.glEnableVertexAttribArray(colorId);
 
+		GLES20.glUniformMatrix4fv(mvId, 1, false, getModelViewM(), 0);
 		GLES20.glUniformMatrix4fv(mvpMId, 1, false, getModelViewProjM(), 0);
 		GLES20.glUniformMatrix4fv(normalMId, 1, false, getNormalM(), 0);
 

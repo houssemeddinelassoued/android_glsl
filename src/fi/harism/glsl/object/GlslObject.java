@@ -27,10 +27,10 @@ public class GlslObject {
 		}
 	}
 
-	public void draw(int mvpMId, int normalMId, int posId, int normalId,
-			int colorId) {
+	public void draw(int mvMId, int mvpMId, int normalMId, int posId,
+			int normalId, int colorId) {
 		for (GlslObject obj : mChildObjects) {
-			obj.draw(mvpMId, normalMId, posId, normalId, colorId);
+			obj.draw(mvMId, mvpMId, normalMId, posId, normalId, colorId);
 		}
 	}
 
@@ -66,6 +66,10 @@ public class GlslObject {
 
 	public final void setScaling(float scaling) {
 		mScaling = scaling;
+	}
+
+	protected final float[] getModelViewM() {
+		return mModelViewM;
 	}
 
 	protected final float[] getModelViewProjM() {
