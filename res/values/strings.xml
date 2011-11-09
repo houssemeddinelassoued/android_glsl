@@ -12,5 +12,7 @@
     <string name="key_bokeh_power">bokeh_power</string>
     <string name="key_bokeh_radius">bokeh_radius</string>
     <string name="key_bokeh_steps">bokeh_steps</string>
+    <string name="key_scene">scene</string>
+    <string name="key_light_count">light_count</string>
 
 </resources>

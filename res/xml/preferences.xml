@@ -1,6 +1,17 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:harism="http://schemas.android.com/apk/res/fi.harism.glsl" >
 
+    <PreferenceCategory android:title="Scene" >
+
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/scene_entries"
+            android:entryValues="@array/scene_values"
+            android:key="@string/key_scene"
+            android:summary="Select scene for rendering"
+            android:title="Select scene" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="Rendering" >
 
         <CheckBoxPreference
@@ -8,6 +19,15 @@
             android:key="@string/key_divide_screen"
             android:summary="Divides screen into two - showing original renderered image and filtered one side by side"
             android:title="Divide Screen" />
+
+        <fi.harism.glsl.GlslSliderPreference
+            android:defaultValue="2.0"
+            android:key="@string/key_light_count"
+            android:summary="Number of light sources. The bigger the value, the slower rendering will be"
+            android:title="Lights (= %.0f)"
+            harism:valueMax="4.0"
+            harism:valueMin="1.0"
+            harism:valuePrecision="1.0" />
 
         <CheckBoxPreference
             android:defaultValue="false"
@@ -20,13 +40,13 @@
     <PreferenceCategory android:title="Filters" >
 
         <PreferenceScreen
-            android:summary="Bokeh filter settings"
-            android:title="Bokeh filter" >
+            android:summary="Lens blur filter settings"
+            android:title="Lens blur" >
 
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:key="@string/key_bokeh_enable"
-                android:summary="Enable / disable bokeh filter"
+                android:summary="Enable / disable lens blur"
                 android:title="Enable" />
 
             <fi.harism.glsl.GlslSliderPreference
@@ -60,14 +80,14 @@
                 harism:valuePrecision="1" />
         </PreferenceScreen>
     </PreferenceCategory>
-    
+
     <PreferenceCategory android:title="Defaults values" >
 
         <Preference
             android:key="@string/key_reset"
+            android:persistent="false"
             android:summary="Resets preferences back to default values"
-            android:title="Reset preferences"
-            android:persistent="false" />
-        
-</PreferenceCategory>
+            android:title="Reset preferences" />
+    </PreferenceCategory>
+
 </PreferenceScreen>
