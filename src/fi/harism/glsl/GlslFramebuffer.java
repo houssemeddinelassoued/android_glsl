@@ -7,8 +7,8 @@ import android.opengl.GLES20;
 public class GlslFramebuffer {
 
 	private int mWidth, mHeight;
-	private int mFramebufferHandle;
-	private int mRenderbufferHandle;
+	private int mFramebufferHandle = -1;
+	private int mRenderbufferHandle = -1;
 	private HashMap<String, Integer> mTextureHandleMap;
 
 	public GlslFramebuffer() {
@@ -47,24 +47,27 @@ public class GlslFramebuffer {
 		return mTextureHandleMap.get(name);
 	}
 
-	public void init(int width, int height) {
+	public void init(int width, int height, boolean depthBuffer) {
 		mWidth = width;
 		mHeight = height;
 
 		int handle[] = { 0 };
 		GLES20.glGenFramebuffers(1, handle, 0);
 		mFramebufferHandle = handle[0];
-		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFramebufferHandle);
 
-		GLES20.glGenRenderbuffers(1, handle, 0);
-		mRenderbufferHandle = handle[0];
-		GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, mRenderbufferHandle);
+		if (depthBuffer) {
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFramebufferHandle);
+			GLES20.glGenRenderbuffers(1, handle, 0);
+			mRenderbufferHandle = handle[0];
+			GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER,
+					mRenderbufferHandle);
 
-		GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER,
-				GLES20.GL_DEPTH_COMPONENT16, width, height);
-		GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,
-				GLES20.GL_DEPTH_ATTACHMENT, GLES20.GL_RENDERBUFFER,
-				mRenderbufferHandle);
+			GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER,
+					GLES20.GL_DEPTH_COMPONENT16, width, height);
+			GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,
+					GLES20.GL_DEPTH_ATTACHMENT, GLES20.GL_RENDERBUFFER,
+					mRenderbufferHandle);
+		}
 	}
 
 	public void reset() {
@@ -72,6 +75,7 @@ public class GlslFramebuffer {
 		GLES20.glDeleteFramebuffers(1, handle, 0);
 		handle[0] = mRenderbufferHandle;
 		GLES20.glDeleteRenderbuffers(1, handle, 0);
+		mFramebufferHandle = mRenderbufferHandle = -1;
 
 		for (Integer textureId : mTextureHandleMap.values()) {
 			handle[0] = textureId;

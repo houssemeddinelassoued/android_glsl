@@ -249,11 +249,11 @@ public final class GlslActivity extends Activity {
 			}
 			mResetFramebuffers = true;
 
-			mFboScreen.init(width, height);
+			mFboScreen.init(width, height, true);
 			mFboScreen.addTexture(TEX_LIGHT1);
 			mFboScreen.addTexture(TEX_LIGHT2);
 			mFboScreen.addTexture(TEX_OUT);
-			mFboScreenHalf.init(width / 2, height / 2);
+			mFboScreenHalf.init(width / 2, height / 2, false);
 			mFboScreenHalf.addTexture(TEX_BOKEH1);
 			mFboScreenHalf.addTexture(TEX_BOKEH2);
 			mFboScreenHalf.addTexture(TEX_BOKEH3);
