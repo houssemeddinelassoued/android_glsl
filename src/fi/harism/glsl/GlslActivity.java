@@ -109,11 +109,9 @@ public final class GlslActivity extends Activity {
 
 	private final class Renderer implements GLSurfaceView.Renderer {
 
-		private static final String TEX_FLAT = "flat";
+		private static final String TEX_OUT = "out";
 		private static final String TEX_LIGHT1 = "light1";
 		private static final String TEX_LIGHT2 = "light2";
-		private static final String TEX_SCENE = "main";
-		private static final String TEX_OUT = "out";
 		private static final String TEX_BOKEH1 = "bokeh1";
 		private static final String TEX_BOKEH2 = "bokeh2";
 		private static final String TEX_BOKEH3 = "bokeh3";
@@ -155,31 +153,22 @@ public final class GlslActivity extends Activity {
 			float rot = 360f * (SystemClock.uptimeMillis() % 6000L) / 6000;
 			Matrix.rotateM(mViewM, 0, rot, 0f, 1f, 0f);
 
-			mFboScreen.useTexture(TEX_FLAT);
-			GLES20.glClearColor(0.1f, 0.3f, 0.5f, 1.0f);
-			GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT
-					| GLES20.GL_COLOR_BUFFER_BIT);
+			mScene.setMVP(mViewM, mProjM);
+
 			GLES20.glEnable(GLES20.GL_CULL_FACE);
 			GLES20.glFrontFace(GLES20.GL_CCW);
 			GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 			GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
-			int mainIds[] = mMainShader.getHandles("uMVPMatrix", "aPosition",
-					"aColor");
-			GLES20.glUseProgram(mMainShader.getProgram());
-			mScene.setMVP(mViewM, mProjM);
-			mScene.draw(-1, mainIds[0], -1, mainIds[1], -1, mainIds[2]);
+			String lightTextureIn = TEX_LIGHT1;
+			String lightTextureOut = TEX_LIGHT2;
 
-			String lightTextureOut = TEX_LIGHT1;
-			String lightTextureTmp = TEX_LIGHT2;
-
-			mFboScreen.useTexture(lightTextureTmp);
-			GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 			mFboScreen.useTexture(lightTextureOut);
 			GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
+					| GLES20.GL_DEPTH_BUFFER_BIT);
+			mFboScreen.useTexture(lightTextureIn);
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-			// GLES20.glDepthFunc(GLES20.GL_EQUAL);
 
 			int lightIds[] = mLightShader.getHandles("uMVMatrix", "uMVPMatrix",
 					"uNormalMatrix", "aPosition", "aNormal", "uLightPos");
@@ -187,7 +176,7 @@ public final class GlslActivity extends Activity {
 			for (int i = 0; i < mScene.getLightCount(); ++i) {
 				float lightPos[] = { 0, 0, 0 };
 				mScene.getLightPosition(i, lightPos);
-				mFboScreen.useTexture(lightTextureTmp);
+				mFboScreen.useTexture(lightTextureIn);
 				GLES20.glUniform3fv(lightIds[5], 1, lightPos, 0);
 				GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
@@ -195,33 +184,42 @@ public final class GlslActivity extends Activity {
 				mScene.draw(lightIds[0], lightIds[1], lightIds[2], lightIds[3],
 						lightIds[4], -1);
 
-				String tmp = lightTextureTmp;
-				lightTextureTmp = lightTextureOut;
-				lightTextureOut = tmp;
+				String in = lightTextureIn;
+				lightTextureIn = lightTextureOut;
+				lightTextureOut = in;
 			}
 
-			mFboScreen.useTexture(TEX_SCENE);
-			// mFilter.copy(mFboScreen.getTexture(TEX_FLAT));
-			mFilter.mult(mFboScreen.getTexture(TEX_FLAT),
+			String sceneTexture = lightTextureIn;
+			int mainIds[] = mMainShader.getHandles("uMVPMatrix", "aPosition",
+					"aColor");
+			mFboScreen.useTexture(sceneTexture);
+			GLES20.glUseProgram(mMainShader.getProgram());
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 					mFboScreen.getTexture(lightTextureOut));
+			mScene.draw(-1, mainIds[0], -1, mainIds[1], -1, mainIds[2]);
+
+			// mFboScreen.useTexture(sceneTexture);
+			// mFilter.copy(mFboScreen.getTexture(lightTextureOut));
 
 			if (mBokehEnabled) {
-				mFilter.bokeh(mFboScreen.getTexture(TEX_SCENE), mFboScreenHalf,
-						TEX_BOKEH1, TEX_BOKEH2, TEX_BOKEH3, mWidth / 2,
-						mHeight / 2);
+				mFilter.bokeh(mFboScreen.getTexture(sceneTexture),
+						mFboScreenHalf, TEX_BOKEH1, TEX_BOKEH2, TEX_BOKEH3,
+						mWidth / 2, mHeight / 2);
 
 				mFboScreen.useTexture(TEX_OUT);
 				mFilter.blend(mFboScreenHalf.getTexture(TEX_BOKEH3),
-						mFboScreen.getTexture(TEX_SCENE));
+						mFboScreen.getTexture(sceneTexture));
 			} else {
 				mFboScreen.useTexture(TEX_OUT);
-				mFilter.copy(mFboScreen.getTexture(TEX_SCENE));
+				mFilter.copy(mFboScreen.getTexture(sceneTexture));
 			}
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 			if (mDivideScreen) {
 				GLES20.glViewport(0, 0, mWidth / 2, mHeight);
-				mFilter.copy(mFboScreen.getTexture(TEX_SCENE), 0f, 0f, .5f, 1f);
+				mFilter.copy(mFboScreen.getTexture(sceneTexture), 0f, 0f, .5f,
+						1f);
 				GLES20.glViewport(mWidth / 2, 0, mWidth / 2, mHeight);
 				mFilter.copy(mFboScreen.getTexture(TEX_OUT), .5f, 0f, 1f, 1f);
 			} else {
@@ -251,10 +249,8 @@ public final class GlslActivity extends Activity {
 			mResetFramebuffers = true;
 
 			mFboScreen.init(width, height);
-			mFboScreen.addTexture(TEX_FLAT);
 			mFboScreen.addTexture(TEX_LIGHT1);
 			mFboScreen.addTexture(TEX_LIGHT2);
-			mFboScreen.addTexture(TEX_SCENE);
 			mFboScreen.addTexture(TEX_OUT);
 			mFboScreenHalf.init(width / 2, height / 2);
 			mFboScreenHalf.addTexture(TEX_BOKEH1);

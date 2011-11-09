@@ -61,13 +61,49 @@ public final class GlslScene {
 
 		mObject = new GlslObject();
 
-		// GlslCube cube = new GlslCube();
-		// cube.setScaling(15f);
-		// cube.setColor((float) Math.random(), (float) Math.random(),
-		// (float) Math.random());
-		// mObject.addChildObject(cube);
-
 		GlslCube cube = new GlslCube();
+		cube.setScaling(15f);
+		cube.setPosition(15f, 0f, 0f);
+		cube.setColor((float) Math.random(), (float) Math.random(),
+				(float) Math.random());
+		mObject.addChildObject(cube);
+
+		cube = new GlslCube();
+		cube.setScaling(15f);
+		cube.setPosition(-15f, 0f, 0f);
+		cube.setColor((float) Math.random(), (float) Math.random(),
+				(float) Math.random());
+		mObject.addChildObject(cube);
+
+		cube = new GlslCube();
+		cube.setScaling(15f);
+		cube.setPosition(0f, 15f, 0f);
+		cube.setColor((float) Math.random(), (float) Math.random(),
+				(float) Math.random());
+		mObject.addChildObject(cube);
+
+		cube = new GlslCube();
+		cube.setScaling(15f);
+		cube.setPosition(0f, -15f, 0f);
+		cube.setColor((float) Math.random(), (float) Math.random(),
+				(float) Math.random());
+		mObject.addChildObject(cube);
+
+		cube = new GlslCube();
+		cube.setScaling(15f);
+		cube.setPosition(0f, 0f, 15f);
+		cube.setColor((float) Math.random(), (float) Math.random(),
+				(float) Math.random());
+		mObject.addChildObject(cube);
+
+		cube = new GlslCube();
+		cube.setScaling(15f);
+		cube.setPosition(0f, 0f, -15f);
+		cube.setColor((float) Math.random(), (float) Math.random(),
+				(float) Math.random());
+		mObject.addChildObject(cube);
+
+		cube = new GlslCube();
 		cube.setScaling(1f);
 		cube.setPosition(5f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
@@ -115,12 +151,12 @@ public final class GlslScene {
 		}
 
 		Light light = new Light();
-		light.setPosition(0f, 2f, 5f);
+		light.setPosition(5f, 0f, 0f);
 		mLights.clear();
 		mLights.add(light);
 
 		light = new Light();
-		light.setPosition(0f, -2f, -5f);
+		light.setPosition(0f, 5f, 5f);
 		mLights.add(light);
 	}
 
