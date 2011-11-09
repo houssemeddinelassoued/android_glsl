@@ -7,12 +7,13 @@
         attribute vec3 aPosition;
         attribute vec3 aColor;
         
-        varying vec4 vColor;
         varying vec4 vPos;
+        varying vec4 vColor;
         
         void main() {
             gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
-            vPos = gl_Position;            
+            vPos = gl_Position;
+            vPos.xy *= 0.5;
             vColor.rgb = aColor;
             vColor.a = gl_Position.z / gl_Position.w;            
         }
@@ -20,15 +21,14 @@
     <string name="shader_render_scene_fs">
         precision mediump float;
         uniform sampler2D sTexture;
-        varying vec4 vColor;
         varying vec4 vPos;
+        varying vec4 vColor;
         
         void main() {
-            vec2 pos = vPos.xy / vPos.w;
-            pos = (pos + 1.0) * 0.5;
+            vec2 pos = (vPos.xy / vPos.w) + 0.5;
             vec2 lightning = texture2D(sTexture, pos).rg;
             
-            float ambient = 0.3;
+            const float ambient = 0.3;
             float diffuse = lightning.r;
             float specular = lightning.g;
             
@@ -42,14 +42,12 @@
         uniform mat4 uMVPMatrix;
         uniform mat4 uNormalMatrix;
         uniform vec3 uLightPos;
-        uniform vec3 uViewDir;
         
         attribute vec3 aPosition;
         attribute vec3 aNormal;
         
-        varying float vDiffuse;
-        varying float vSpecular;
         varying vec4 vPos;
+        varying vec2 vColor;
         
         void main() {
             gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
@@ -62,28 +60,25 @@
             vec3 reflectionNormal = reflect(-lightNormal, vertexNormal);
             reflectionNormal = normalize(reflectionNormal);
             
-            vDiffuse = dot(vertexNormal, lightNormal);
-            vDiffuse = clamp(vDiffuse, 0.0, 1.0);
-            vSpecular = dot(reflectionNormal, vec3(0.0, 0.0, 1.0));
-            vSpecular = clamp(vSpecular, 0.0, 1.0);
-            vSpecular = pow(vSpecular, 8.0);
+            vColor.r = dot(vertexNormal, lightNormal);
+            vColor.g = dot(reflectionNormal, vec3(0.0, 0.0, 1.0));
+            vColor = clamp(vColor, 0.0, 1.0);
+            vColor.g = pow(vColor.g, 8.0);
             
             vPos = gl_Position;
+            vPos.xy *= 0.5;
         }
     </string>
     <string name="shader_render_light_fs">
         precision mediump float;
         uniform sampler2D sTexture;
-        varying float vDiffuse;
-        varying float vSpecular;
         varying vec4 vPos;
+        varying vec2 vColor;
         
         void main() {
-            vec2 pos = vPos.xy / vPos.w;
-            pos = (pos + 1.0) * 0.5;
+            vec2 pos = (vPos.xy / vPos.w) + 0.5;
             gl_FragColor = texture2D(sTexture, pos);
-            gl_FragColor.r += vDiffuse;
-            gl_FragColor.g += vSpecular;
+            gl_FragColor.rg += vColor;
         }
     </string>
 
