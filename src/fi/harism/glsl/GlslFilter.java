@@ -15,6 +15,7 @@ public class GlslFilter {
 	private BlendFilter mBlendFilter;
 	private BokehFilter mBokehFilter;
 	private MultFilter mMultFilter;
+	private AddFilter mAddFilter;
 	private FloatBuffer mTriangleVertices;
 
 	private static final float[] mCoords = { -1f, 1f, 0, 1, -1f, -1f, 0, 0, 1f,
@@ -25,12 +26,17 @@ public class GlslFilter {
 		mBlendFilter = new BlendFilter();
 		mBokehFilter = new BokehFilter();
 		mMultFilter = new MultFilter();
+		mAddFilter = new AddFilter();
 
 		ByteBuffer buffer = ByteBuffer.allocateDirect(mCoords.length * 4);
 		mTriangleVertices = buffer.order(ByteOrder.nativeOrder())
 				.asFloatBuffer();
 		mTriangleVertices.position(0);
 		mTriangleVertices.put(mCoords);
+	}
+
+	public void add(int src0, int src1) {
+		mAddFilter.draw(src0, src1);
 	}
 
 	public void blend(int src0, int src1) {
@@ -57,6 +63,7 @@ public class GlslFilter {
 		mBlendFilter.init(ctx);
 		mBokehFilter.init(ctx);
 		mMultFilter.init(ctx);
+		mAddFilter.init(ctx);
 	}
 
 	public void mult(int src0, int src1) {
@@ -91,6 +98,32 @@ public class GlslFilter {
 		mTriangleVertices.put(11, t2);
 		mTriangleVertices.put(14, s2);
 		mTriangleVertices.put(15, t1);
+	}
+
+	private class AddFilter {
+
+		private GlslShader mShader = new GlslShader();
+
+		public void draw(int src0, int src1) {
+			GLES20.glUseProgram(mShader.getProgram());
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src0);
+
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src1);
+			GLES20.glUniform1i(mShader.getHandle("sTexture1"), 1);
+
+			drawRect(mShader.getHandle("aPosition"),
+					mShader.getHandle("aTextureCoord"));
+		}
+
+		public void init(Context ctx) {
+			mShader.setProgram(ctx.getString(R.string.shader_add_vertex),
+					ctx.getString(R.string.shader_add_fragment));
+			mShader.addHandles("aPosition", "aTextureCoord", "sTexture0",
+					"sTexture1");
+		}
+
 	}
 
 	private class BlendFilter {
