@@ -1,4 +1,4 @@
-package fi.harism.glsl.object;
+package fi.harism.glsl.scene;
 
 import java.util.Vector;
 

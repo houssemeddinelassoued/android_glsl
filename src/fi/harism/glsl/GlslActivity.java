@@ -6,8 +6,6 @@ import java.util.TimerTask;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import fi.harism.glsl.object.GlslScene;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +19,7 @@ import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.Menu;
 import android.view.MenuItem;
+import fi.harism.glsl.scene.GlslScene;
 
 public final class GlslActivity extends Activity {
 
