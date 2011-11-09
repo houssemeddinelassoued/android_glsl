@@ -136,12 +136,6 @@ public class GlslFilter {
 		drawRect(mCopyShader.getHandle("aPosition"));
 	}
 
-	public void copy(int textureId, float x1, float y1, float x2, float y2) {
-		setClipCoords(x1, y1, x2, y2);
-		copy(textureId);
-		setClipCoords(-1, 1, 1, -1);
-	}
-
 	public void init(Context ctx) {
 		mCopyShader.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_filter_copy_fs));
@@ -194,6 +188,17 @@ public class GlslFilter {
 		drawRect(mMultShader.getHandle("aPosition"));
 	}
 
+	public void setClipCoords(float x1, float y1, float x2, float y2) {
+		mTriangleVertices.put(0, x1);
+		mTriangleVertices.put(1, y1);
+		mTriangleVertices.put(2, x1);
+		mTriangleVertices.put(3, y2);
+		mTriangleVertices.put(4, x2);
+		mTriangleVertices.put(5, y1);
+		mTriangleVertices.put(6, x2);
+		mTriangleVertices.put(7, y2);
+	}
+
 	public void setPreferences(Context ctx, SharedPreferences preferences) {
 		String key = ctx.getString(R.string.key_bokeh_power);
 		mBokehPower = (float) Math.pow(10, preferences.getFloat(key, 0f));
@@ -212,17 +217,6 @@ public class GlslFilter {
 		GLES20.glDisable(GLES20.GL_CULL_FACE);
 		GLES20.glDisable(GLES20.GL_DEPTH_TEST);
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-	}
-
-	private void setClipCoords(float x1, float y1, float x2, float y2) {
-		mTriangleVertices.put(0, x1);
-		mTriangleVertices.put(1, y1);
-		mTriangleVertices.put(2, x1);
-		mTriangleVertices.put(3, y2);
-		mTriangleVertices.put(4, x2);
-		mTriangleVertices.put(5, y1);
-		mTriangleVertices.put(6, x2);
-		mTriangleVertices.put(7, y2);
 	}
 
 }

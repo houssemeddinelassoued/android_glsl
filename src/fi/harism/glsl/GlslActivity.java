@@ -217,9 +217,11 @@ public final class GlslActivity extends Activity {
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 			if (mDivideScreen) {
-				mFilter.copy(mFboScreen.getTexture(sceneTexture), -1f, 1f, 0f,
-						-1f);
-				mFilter.copy(mFboScreen.getTexture(TEX_OUT), 0f, 1f, 1f, -1f);
+				mFilter.setClipCoords(-1f, 1f, 0f, -1f);
+				mFilter.copy(mFboScreen.getTexture(sceneTexture));
+				mFilter.setClipCoords(0f, 1f, 1f, -1f);
+				mFilter.copy(mFboScreen.getTexture(TEX_OUT));
+				mFilter.setClipCoords(-1f, 1f, 1f, -1f);
 			} else {
 				GLES20.glViewport(0, 0, mWidth, mHeight);
 				mFilter.copy(mFboScreen.getTexture(TEX_OUT));
