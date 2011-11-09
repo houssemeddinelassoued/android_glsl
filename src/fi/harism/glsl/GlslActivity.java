@@ -232,7 +232,7 @@ public final class GlslActivity extends Activity {
 			if (mLastRenderTime != 0) {
 				long diff = time - mLastRenderTime;
 				mFps = 1000f / diff;
-				mScene.update(diff / 1000f);
+				mScene.animate(diff / 1000f);
 			}
 			mLastRenderTime = time;
 
@@ -261,7 +261,6 @@ public final class GlslActivity extends Activity {
 
 		@Override
 		public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
-			mScene.init(GlslActivity.this);
 			mFilter.init(GlslActivity.this);
 			mResetFramebuffers = false;
 
@@ -281,6 +280,7 @@ public final class GlslActivity extends Activity {
 			key = ctx.getString(R.string.key_bokeh_enable);
 			mBokehEnabled = preferences.getBoolean(key, true);
 			mFilter.setPreferences(ctx, preferences);
+			mScene.setPreferences(ctx, preferences);
 		}
 	}
 

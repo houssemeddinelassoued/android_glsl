@@ -14,6 +14,7 @@ public class GlslObject {
 	private static final float[] mTempM = new float[16];
 	private final float[] mPosition = new float[3];
 	private final float[] mRotation = new float[3];
+	private final float[] mRotationD = new float[3];
 	private float mScaling = 1f;
 	private final Vector<GlslObject> mChildObjects = new Vector<GlslObject>();
 
@@ -22,6 +23,13 @@ public class GlslObject {
 	}
 
 	public void animate(float timeDiff) {
+		for (int i = 0; i < 3; ++i) {
+			mRotation[i] += mRotationD[i] * timeDiff;
+			while (mRotation[i] < 0f)
+				mRotation[i] += 360f;
+			while (mRotation[i] > 360f)
+				mRotation[i] -= 360f;
+		}
 		for (GlslObject obj : mChildObjects) {
 			obj.animate(timeDiff);
 		}
@@ -62,6 +70,12 @@ public class GlslObject {
 		mRotation[0] = x;
 		mRotation[1] = y;
 		mRotation[2] = z;
+	}
+
+	public final void setRotationD(float x, float y, float z) {
+		mRotationD[0] = x;
+		mRotationD[1] = y;
+		mRotationD[2] = z;
 	}
 
 	public final void setScaling(float scaling) {
