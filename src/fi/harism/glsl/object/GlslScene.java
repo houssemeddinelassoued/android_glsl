@@ -1,12 +1,11 @@
-package fi.harism.glsl;
+package fi.harism.glsl.object;
 
 import java.util.Vector;
 
 import android.content.Context;
 import android.opengl.Matrix;
 import android.os.SystemClock;
-import fi.harism.glsl.object.GlslCube;
-import fi.harism.glsl.object.GlslObject;
+import fi.harism.glsl.GlslUtils;
 
 public final class GlslScene {
 
