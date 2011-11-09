@@ -10,7 +10,6 @@
             vTextureCoord = (gl_Position.xy + 1.0) * 0.5;
         }
     </string>
-
     <string name="shader_filter_add_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -23,7 +22,6 @@
             gl_FragColor = colSrc0 + colSrc1;
         }
     </string>
-    
     <string name="shader_filter_blend_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -36,7 +34,6 @@
             gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
         }
     </string>
-    
     <string name="shader_filter_bokeh_in_fs">
         precision mediump float;
           uniform float uPower;
@@ -61,7 +58,6 @@
             gl_FragColor.rgb *= gl_FragColor.a;
         }
     </string>
-    
     <string name="shader_filter_bokeh_out_fs">
         precision mediump float;
           uniform float uInvPower;
@@ -74,7 +70,6 @@
             gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(uInvPower));
         }
     </string>
-    
     <string name="shader_filter_bokeh1_fs">
         precision mediump float;
         uniform int uSteps;
@@ -99,7 +94,6 @@
             gl_FragColor /= weightSum;
         }
     </string>
-    
     <string name="shader_filter_bokeh2_fs">
         precision mediump float;
         uniform int uSteps;
@@ -126,7 +120,6 @@
             gl_FragColor = (gl_FragColor + texture2D(sTexture1, vTextureCoord)) * 0.5;
         }
     </string>
-    
     <string name="shader_filter_bokeh3_fs">
         precision mediump float;
         uniform int uSteps;
@@ -162,7 +155,6 @@
             gl_FragColor /= weightSum;
         }
     </string>
-    
     <string name="shader_filter_copy_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -172,7 +164,6 @@
             gl_FragColor = texture2D(sTexture0, vTextureCoord);
         }
     </string>
-    
     <string name="shader_filter_mult_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -185,5 +176,5 @@
             gl_FragColor = colSrc0 * colSrc1;
         }
     </string>
-                
+
 </resources>

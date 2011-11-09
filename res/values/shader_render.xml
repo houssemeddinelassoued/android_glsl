@@ -18,7 +18,6 @@
             vPos = gl_Position;            
         }
     </string>
-    
     <string name="shader_render_scene_fs">
         precision mediump float;
         uniform sampler2D sTexture;
@@ -35,7 +34,6 @@
             */
         }
     </string>
-    
     <string name="shader_render_light_vs">
         uniform mat4 uMVMatrix;
         uniform mat4 uMVPMatrix;
@@ -64,7 +62,6 @@
             vPos = gl_Position;
         }
     </string>
-    
     <string name="shader_render_light_fs">
         precision mediump float;
         uniform sampler2D sTexture;
@@ -77,5 +74,5 @@
             gl_FragColor = texture2D(sTexture, pos) + vColor;
         }
     </string>
-    
+
 </resources>
