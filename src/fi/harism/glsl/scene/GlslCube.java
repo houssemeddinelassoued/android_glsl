@@ -66,6 +66,7 @@ public final class GlslCube extends GlslObject {
 	@Override
 	public void animate(float timeDiff) {
 		// TODO: Implement me
+		super.animate(timeDiff);
 	}
 
 	@Override
