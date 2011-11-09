@@ -30,7 +30,7 @@
             
             const float ambient = 0.3;
             float diffuse = lightning.r;
-            float specular = lightning.g;
+            float specular = lightning.g * 0.5;
             
             gl_FragColor.rgb = mix(vec3(0.0), vColor.rgb, min(ambient + diffuse, 1.0));
 			gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), specular);
