@@ -10,7 +10,7 @@
 		attribute vec3 aNormal;
 		
 		varying vec4 vColor;
-		varying vec2 vPos;
+		varying vec4 vPos;
 		
 		void main() {
 			gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
@@ -25,8 +25,7 @@
 			vColor = vec4(dot(normal, lightNormal));
 			vColor = clamp(vColor, 0.0, 1.0);
 			
-			vPos = gl_Position.xy / gl_Position.w;
-			vPos = (vPos + 1.0) * 0.5;
+			vPos = gl_Position;
 		}
     </string>
     
@@ -34,10 +33,12 @@
 	    precision mediump float;
         uniform sampler2D sTexture;
         varying vec4 vColor;
-        varying vec2 vPos;
+        varying vec4 vPos;
         
         void main() {
-        	gl_FragColor = texture2D(sTexture, vPos) + vColor;
+			vec2 pos = vPos.xy / vPos.w;
+			pos = (pos + 1.0) * 0.5;
+        	gl_FragColor = texture2D(sTexture, pos) + vColor;
 		}
     </string>
     
