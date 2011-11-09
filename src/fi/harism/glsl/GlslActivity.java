@@ -217,11 +217,9 @@ public final class GlslActivity extends Activity {
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 			if (mDivideScreen) {
-				GLES20.glViewport(0, 0, mWidth / 2, mHeight);
-				mFilter.copy(mFboScreen.getTexture(sceneTexture), 0f, 0f, .5f,
-						1f);
-				GLES20.glViewport(mWidth / 2, 0, mWidth / 2, mHeight);
-				mFilter.copy(mFboScreen.getTexture(TEX_OUT), .5f, 0f, 1f, 1f);
+				mFilter.copy(mFboScreen.getTexture(sceneTexture), -1f, 1f, 0f,
+						-1f);
+				mFilter.copy(mFboScreen.getTexture(TEX_OUT), 0f, 1f, 1f, -1f);
 			} else {
 				GLES20.glViewport(0, 0, mWidth, mHeight);
 				mFilter.copy(mFboScreen.getTexture(TEX_OUT));
@@ -264,12 +262,12 @@ public final class GlslActivity extends Activity {
 			mFilter.init(GlslActivity.this);
 			mResetFramebuffers = false;
 
-			mMainShader.setProgram(getString(R.string.shader_main_vertex),
-					getString(R.string.shader_main_fragment));
+			mMainShader.setProgram(getString(R.string.shader_render_scene_vs),
+					getString(R.string.shader_render_scene_fs));
 			mMainShader.addHandles("uMVPMatrix", "aPosition", "aColor");
 
-			mLightShader.setProgram(getString(R.string.shader_light_vertex),
-					getString(R.string.shader_light_fragment));
+			mLightShader.setProgram(getString(R.string.shader_render_light_vs),
+					getString(R.string.shader_render_light_fs));
 			mLightShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
 					"uLightPos", "aPosition", "aNormal");
 		}
