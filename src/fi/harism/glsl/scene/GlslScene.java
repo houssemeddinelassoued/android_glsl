@@ -5,7 +5,6 @@ import java.util.Vector;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.opengl.Matrix;
-import fi.harism.glsl.GlslUtils;
 import fi.harism.glsl.R;
 
 public final class GlslScene {
@@ -21,9 +20,6 @@ public final class GlslScene {
 	public void animate(float timeDiff) {
 		for (GlslObject object : mObjects) {
 			object.animate(timeDiff);
-		}
-		for (Light light : mLights) {
-			light.animate(timeDiff);
 		}
 	}
 
@@ -125,8 +121,9 @@ public final class GlslScene {
 
 		for (int i = 0; i < lightCount; ++i) {
 			Light light = new Light();
-			light.setPosition(8f, 0f, 0f);
-			light.setRotationD(0f, (float) (10 * Math.random()) + 5f, 0f);
+			light.setPosition((float) (Math.random() * 8f) - 4f,
+					(float) (Math.random() * 8f) - 4f,
+					(float) (Math.random() * 8f) - 4f);
 			mLights.add(light);
 		}
 	}
@@ -184,8 +181,9 @@ public final class GlslScene {
 
 		for (int i = 0; i < lightCount; ++i) {
 			Light light = new Light();
-			light.setPosition(8f, 0f, 0f);
-			light.setRotationD(0f, (float) (10 * Math.random()) + 5f, 0f);
+			light.setPosition((float) (Math.random() * 8f) - 4f,
+					(float) (Math.random() * 8f) - 4f,
+					(float) (Math.random() * 8f) - 4f);
 			mLights.add(light);
 		}
 	}
@@ -287,30 +285,17 @@ public final class GlslScene {
 
 		for (int i = 0; i < lightCount; ++i) {
 			Light light = new Light();
-			light.setPosition(8f, 0f, 0f);
-			light.setRotationD(0f, (float) (10 * Math.random()) + 5f, 0f);
+			light.setPosition((float) (Math.random() * 8f) - 4f,
+					(float) (Math.random() * 8f) - 4f,
+					(float) (Math.random() * 8f) - 4f);
 			mLights.add(light);
 		}
 	}
 
 	private final class Light {
 		private float[] mPosition = new float[4];
-		private float[] mRotation = new float[3];
-		private float[] mRotationD = new float[3];
-
 		private float[] mProjPos = new float[4];
-
 		private float[] mTempM = new float[16];
-
-		public void animate(float timeDiff) {
-			for (int i = 0; i < 3; ++i) {
-				mRotation[i] += mRotationD[i] * timeDiff;
-				while (mRotation[i] < 0f)
-					mRotation[i] += 360f;
-				while (mRotation[i] > 360f)
-					mRotation[i] -= 360f;
-			}
-		}
 
 		public void getPosition(float[] pos) {
 			pos[0] = mProjPos[0];
@@ -319,11 +304,10 @@ public final class GlslScene {
 		}
 
 		public void setMVP(float[] viewM) {
-			GlslUtils.setRotateM(mTempM, mRotation);
+			Matrix.setIdentityM(mTempM, 0);
 			Matrix.translateM(mTempM, 0, mPosition[0], mPosition[1],
 					mPosition[2]);
 			Matrix.multiplyMM(mTempM, 0, viewM, 0, mTempM, 0);
-
 			Matrix.multiplyMV(mProjPos, 0, mTempM, 0, mPosition, 0);
 		}
 
@@ -332,18 +316,6 @@ public final class GlslScene {
 			mPosition[1] = y;
 			mPosition[2] = z;
 			mPosition[3] = 1;
-		}
-
-		public void setRotation(float x, float y, float z) {
-			mRotation[0] = x;
-			mRotation[1] = y;
-			mRotation[2] = z;
-		}
-
-		public void setRotationD(float x, float y, float z) {
-			mRotationD[0] = x;
-			mRotationD[1] = y;
-			mRotationD[2] = z;
 		}
 	}
 
