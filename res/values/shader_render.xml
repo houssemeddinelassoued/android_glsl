@@ -29,7 +29,7 @@
             
             const float ambient = 0.3;
             float ambientPlusDiffuse = mix(ambient, 1.0, lightning.r);
-            float specular = lightning.g * 0.5;
+            float specular = lightning.g;
             const vec4 white = vec4(1.0);
             
             gl_FragColor = vColor * ambientPlusDiffuse;
@@ -47,38 +47,45 @@
         attribute vec4 aNormal;
         
         varying vec4 vPos;
-        varying vec2 vColor;
+        varying vec4 vNormal;
+        varying vec4 vLightDir;
+        varying vec4 vEyeVec;
+        varying float vInvDist;
         
         void main() {
             gl_Position = uMVPMatrix * aPosition;
-            vec4 mvPos = uMVMatrix * aPosition;
-            
-            vec4 vertexNormal = uNormalMatrix * aNormal;
-            vertexNormal = normalize(vec4(vertexNormal.xyz, 0.0));
-            vec4 lightNormal = uLightPos - mvPos;
-            lightNormal = normalize(vec4(lightNormal.xyz, 0.0));
-            vec4 reflectionNormal = reflect(-lightNormal, vertexNormal);
-            reflectionNormal = normalize(reflectionNormal);
-            
-            vColor.r = dot(vertexNormal, lightNormal);
-            vColor.g = dot(reflectionNormal, vec4(0.0, 0.0, 1.0, 0.0));
-            vColor = clamp(vColor, 0.0, 1.0);
-            vColor.g = pow(vColor.g, 8.0);
-            
             vPos = gl_Position;
             vPos.xy *= 0.5;
+            
+            vec4 mvPos = uMVMatrix * aPosition;
+            vLightDir = vec4(uLightPos.xyz - mvPos.xyz, 0.0);
+            vEyeVec = vec4(-(mvPos.xyz), 0.0);
+            vNormal = vec4((uNormalMatrix * aNormal).xyz, 0.0);
+            vInvDist = inversesqrt(length(vLightDir));
         }
     </string>
     <string name="shader_render_light_fs">
         precision mediump float;
         uniform sampler2D sTexture;
         varying vec4 vPos;
-        varying vec2 vColor;
+        varying vec4 vNormal;
+        varying vec4 vLightDir;
+        varying vec4 vEyeVec;
+        varying float vInvDist;
         
         void main() {
             vec2 pos = (vPos.xy / vPos.w) + 0.5;
             gl_FragColor = texture2D(sTexture, pos);
-            gl_FragColor.rg += vColor;
+            
+            vec4 normal = normalize(vNormal);
+            vec4 light = normalize(vLightDir);
+            float lambert = dot(normal, light);
+            if (lambert > 0.0) {
+                gl_FragColor.r += lambert * vInvDist;
+                vec4 eye = normalize(vEyeVec);
+                vec4 reflection = reflect(-light, normal);
+                gl_FragColor.g += pow(max(dot(reflection, eye), 0.0), 2.0) * vInvDist;
+            }
         }
     </string>
 
