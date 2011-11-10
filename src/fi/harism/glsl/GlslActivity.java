@@ -177,10 +177,10 @@ public final class GlslActivity extends Activity {
 			GLES20.glUseProgram(mLightShader.getProgram());
 
 			for (int i = 0; i < mScene.getLightCount(); ++i) {
-				float lightPos[] = { 0, 0, 0 };
+				float lightPos[] = { 0, 0, 0, 0 };
 				mScene.getLightPosition(i, lightPos);
 				mFbo.bindTexture(idxLightIn);
-				GLES20.glUniform3fv(lightIds[5], 1, lightPos, 0);
+				GLES20.glUniform4fv(lightIds[5], 1, lightPos, 0);
 				GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 						mFbo.getTexture(idxLightOut));
@@ -203,7 +203,7 @@ public final class GlslActivity extends Activity {
 			mScene.draw(-1, mainIds[0], -1, mainIds[1], -1, mainIds[2]);
 
 			// mFbo.bindTexture(idxScene);
-			// mFilter.copy(idxLightOut);
+			// mFilter.copy(mFbo.getTexture(idxLightOut));
 
 			if (mBokehEnabled) {
 				mFilter.bokeh(mFbo.getTexture(idxScene), mFboHalf, TEX_BOKEH1,
