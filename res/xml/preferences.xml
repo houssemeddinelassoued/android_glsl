@@ -50,16 +50,6 @@
                 android:title="Enable" />
 
             <fi.harism.glsl.GlslSliderPreference
-                android:defaultValue="0.3"
-                android:dependency="@string/key_bokeh_enable"
-                android:key="@string/key_bokeh_power"
-                android:summary="Over exposes color values to &apos;emulate&apos; hdr images"
-                android:title="Power (= %.2f)"
-                harism:valueMax="1.0"
-                harism:valueMin="0.0"
-                harism:valuePrecision="0.01" />
-
-            <fi.harism.glsl.GlslSliderPreference
                 android:defaultValue="10"
                 android:dependency="@string/key_bokeh_enable"
                 android:key="@string/key_bokeh_radius"
