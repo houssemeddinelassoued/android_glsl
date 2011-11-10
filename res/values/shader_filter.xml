@@ -10,18 +10,6 @@
             vTextureCoord = (gl_Position.xy + 1.0) * 0.5;
         }
     </string>
-    <string name="shader_filter_add_fs">
-        precision mediump float;
-        uniform sampler2D sTexture0;
-        uniform sampler2D sTexture1;
-        varying vec2 vTextureCoord;
-        
-        void main() {
-            vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
-            vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
-            gl_FragColor = colSrc0 + colSrc1;
-        }
-    </string>
     <string name="shader_filter_blend_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -36,7 +24,6 @@
     </string>
     <string name="shader_filter_bokeh_in_fs">
         precision mediump float;
-        uniform float uPower;
         uniform sampler2D sTexture0;
         varying vec2 vTextureCoord;
         
@@ -53,21 +40,20 @@
             float cocBias = (A * fLen * (zNear - fPlane)) / ((fPlane + fLen) * zNear);
             gl_FragColor.a = abs(gl_FragColor.a * cocScale + cocBias);
             gl_FragColor.a = clamp(gl_FragColor.a, 1.0 / 256.0, 1.0);
-            
-            gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(uPower));
             gl_FragColor.rgb *= gl_FragColor.a;
         }
     </string>
     <string name="shader_filter_bokeh_out_fs">
         precision mediump float;
-        uniform float uInvPower;
         uniform sampler2D sTexture0;
+        uniform sampler2D sTexture1;
         varying vec2 vTextureCoord;
         
         void main() {
-            gl_FragColor = texture2D(sTexture0, vTextureCoord);
-            gl_FragColor.rgb /= gl_FragColor.a;
-            gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(uInvPower));
+            vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
+            colSrc0.rgb /= colSrc0.a;
+            vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
+            gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
         }
     </string>
     <string name="shader_filter_bokeh1_fs">
@@ -162,18 +148,6 @@
         
         void main() {
             gl_FragColor = texture2D(sTexture0, vTextureCoord);
-        }
-    </string>
-    <string name="shader_filter_mult_fs">
-        precision mediump float;
-        uniform sampler2D sTexture0;
-        uniform sampler2D sTexture1;
-        varying vec2 vTextureCoord;
-        
-        void main() {
-            vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
-            vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
-            gl_FragColor = colSrc0 * colSrc1;
         }
     </string>
 
