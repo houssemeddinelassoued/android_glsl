@@ -4,18 +4,17 @@
     <string name="shader_render_scene_vs">
         uniform mat4 uMVPMatrix;
         
-        attribute vec3 aPosition;
-        attribute vec3 aColor;
+        attribute vec4 aPosition;
+        attribute vec4 aColor;
         
         varying vec4 vPos;
         varying vec4 vColor;
         
         void main() {
-            gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
+            gl_Position = uMVPMatrix * aPosition;
             vPos = gl_Position;
             vPos.xy *= 0.5;
-            vColor.rgb = aColor;
-            vColor.a = gl_Position.z / gl_Position.w;            
+            vColor = aColor;
         }
     </string>
     <string name="shader_render_scene_fs">
@@ -29,39 +28,40 @@
             vec2 lightning = texture2D(sTexture, pos).rg;
             
             const float ambient = 0.3;
-            float diffuse = lightning.r;
+            float ambientPlusDiffuse = mix(ambient, 1.0, lightning.r);
             float specular = lightning.g * 0.5;
+            const vec4 white = vec4(1.0);
             
-            gl_FragColor.rgb = mix(vec3(0.0), vColor.rgb, min(ambient + diffuse, 1.0));
-			gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), specular);
-			gl_FragColor.a = vColor.a;
+            gl_FragColor = vColor * ambientPlusDiffuse;
+			gl_FragColor = mix(gl_FragColor, white, specular);
+			gl_FragColor.a = vPos.z / vPos.w;
         }
     </string>
     <string name="shader_render_light_vs">
         uniform mat4 uMVMatrix;
         uniform mat4 uMVPMatrix;
         uniform mat4 uNormalMatrix;
-        uniform vec3 uLightPos;
+        uniform vec4 uLightPos;
         
-        attribute vec3 aPosition;
-        attribute vec3 aNormal;
+        attribute vec4 aPosition;
+        attribute vec4 aNormal;
         
         varying vec4 vPos;
         varying vec2 vColor;
         
         void main() {
-            gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
-            vec4 mvPos = uMVMatrix * vec4(aPosition, 1.0);
+            gl_Position = uMVPMatrix * aPosition;
+            vec4 mvPos = uMVMatrix * aPosition;
             
-            vec3 vertexNormal = (uNormalMatrix * vec4(aNormal, 0.0)).xyz;
-            vertexNormal = normalize(vertexNormal);
-            vec3 lightNormal = uLightPos - mvPos.xyz;
-            lightNormal = normalize(lightNormal);
-            vec3 reflectionNormal = reflect(-lightNormal, vertexNormal);
+            vec4 vertexNormal = uNormalMatrix * aNormal;
+            vertexNormal = normalize(vec4(vertexNormal.xyz, 0.0));
+            vec4 lightNormal = uLightPos - mvPos;
+            lightNormal = normalize(vec4(lightNormal.xyz, 0.0));
+            vec4 reflectionNormal = reflect(-lightNormal, vertexNormal);
             reflectionNormal = normalize(reflectionNormal);
             
             vColor.r = dot(vertexNormal, lightNormal);
-            vColor.g = dot(reflectionNormal, vec3(0.0, 0.0, 1.0));
+            vColor.g = dot(reflectionNormal, vec4(0.0, 0.0, 1.0, 0.0));
             vColor = clamp(vColor, 0.0, 1.0);
             vColor.g = pow(vColor.g, 8.0);
             

@@ -36,8 +36,8 @@
     </string>
     <string name="shader_filter_bokeh_in_fs">
         precision mediump float;
-          uniform float uPower;
-          uniform sampler2D sTexture0;
+        uniform float uPower;
+        uniform sampler2D sTexture0;
         varying vec2 vTextureCoord;
         
         void main() {
@@ -60,8 +60,8 @@
     </string>
     <string name="shader_filter_bokeh_out_fs">
         precision mediump float;
-          uniform float uInvPower;
-          uniform sampler2D sTexture0;
+        uniform float uInvPower;
+        uniform sampler2D sTexture0;
         varying vec2 vTextureCoord;
         
         void main() {
@@ -73,7 +73,7 @@
     <string name="shader_filter_bokeh1_fs">
         precision mediump float;
         uniform int uSteps;
-          uniform sampler2D sTexture0;
+        uniform sampler2D sTexture0;
         uniform vec2 uDelta0;
         varying vec2 vTextureCoord;
         
