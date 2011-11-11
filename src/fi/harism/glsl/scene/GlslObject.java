@@ -3,7 +3,7 @@ package fi.harism.glsl.scene;
 import java.util.Vector;
 
 import android.opengl.Matrix;
-import fi.harism.glsl.GlslUtils;
+import fi.harism.glsl.GlslMatrix;
 
 public class GlslObject {
 
@@ -43,7 +43,7 @@ public class GlslObject {
 	}
 
 	public final void setMVP(float[] mvM, float[] projM) {
-		GlslUtils.setRotateM(mModelM, mRotation);
+		GlslMatrix.setRotateM(mModelM, mRotation);
 		Matrix.scaleM(mModelM, 0, mScaling, mScaling, mScaling);
 		Matrix.setIdentityM(mTempM, 0);
 		Matrix.translateM(mTempM, 0, mPosition[0], mPosition[1], mPosition[2]);

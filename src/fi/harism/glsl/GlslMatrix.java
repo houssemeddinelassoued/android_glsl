@@ -2,7 +2,7 @@ package fi.harism.glsl;
 
 import android.opengl.Matrix;
 
-public class GlslUtils {
+public class GlslMatrix {
 
 	public static final void setPerspectiveM(float[] m, float fovy,
 			float aspect, float zNear, float zFar) {
