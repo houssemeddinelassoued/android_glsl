@@ -34,8 +34,8 @@ public final class GlslScene {
 		return mLights.size();
 	}
 
-	public void getLightPosition(int idx, float[] pos) {
-		mLights.get(idx).getPosition(pos);
+	public void getLightPosition(int idx, float[] pos, int posIdx) {
+		mLights.get(idx).getPosition(pos, posIdx);
 	}
 
 	public void setMVP(float[] viewM, float[] projM) {
@@ -297,10 +297,10 @@ public final class GlslScene {
 		private float[] mProjPos = new float[4];
 		private float[] mTempM = new float[16];
 
-		public void getPosition(float[] pos) {
-			pos[0] = mProjPos[0];
-			pos[1] = mProjPos[1];
-			pos[2] = mProjPos[2];
+		public void getPosition(float[] pos, int posIdx) {
+			pos[posIdx] = mProjPos[0];
+			pos[posIdx + 1] = mProjPos[1];
+			pos[posIdx + 2] = mProjPos[2];
 		}
 
 		public void setMVP(float[] viewM) {

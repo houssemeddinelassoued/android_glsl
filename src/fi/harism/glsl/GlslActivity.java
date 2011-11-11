@@ -111,8 +111,7 @@ public final class GlslActivity extends Activity {
 	private final class Renderer implements GLSurfaceView.Renderer {
 
 		private static final int TEX_OUT = 0;
-		private static final int TEX_LIGHT1 = 1;
-		private static final int TEX_LIGHT2 = 2;
+		private static final int TEX_SCENE = 1;
 		private static final int TEX_BOKEH1 = 0;
 		private static final int TEX_BOKEH2 = 1;
 		private static final int TEX_BOKEH3 = 2;
@@ -134,8 +133,7 @@ public final class GlslActivity extends Activity {
 		private boolean mDivideScreen;
 		private boolean mLensBlurEnabled;
 
-		private GlslShader mMainShader = new GlslShader();
-		private GlslShader mLightShader = new GlslShader();
+		private GlslShader mSceneShader = new GlslShader();
 
 		public Renderer() {
 			mLastRenderTime = SystemClock.uptimeMillis();
@@ -161,64 +159,41 @@ public final class GlslActivity extends Activity {
 			GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 			GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
-			int idxLightIn = TEX_LIGHT1;
-			int idxLightOut = TEX_LIGHT2;
-
 			mFbo.bind();
-			mFbo.bindTexture(idxLightOut);
+			mFbo.bindTexture(TEX_SCENE);
 			GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
 					| GLES20.GL_DEPTH_BUFFER_BIT);
-			mFbo.bindTexture(idxLightIn);
-			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-			int lightIds[] = mLightShader.getHandles("uMVMatrix", "uMVPMatrix",
-					"uNormalMatrix", "aPosition", "aNormal", "uLightPos");
-			GLES20.glUseProgram(mLightShader.getProgram());
-
-			for (int i = 0; i < mScene.getLightCount(); ++i) {
-				float lightPos[] = { 0, 0, 0, 0 };
-				mScene.getLightPosition(i, lightPos);
-				mFbo.bindTexture(idxLightIn);
-				GLES20.glUniform4fv(lightIds[5], 1, lightPos, 0);
-				GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-				GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-						mFbo.getTexture(idxLightOut));
-				mScene.draw(lightIds[0], lightIds[1], lightIds[2], lightIds[3],
-						lightIds[4], -1);
-
-				int tmp = idxLightIn;
-				idxLightIn = idxLightOut;
-				idxLightOut = tmp;
+			int lightCount = mScene.getLightCount();
+			float lightPositions[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0 };
+			for (int i = 0; i < lightCount; ++i) {
+				mScene.getLightPosition(i, lightPositions, i * 4);
 			}
-
-			int idxScene = idxLightIn;
-			int mainIds[] = mMainShader.getHandles("uMVPMatrix", "aPosition",
-					"aColor");
-			mFbo.bindTexture(idxScene);
-			GLES20.glUseProgram(mMainShader.getProgram());
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-					mFbo.getTexture(idxLightOut));
-			mScene.draw(-1, mainIds[0], -1, mainIds[1], -1, mainIds[2]);
-
-			// mFbo.bindTexture(idxScene);
-			// mFilter.copy(mFbo.getTexture(idxLightOut));
+			int shaderIds[] = mSceneShader.getHandles("uMVMatrix",
+					"uMVPMatrix", "uNormalMatrix", "aPosition", "aNormal",
+					"aColor", "uLightCount", "uLights");
+			GLES20.glUseProgram(mSceneShader.getProgram());
+			GLES20.glUniform1i(shaderIds[6], lightCount);
+			GLES20.glUniform4fv(shaderIds[7], 4, lightPositions, 0);
+			mScene.draw(shaderIds[0], shaderIds[1], shaderIds[2], shaderIds[3],
+					shaderIds[4], shaderIds[5]);
 
 			if (mLensBlurEnabled) {
-				mFilter.lensBlur(mFbo.getTexture(idxScene), mFboHalf,
+				mFilter.lensBlur(mFbo.getTexture(TEX_SCENE), mFboHalf,
 						TEX_BOKEH1, TEX_BOKEH2, TEX_BOKEH3, mFbo, TEX_OUT,
 						mWidth / 2, mHeight / 2);
 			} else {
 				mFbo.bindTexture(TEX_OUT);
-				mFilter.copy(mFbo.getTexture(idxScene));
+				mFilter.copy(mFbo.getTexture(TEX_SCENE));
 			}
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 			GLES20.glViewport(0, 0, mWidth, mHeight);
 			if (mDivideScreen) {
 				mFilter.setClipCoords(-1f, 1f, 0f, -1f);
-				mFilter.copy(mFbo.getTexture(idxScene));
+				mFilter.copy(mFbo.getTexture(TEX_SCENE));
 				mFilter.setClipCoords(0f, 1f, 1f, -1f);
 				mFilter.copy(mFbo.getTexture(TEX_OUT));
 				mFilter.setClipCoords(-1f, 1f, 1f, -1f);
@@ -247,7 +222,7 @@ public final class GlslActivity extends Activity {
 			}
 			mResetFramebuffers = true;
 
-			mFbo.init(width, height, 3, true);
+			mFbo.init(width, height, 2, true);
 			mFboHalf.init(width / 2, height / 2, 3, false);
 		}
 
@@ -256,14 +231,10 @@ public final class GlslActivity extends Activity {
 			mFilter.init(GlslActivity.this);
 			mResetFramebuffers = false;
 
-			mMainShader.setProgram(getString(R.string.shader_render_scene_vs),
-					getString(R.string.shader_render_scene_fs));
-			mMainShader.addHandles("uMVPMatrix", "aPosition", "aColor");
-
-			mLightShader.setProgram(getString(R.string.shader_render_light_vs),
-					getString(R.string.shader_render_light_fs));
-			mLightShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
-					"uLightPos", "aPosition", "aNormal");
+			mSceneShader.setProgram(getString(R.string.shader_scene_vs),
+					getString(R.string.shader_scene_fs));
+			mSceneShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
+					"aPosition", "aNormal", "aColor", "uLightCount", "uLights");
 		}
 
 		public void setPreferences(Context ctx, SharedPreferences preferences) {

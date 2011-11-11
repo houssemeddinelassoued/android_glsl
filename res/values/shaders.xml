@@ -1,91 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="shader_render_scene_vs">
-        uniform mat4 uMVPMatrix;
-        
-        attribute vec4 aPosition;
-        attribute vec4 aColor;
-        
-        varying vec4 vPos;
-        varying vec4 vColor;
-        
-        void main() {
-            gl_Position = uMVPMatrix * aPosition;
-            vPos = gl_Position;
-            vPos.xy *= 0.5;
-            vColor = aColor;
-        }
-    </string>
-    <string name="shader_render_scene_fs">
-        precision mediump float;
-        uniform sampler2D sTexture;
-        varying vec4 vPos;
-        varying vec4 vColor;
-        
-        void main() {
-            vec2 pos = (vPos.xy / vPos.w) + 0.5;
-            vec2 lightning = texture2D(sTexture, pos).rg;
-            
-            const float ambient = 0.3;
-            float ambientPlusDiffuse = mix(ambient, 1.0, lightning.r);
-            float specular = lightning.g;
-            const vec4 white = vec4(1.0);
-            
-            gl_FragColor = vColor * ambientPlusDiffuse;
-			gl_FragColor = mix(gl_FragColor, white, specular);
-			gl_FragColor.a = vPos.z / vPos.w;
-        }
-    </string>
-    <string name="shader_render_light_vs">
+    <string name="shader_scene_vs">
         uniform mat4 uMVMatrix;
         uniform mat4 uMVPMatrix;
         uniform mat4 uNormalMatrix;
-        uniform vec4 uLightPos;
+        uniform vec4 uLights[4];
+        uniform lowp int uLightCount;
         
         attribute vec4 aPosition;
         attribute vec4 aNormal;
+        attribute vec4 aColor;
         
         varying vec4 vPos;
         varying vec4 vNormal;
-        varying vec4 vLightDir;
+        varying vec4 vColor;
         varying vec4 vEyeVec;
-        varying float vInvDist;
+        varying vec4 vLights[4];
+        
+        vec4 calcLight(vec4 lightPos, vec4 vertexPos) {
+            vec4 light = vec4(lightPos - vertexPos);
+            float dist = length(light.xyz);
+            light.w = inversesqrt(dist);
+            return light;
+        }
         
         void main() {
-            gl_Position = uMVPMatrix * aPosition;
+            gl_Position = uMVPMatrix * aPosition;            
             vPos = gl_Position;
             vPos.xy *= 0.5;
-            
             vec4 mvPos = uMVMatrix * aPosition;
-            vLightDir = vec4(uLightPos.xyz - mvPos.xyz, 0.0);
-            vEyeVec = vec4(-(mvPos.xyz), 0.0);
             vNormal = vec4((uNormalMatrix * aNormal).xyz, 0.0);
-            vInvDist = inversesqrt(length(vLightDir));
+            vColor = aColor;
+            vEyeVec = vec4(-(mvPos.xyz), 0.0);
+            
+            if (uLightCount > 0)
+                vLights[0] = calcLight(uLights[0], mvPos);
+            if (uLightCount > 1)
+                vLights[1] = calcLight(uLights[1], mvPos);
+            if (uLightCount > 2)
+                vLights[2] = calcLight(uLights[2], mvPos);
+            if (uLightCount > 3)
+                vLights[3] = calcLight(uLights[3], mvPos);
         }
     </string>
-    <string name="shader_render_light_fs">
+    <string name="shader_scene_fs">
         precision mediump float;
-        uniform sampler2D sTexture;
+        uniform lowp int uLightCount;
         varying vec4 vPos;
         varying vec4 vNormal;
-        varying vec4 vLightDir;
+        varying vec4 vColor;
         varying vec4 vEyeVec;
-        varying float vInvDist;
+        varying vec4 vLights[4];
+        
+        vec2 calcLight(vec4 normal, vec4 lightDir, vec4 eyeVec) {
+            vec2 lightning = vec2(0.0);
+            vec4 lightNormal = vec4(normalize(lightDir.xyz), 0.0);
+            
+            float lambert = dot(normal, lightNormal);
+            if (lambert > 0.0) {
+                lightning.x = lambert * lightDir.w;
+                vec4 reflection = reflect(-lightNormal, normal);
+                lightning.y = pow(max(dot(reflection, eyeVec), 0.0), 3.0) * lightDir.w;
+            }
+            return lightning;
+        }
         
         void main() {
             vec2 pos = (vPos.xy / vPos.w) + 0.5;
-            gl_FragColor = texture2D(sTexture, pos);
-            
             vec4 normal = normalize(vNormal);
-            vec4 light = normalize(vLightDir);
-            float lambert = dot(normal, light);
-            if (lambert > 0.0) {
-                gl_FragColor.r += lambert * vInvDist;
-                vec4 eye = normalize(vEyeVec);
-                vec4 reflection = reflect(-light, normal);
-                gl_FragColor.g += pow(max(dot(reflection, eye), 0.0), 2.0) * vInvDist;
-            }
+            vec4 eyeVec = normalize(vEyeVec);
+            
+            vec2 lightning = vec2(0.0);
+            if (uLightCount > 0)
+                lightning += calcLight(normal, vLights[0], eyeVec);
+            if (uLightCount > 1)
+                lightning += calcLight(normal, vLights[1], eyeVec);
+            if (uLightCount > 2)
+                lightning += calcLight(normal, vLights[2], eyeVec);
+            if (uLightCount > 3)
+                lightning += calcLight(normal, vLights[3], eyeVec);
+            
+            const float ambient = 0.3;
+            float ambientPlusDiffuse = min(ambient + lightning.x, 1.0);
+            float specular = min(lightning.y, 1.0);
+            
+            const vec4 white = vec4(1.0);
+            gl_FragColor = vColor * ambientPlusDiffuse;
+			gl_FragColor = mix(gl_FragColor, white, specular);
+			gl_FragColor.a = vPos.z / vPos.w;
         }
     </string>
     <string name="shader_filter_vs">
