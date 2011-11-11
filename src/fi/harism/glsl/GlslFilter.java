@@ -62,9 +62,8 @@ public class GlslFilter {
 				"uDelta0", "uDelta1");
 	}
 
-	public void lensBlur(int texSrc, GlslFramebuffer fboTmp, int idxTmp1,
-			int idxTmp2, int idxTmp3, GlslFramebuffer fboOut, int idxOut,
-			int w, int h) {
+	public void lensBlur(int texSrc, GlslFbo fboTmp, int idxTmp1, int idxTmp2,
+			int idxTmp3, GlslFbo fboOut, int idxOut, int w, int h) {
 		float angle = (float) (Math.PI * (SystemClock.uptimeMillis() % 10000) / 5000);
 
 		float[][] dir = new float[3][2];

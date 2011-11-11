@@ -127,8 +127,8 @@ public final class GlslActivity extends Activity {
 		private GlslFilter mFilter = new GlslFilter();
 
 		private boolean mResetFramebuffers;
-		private GlslFramebuffer mFbo = new GlslFramebuffer();
-		private GlslFramebuffer mFboHalf = new GlslFramebuffer();
+		private GlslFbo mFbo = new GlslFbo();
+		private GlslFbo mFboHalf = new GlslFbo();
 
 		private boolean mDivideScreen;
 		private boolean mLensBlurEnabled;

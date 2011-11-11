@@ -2,7 +2,7 @@ package fi.harism.glsl;
 
 import android.opengl.GLES20;
 
-public class GlslFramebuffer {
+public class GlslFbo {
 
 	private int mWidth, mHeight;
 	private int mFramebufferHandle = 0;
