@@ -3,6 +3,7 @@ package fi.harism.glsl.scene;
 import java.util.Vector;
 
 import android.opengl.Matrix;
+import fi.harism.glsl.GlslData;
 import fi.harism.glsl.GlslMatrix;
 
 public class GlslObject {
@@ -35,10 +36,9 @@ public class GlslObject {
 		}
 	}
 
-	public void draw(int mvMId, int mvpMId, int normalMId, int posId,
-			int normalId, int colorId) {
+	public void draw(GlslData mData) {
 		for (GlslObject obj : mChildObjects) {
-			obj.draw(mvMId, mvpMId, normalMId, posId, normalId, colorId);
+			obj.draw(mData);
 		}
 	}
 

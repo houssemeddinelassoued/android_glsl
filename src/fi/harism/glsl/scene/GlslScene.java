@@ -5,6 +5,7 @@ import java.util.Vector;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.opengl.Matrix;
+import fi.harism.glsl.GlslData;
 import fi.harism.glsl.R;
 
 public final class GlslScene {
@@ -23,10 +24,9 @@ public final class GlslScene {
 		}
 	}
 
-	public void draw(int mMId, int mvpMId, int normalMId, int posId,
-			int normalId, int colorId) {
+	public void draw(GlslData mData) {
 		for (GlslObject object : mObjects) {
-			object.draw(mMId, mvpMId, normalMId, posId, normalId, colorId);
+			object.draw(mData);
 		}
 	}
 

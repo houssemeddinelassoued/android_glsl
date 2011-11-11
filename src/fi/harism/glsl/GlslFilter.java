@@ -5,7 +5,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.opengl.GLES20;
 import android.os.SystemClock;
 
@@ -18,8 +17,6 @@ public class GlslFilter {
 	private GlslShader mLensBlur3 = new GlslShader();
 	private GlslShader mCopy = new GlslShader();
 	private FloatBuffer mTriangleVertices;
-
-	private int mBokehBlurSteps, mBokehBlurRadius;
 
 	private static final float[] mCoords = { -1f, 1f, -1f, -1f, 1f, 1f, 1f, -1f };
 
@@ -63,14 +60,16 @@ public class GlslFilter {
 	}
 
 	public void lensBlur(int texSrc, GlslFbo fboTmp, int idxTmp1, int idxTmp2,
-			int idxTmp3, GlslFbo fboOut, int idxOut, int w, int h) {
+			int idxTmp3, GlslFbo fboOut, int idxOut, GlslData mData) {
 		float angle = (float) (Math.PI * (SystemClock.uptimeMillis() % 10000) / 5000);
 
 		float[][] dir = new float[3][2];
 		for (int i = 0; i < 3; i++) {
 			float a = angle + i * (float) Math.PI * 2 / 3;
-			dir[i][0] = mBokehBlurRadius * (float) Math.sin(a) / w;
-			dir[i][1] = mBokehBlurRadius * (float) Math.cos(a) / h;
+			dir[i][0] = mData.mLensBlurRadius * (float) Math.sin(a)
+					/ mData.mViewWidth;
+			dir[i][1] = mData.mLensBlurRadius * (float) Math.cos(a)
+					/ mData.mViewHeight;
 		}
 
 		int idxPass1 = idxTmp1;
@@ -89,7 +88,7 @@ public class GlslFilter {
 		GLES20.glUseProgram(mLensBlur1.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass1));
-		GLES20.glUniform1i(mLensBlur1.getHandle("uSteps"), mBokehBlurSteps);
+		GLES20.glUniform1i(mLensBlur1.getHandle("uSteps"), mData.mLensBlurSteps);
 		GLES20.glUniform2fv(mLensBlur1.getHandle("uDelta0"), 1, dir[0], 0);
 		drawRect(mLensBlur1.getHandle("aPosition"));
 
@@ -100,7 +99,7 @@ public class GlslFilter {
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass2));
 		GLES20.glUniform1i(mLensBlur2.getHandle("sTexture1"), 1);
-		GLES20.glUniform1i(mLensBlur2.getHandle("uSteps"), mBokehBlurSteps);
+		GLES20.glUniform1i(mLensBlur2.getHandle("uSteps"), mData.mLensBlurSteps);
 		GLES20.glUniform2fv(mLensBlur2.getHandle("uDelta0"), 1, dir[1], 0);
 		drawRect(mLensBlur2.getHandle("aPosition"));
 
@@ -111,7 +110,7 @@ public class GlslFilter {
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass3));
 		GLES20.glUniform1i(mLensBlur3.getHandle("sTexture1"), 1);
-		GLES20.glUniform1i(mLensBlur3.getHandle("uSteps"), mBokehBlurSteps);
+		GLES20.glUniform1i(mLensBlur3.getHandle("uSteps"), mData.mLensBlurSteps);
 		GLES20.glUniform2fv(mLensBlur3.getHandle("uDelta0"), 1, dir[1], 0);
 		GLES20.glUniform2fv(mLensBlur3.getHandle("uDelta1"), 1, dir[2], 0);
 		drawRect(mLensBlur3.getHandle("aPosition"));
@@ -136,13 +135,6 @@ public class GlslFilter {
 		mTriangleVertices.put(5, y1);
 		mTriangleVertices.put(6, x2);
 		mTriangleVertices.put(7, y2);
-	}
-
-	public void setPreferences(Context ctx, SharedPreferences preferences) {
-		String key = ctx.getString(R.string.key_bokeh_radius);
-		mBokehBlurRadius = (int) preferences.getFloat(key, 0);
-		key = ctx.getString(R.string.key_bokeh_steps);
-		mBokehBlurSteps = (int) preferences.getFloat(key, 0);
 	}
 
 	private void drawRect(int positionHandle) {

@@ -5,6 +5,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import android.opengl.GLES20;
+import fi.harism.glsl.GlslData;
 
 public final class GlslCube extends GlslObject {
 
@@ -70,29 +71,30 @@ public final class GlslCube extends GlslObject {
 	}
 
 	@Override
-	public void draw(int mvId, int mvpMId, int normalMId, int posId,
-			int normalId, int colorId) {
+	public void draw(GlslData mData) {
 
-		super.draw(mvId, mvpMId, normalMId, posId, normalId, colorId);
+		super.draw(mData);
 
 		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
-		GLES20.glVertexAttribPointer(posId, 3, GLES20.GL_FLOAT, false,
-				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-		GLES20.glEnableVertexAttribArray(posId);
+		GLES20.glVertexAttribPointer(mData.aPosition, 3, GLES20.GL_FLOAT,
+				false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+		GLES20.glEnableVertexAttribArray(mData.aPosition);
 
 		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_NORMAL_OFFSET);
-		GLES20.glVertexAttribPointer(normalId, 3, GLES20.GL_FLOAT, false,
+		GLES20.glVertexAttribPointer(mData.aNormal, 3, GLES20.GL_FLOAT, false,
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-		GLES20.glEnableVertexAttribArray(normalId);
+		GLES20.glEnableVertexAttribArray(mData.aNormal);
 
 		mTriangleVertices.position(TRIANGLE_VERTICES_DATA_COL_OFFSET);
-		GLES20.glVertexAttribPointer(colorId, 3, GLES20.GL_FLOAT, false,
+		GLES20.glVertexAttribPointer(mData.aColor, 3, GLES20.GL_FLOAT, false,
 				TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-		GLES20.glEnableVertexAttribArray(colorId);
+		GLES20.glEnableVertexAttribArray(mData.aColor);
 
-		GLES20.glUniformMatrix4fv(mvId, 1, false, getModelViewM(), 0);
-		GLES20.glUniformMatrix4fv(mvpMId, 1, false, getModelViewProjM(), 0);
-		GLES20.glUniformMatrix4fv(normalMId, 1, false, getNormalM(), 0);
+		GLES20.glUniformMatrix4fv(mData.uMVMatrix, 1, false, getModelViewM(), 0);
+		GLES20.glUniformMatrix4fv(mData.uMVPMatrix, 1, false,
+				getModelViewProjM(), 0);
+		GLES20.glUniformMatrix4fv(mData.uNormalMatrix, 1, false, getNormalM(),
+				0);
 
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, mCubeIndices.length * 3);
 	}
