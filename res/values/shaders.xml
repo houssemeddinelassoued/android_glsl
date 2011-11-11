@@ -126,9 +126,10 @@
             
             float cocScale = (A * fLen * fPlane * (zFar- zNear)) / ((fPlane - fLen) * zNear *zFar);
             float cocBias = (A * fLen * (zNear - fPlane)) / ((fPlane + fLen) * zNear);
-            gl_FragColor.a = abs(gl_FragColor.a * cocScale + cocBias);
-            gl_FragColor.a = clamp(gl_FragColor.a, 1.0 / 256.0, 1.0);
-            gl_FragColor.rgb *= gl_FragColor.a;
+            
+            const float minDivider = 1.0 / 255.0;
+            gl_FragColor.a = min(abs(gl_FragColor.a * cocScale + cocBias), 1.0);
+            gl_FragColor.rgb *= mix(minDivider, 1.0, gl_FragColor.a);
         }
     </string>
     <string name="shader_filter_bokeh_out_fs">
@@ -139,7 +140,8 @@
         
         void main() {
             vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
-            colSrc0.rgb /= colSrc0.a;
+            const float minDivider = 1.0 / 255.0;
+            colSrc0.rgb /= mix(minDivider, 1.0, colSrc0.a);
             vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
             gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
         }
