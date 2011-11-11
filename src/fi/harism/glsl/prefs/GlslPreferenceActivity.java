@@ -1,9 +1,10 @@
-package fi.harism.glsl;
+package fi.harism.glsl.prefs;
 
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import fi.harism.glsl.R;
 
 public final class GlslPreferenceActivity extends PreferenceActivity implements
 		Preference.OnPreferenceClickListener {

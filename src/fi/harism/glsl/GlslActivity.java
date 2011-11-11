@@ -62,7 +62,7 @@ public final class GlslActivity extends Activity {
 		switch (item.getItemId()) {
 		case R.id.menu_settings:
 			startActivity(new Intent(this,
-					fi.harism.glsl.GlslPreferenceActivity.class));
+					fi.harism.glsl.prefs.GlslPreferenceActivity.class));
 			return true;
 		}
 		return false;

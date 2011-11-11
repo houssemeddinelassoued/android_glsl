@@ -20,7 +20,7 @@
             android:summary="Divides screen into two - showing original renderered image and filtered one side by side"
             android:title="Divide Screen" />
 
-        <fi.harism.glsl.GlslSliderPreference
+        <fi.harism.glsl.prefs.GlslSliderPreference
             android:defaultValue="2.0"
             android:key="@string/key_light_count"
             android:summary="Number of light sources. The bigger the value, the slower rendering will be"
@@ -49,7 +49,7 @@
                 android:summary="Enable / disable lens blur"
                 android:title="Enable" />
 
-            <fi.harism.glsl.GlslSliderPreference
+            <fi.harism.glsl.prefs.GlslSliderPreference
                 android:defaultValue="10"
                 android:dependency="@string/key_bokeh_enable"
                 android:key="@string/key_bokeh_radius"
@@ -59,7 +59,7 @@
                 harism:valueMin="1"
                 harism:valuePrecision="1" />
 
-            <fi.harism.glsl.GlslSliderPreference
+            <fi.harism.glsl.prefs.GlslSliderPreference
                 android:defaultValue="5"
                 android:dependency="@string/key_bokeh_enable"
                 android:key="@string/key_bokeh_steps"
