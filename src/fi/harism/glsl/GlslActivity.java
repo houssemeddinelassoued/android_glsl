@@ -132,7 +132,7 @@ public final class GlslActivity extends Activity {
 		private GlslFramebuffer mFboHalf = new GlslFramebuffer();
 
 		private boolean mDivideScreen;
-		private boolean mBokehEnabled;
+		private boolean mLensBlurEnabled;
 
 		private GlslShader mMainShader = new GlslShader();
 		private GlslShader mLightShader = new GlslShader();
@@ -205,10 +205,10 @@ public final class GlslActivity extends Activity {
 			// mFbo.bindTexture(idxScene);
 			// mFilter.copy(mFbo.getTexture(idxLightOut));
 
-			if (mBokehEnabled) {
-				mFilter.bokeh(mFbo.getTexture(idxScene), mFboHalf, TEX_BOKEH1,
-						TEX_BOKEH2, TEX_BOKEH3, mFbo, TEX_OUT, mWidth / 2,
-						mHeight / 2);
+			if (mLensBlurEnabled) {
+				mFilter.lensBlur(mFbo.getTexture(idxScene), mFboHalf,
+						TEX_BOKEH1, TEX_BOKEH2, TEX_BOKEH3, mFbo, TEX_OUT,
+						mWidth / 2, mHeight / 2);
 			} else {
 				mFbo.bindTexture(TEX_OUT);
 				mFilter.copy(mFbo.getTexture(idxScene));
@@ -270,7 +270,7 @@ public final class GlslActivity extends Activity {
 			String key = ctx.getString(R.string.key_divide_screen);
 			mDivideScreen = preferences.getBoolean(key, false);
 			key = ctx.getString(R.string.key_bokeh_enable);
-			mBokehEnabled = preferences.getBoolean(key, true);
+			mLensBlurEnabled = preferences.getBoolean(key, true);
 			mFilter.setPreferences(ctx, preferences);
 			mScene.setPreferences(ctx, preferences);
 		}

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    
+
     <string name="shader_render_scene_vs">
         uniform mat4 uMVPMatrix;
         
@@ -88,7 +88,6 @@
             }
         }
     </string>
-    
     <string name="shader_filter_vs">
         attribute vec4 aPosition;
         varying vec2 vTextureCoord;
@@ -98,19 +97,7 @@
             vTextureCoord = (gl_Position.xy + 1.0) * 0.5;
         }
     </string>
-    <string name="shader_filter_blend_fs">
-        precision mediump float;
-        uniform sampler2D sTexture0;
-        uniform sampler2D sTexture1;
-        varying vec2 vTextureCoord;
-        
-        void main() {
-            vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
-            vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
-            gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
-        }
-    </string>
-    <string name="shader_filter_bokeh_in_fs">
+    <string name="shader_lensblur_in_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
         varying vec2 vTextureCoord;
@@ -132,7 +119,7 @@
             gl_FragColor.rgb *= mix(minDivider, 1.0, gl_FragColor.a);
         }
     </string>
-    <string name="shader_filter_bokeh_out_fs">
+    <string name="shader_lensblur_out_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
         uniform sampler2D sTexture1;
@@ -146,7 +133,7 @@
             gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
         }
     </string>
-    <string name="shader_filter_bokeh1_fs">
+    <string name="shader_lensblur_1_fs">
         precision mediump float;
         uniform int uSteps;
         uniform sampler2D sTexture0;
@@ -167,10 +154,12 @@
                 weightSum += color0.a;
                 textureCoord0 += delta0;
             }
-            gl_FragColor /= weightSum;
+            if (weightSum > 0.0) {
+                gl_FragColor /= weightSum;
+            }
         }
     </string>
-    <string name="shader_filter_bokeh2_fs">
+    <string name="shader_lensblur_2_fs">
         precision mediump float;
         uniform int uSteps;
         uniform sampler2D sTexture0;
@@ -192,11 +181,13 @@
                 weightSum += color0.a;
                 textureCoord0 += delta0;
             }
-            gl_FragColor /= weightSum;
+            if (weightSum > 0.0) {
+                gl_FragColor /= weightSum;
+            }
             gl_FragColor = (gl_FragColor + texture2D(sTexture1, vTextureCoord)) * 0.5;
         }
     </string>
-    <string name="shader_filter_bokeh3_fs">
+    <string name="shader_lensblur_3_fs">
         precision mediump float;
         uniform int uSteps;
         uniform sampler2D sTexture0;
@@ -228,10 +219,12 @@
                 weightSum += color1.a;
                 textureCoord1 += delta1;
             }
-            gl_FragColor /= weightSum;
+            if (weightSum > 0.0) {
+                gl_FragColor /= weightSum;
+            }
         }
     </string>
-    <string name="shader_filter_copy_fs">
+    <string name="shader_copy_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
         varying vec2 vTextureCoord;
@@ -240,5 +233,5 @@
             gl_FragColor = texture2D(sTexture0, vTextureCoord);
         }
     </string>
-    
+
 </resources>
