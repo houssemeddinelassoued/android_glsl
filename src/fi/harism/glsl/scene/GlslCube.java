@@ -34,7 +34,7 @@ public final class GlslCube extends GlslObject {
 			{ 0, 0, 1f }, { 0, 0, -1f } };
 
 	private static final int[][][] mCubeIndices = {
-			// { vertice indices }, { color index }
+			// { vertices indices }, { color index }
 			{ { 3, 2, 0 }, { 0 }, { 4 } }, { { 0, 2, 1 }, { 0 }, { 4 } },
 			{ { 6, 7, 5 }, { 1 }, { 5 } }, { { 5, 7, 4 }, { 1 }, { 5 } },
 			{ { 7, 3, 4 }, { 2 }, { 1 } }, { { 4, 3, 0 }, { 2 }, { 1 } },
@@ -65,9 +65,9 @@ public final class GlslCube extends GlslObject {
 	}
 
 	@Override
-	public void animate(float timeDiff) {
-		// TODO: Implement me
-		super.animate(timeDiff);
+	public void animate() {
+		// TODO:
+		super.animate();
 	}
 
 	@Override
