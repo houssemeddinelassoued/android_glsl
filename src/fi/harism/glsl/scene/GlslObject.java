@@ -15,24 +15,16 @@ public class GlslObject {
 	private static final float[] mTempM = new float[16];
 	private final float[] mPosition = new float[3];
 	private final float[] mRotation = new float[3];
-	private final float[] mRotationD = new float[3];
 	private float mScaling = 1f;
 	private final Vector<GlslObject> mChildObjects = new Vector<GlslObject>();
 
-	public void addChildObject(GlslObject obj) {
+	public void addChild(GlslObject obj) {
 		mChildObjects.add(obj);
 	}
 
-	public void animate(float timeDiff) {
-		for (int i = 0; i < 3; ++i) {
-			mRotation[i] += mRotationD[i] * timeDiff;
-			while (mRotation[i] < 0f)
-				mRotation[i] += 360f;
-			while (mRotation[i] > 360f)
-				mRotation[i] -= 360f;
-		}
+	public void animate() {
 		for (GlslObject obj : mChildObjects) {
-			obj.animate(timeDiff);
+			obj.animate();
 		}
 	}
 
@@ -40,6 +32,14 @@ public class GlslObject {
 		for (GlslObject obj : mChildObjects) {
 			obj.draw(mData);
 		}
+	}
+
+	public final void getPosition(float[] position) {
+		copy(mPosition, position, 3);
+	}
+
+	public final void getRotation(float[] rotation) {
+		copy(mRotation, rotation, 3);
 	}
 
 	public final void setMVP(float[] mvM, float[] projM) {
@@ -61,25 +61,31 @@ public class GlslObject {
 	}
 
 	public final void setPosition(float x, float y, float z) {
-		mPosition[0] = x;
-		mPosition[1] = y;
-		mPosition[2] = z;
+		float[] position = { x, y, z };
+		copy(position, mPosition, 3);
+	}
+
+	public final void setPosition(float[] position) {
+		copy(position, mPosition, 3);
 	}
 
 	public final void setRotation(float x, float y, float z) {
-		mRotation[0] = x;
-		mRotation[1] = y;
-		mRotation[2] = z;
+		float[] rotation = { x, y, z };
+		copy(rotation, mRotation, 3);
 	}
 
-	public final void setRotationD(float x, float y, float z) {
-		mRotationD[0] = x;
-		mRotationD[1] = y;
-		mRotationD[2] = z;
+	public final void setRotation(float[] rotation) {
+		copy(rotation, mRotation, 3);
 	}
 
 	public final void setScaling(float scaling) {
 		mScaling = scaling;
+	}
+
+	private final void copy(float[] src, float[] dst, int count) {
+		for (int i = 0; i < count; ++i) {
+			dst[i] = src[i];
+		}
 	}
 
 	protected final float[] getModelViewM() {
