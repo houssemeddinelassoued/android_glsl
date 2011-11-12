@@ -147,7 +147,7 @@ public final class GlslActivity extends Activity {
 
 			mFbo.bind();
 			mFbo.bindTexture(TEX_SCENE);
-			GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			GLES20.glClearColor(0.2f, 0.3f, 0.5f, 1.0f);
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
 					| GLES20.GL_DEPTH_BUFFER_BIT);
 
@@ -188,7 +188,7 @@ public final class GlslActivity extends Activity {
 			if (mLastRenderTime != 0) {
 				long diff = time - mLastRenderTime;
 				mFps = 1000f / diff;
-				mScene.animate(diff / 1000f);
+				mScene.animate();
 			}
 			mLastRenderTime = time;
 
@@ -206,7 +206,7 @@ public final class GlslActivity extends Activity {
 			// mData.mZNear, 20);
 			GlslMatrix.setPerspectiveM(mData.mProjM, 45f, ratio, mData.mZNear,
 					mData.mZFar);
-			Matrix.setLookAtM(mData.mViewM, 0, 0f, 3f, -8f, 0f, 0f, 0f, 0f,
+			Matrix.setLookAtM(mData.mViewM, 0, 0f, 3f, -10f, 0f, 0f, 50f, 0f,
 					1.0f, 0.0f);
 
 			if (mResetFramebuffers) {
