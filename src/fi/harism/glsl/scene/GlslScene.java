@@ -68,54 +68,59 @@ public final class GlslScene {
 	}
 
 	private void initSceneBoxes1(int lightCount) {
+		GlslObject rootObject = new GlslObject();
+		mObjects.add(rootObject);
+		mAnimator.setRotation(rootObject, 3f, 20f, 6f);
+
 		GlslCube cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(15f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(-15f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(0f, 15f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(0f, -15f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(0f, 0f, 15f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(0f, 0f, -15f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(2f);
 		cube.setPosition(0f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
+		mAnimator.setRotation(cube, 15f, -5f, 7f);
 
 		for (int i = 0; i < lightCount; ++i) {
 			Light light = new Light();
@@ -127,54 +132,59 @@ public final class GlslScene {
 	}
 
 	private void initSceneBoxes2(int lightCount) {
+		GlslObject rootObject = new GlslObject();
+		mObjects.add(rootObject);
+		mAnimator.setRotation(rootObject, 3f, 20f, 6f);
+
 		GlslCube cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(15f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(-15f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(0f, 15f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(0f, -15f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(0f, 0f, 15f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(15f);
 		cube.setPosition(0f, 0f, -15f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
 
 		cube = new GlslCube();
 		cube.setScaling(4f);
 		cube.setPosition(0f, 0f, 0f);
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
-		mObjects.add(cube);
+		rootObject.addChild(cube);
+		mAnimator.setRotation(cube, 8f, 12f, -10f);
 
 		for (int i = 0; i < lightCount; ++i) {
 			Light light = new Light();

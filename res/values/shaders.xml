@@ -92,13 +92,13 @@
         void main() {
             gl_FragColor = texture2D(sTexture0, vTextureCoord);
             
-            float A = 3.0;
-            float fLen = 2.0;
-            float fPlane = 20.0;
+            float A = 1.0;
+            float fLen = 3.9;
+            float fPlane = 30.0;
             float zNear = 1.0;
-            float zFar = 20.0;
+            float zFar = 100.0;
             
-            float cocScale = (A * fLen * fPlane * (zFar- zNear)) / ((fPlane - fLen) * zNear *zFar);
+            float cocScale = (A * fLen * fPlane * (zFar- zNear)) / ((fPlane - fLen) * zNear * zFar);
             float cocBias = (A * fLen * (zNear - fPlane)) / ((fPlane + fLen) * zNear);
             
             const float minDivider = 1.0 / 255.0;
