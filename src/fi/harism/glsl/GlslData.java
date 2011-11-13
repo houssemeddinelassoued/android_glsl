@@ -11,8 +11,11 @@ public final class GlslData {
 	// Camera values.
 	public int mViewWidth;
 	public int mViewHeight;
+	public float mFovY;
 	public float mZNear;
 	public float mZFar;
+	public float mFStop;
+	public float mFocalPlane;
 	public float[] mViewM = new float[16];
 	public float[] mProjM = new float[16];
 	// Lens blur values.

@@ -9,26 +9,19 @@ public class GlslMatrix {
 
 		Matrix.setIdentityM(m, 0);
 
-		float xymax = zNear * (float) Math.tan(fovy * Math.PI / 360);
-		float ymin = -xymax;
-		float xmin = -xymax;
+		float ymax = zNear * (float) Math.tan(fovy * Math.PI / 360);
+		float xmax = ymax * aspect;
 
-		float width = xymax - xmin;
-		float height = xymax - ymin;
+		float temp = 2 * zNear;
+		float temp2 = xmax + xmax;
+		float temp3 = ymax + ymax;
+		float temp4 = zFar - zNear;
 
-		float depth = zFar - zNear;
-		float q = -(zFar + zNear) / depth;
-		float qn = -2 * (zFar * zNear) / depth;
-
-		float w = 2 * zNear / width;
-		w = w / aspect;
-		float h = 2 * zNear / height;
-
-		m[0] = w;
-		m[5] = h;
-		m[10] = q;
+		m[0] = temp / temp2;
+		m[5] = temp / temp3;
+		m[10] = (-zFar - zNear) / temp4;
 		m[11] = -1;
-		m[14] = qn;
+		m[14] = (-temp * zFar) / temp4;
 		m[15] = 0;
 	}
 

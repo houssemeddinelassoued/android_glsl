@@ -16,10 +16,10 @@
         varying vec4 vColor;
                
         void main() {
-            gl_Position = uMVPMatrix * aPosition;            
+            gl_Position = uMVPMatrix * vec4(aPosition.xyz, 1.0);
             vPos = gl_Position;
             vPos.xy *= 0.5;
-            vMvPos = uMVMatrix * aPosition;
+            vMvPos = uMVMatrix * aPosition, 1.0;
             vMvPos.w = 0.0;
             vNormal = uNormalMatrix * aNormal;
             vNormal.w = 0.0;
@@ -31,6 +31,8 @@
         precision mediump float;
         uniform vec4 uLights[4];
         uniform int uLightCount;
+        uniform float uCocScale;
+        uniform float uCocBias;
         varying vec4 vPos;
         varying vec4 vMvPos;
         varying vec4 vNormal;
@@ -71,8 +73,8 @@
             
             const vec4 white = vec4(1.0);
             gl_FragColor = vColor * ambientPlusDiffuse;
-			gl_FragColor = mix(gl_FragColor, white, specular);
-			gl_FragColor.a = vPos.z / vPos.w;
+            gl_FragColor = mix(gl_FragColor, white, specular);
+            gl_FragColor.a = abs(gl_FragCoord.z * uCocScale + uCocBias);
         }
     </string>
     <string name="shader_filter_vs">
@@ -87,22 +89,13 @@
     <string name="shader_lensblur_in_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
+        uniform float uCocScale;
+        uniform float uCocBias;
         varying vec2 vTextureCoord;
         
         void main() {
-            gl_FragColor = texture2D(sTexture0, vTextureCoord);
-            
-            float A = 1.0;
-            float fLen = 3.9;
-            float fPlane = 30.0;
-            float zNear = 1.0;
-            float zFar = 100.0;
-            
-            float cocScale = (A * fLen * fPlane * (zFar- zNear)) / ((fPlane - fLen) * zNear * zFar);
-            float cocBias = (A * fLen * (zNear - fPlane)) / ((fPlane + fLen) * zNear);
-            
             const float minDivider = 1.0 / 255.0;
-            gl_FragColor.a = min(abs(gl_FragColor.a * cocScale + cocBias), 1.0);
+            gl_FragColor = texture2D(sTexture0, vTextureCoord);
             gl_FragColor.rgb *= mix(minDivider, 1.0, gl_FragColor.a);
         }
     </string>

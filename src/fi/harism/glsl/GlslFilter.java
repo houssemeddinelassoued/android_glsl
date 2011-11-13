@@ -61,6 +61,7 @@ public class GlslFilter {
 
 	public void lensBlur(int texSrc, GlslFbo fboTmp, int idxTmp1, int idxTmp2,
 			int idxTmp3, GlslFbo fboOut, int idxOut, GlslData mData) {
+
 		float angle = (float) (Math.PI * (SystemClock.uptimeMillis() % 10000) / 5000);
 
 		float[][] dir = new float[3][2];
@@ -76,8 +77,8 @@ public class GlslFilter {
 		int idxPass2 = idxTmp2;
 		int idxPass3 = idxTmp3;
 		int idxPass4 = idxTmp1;
-		fboTmp.bind();
 
+		fboTmp.bind();
 		fboTmp.bindTexture(idxPass1);
 		GLES20.glUseProgram(mLensBlurIn.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);

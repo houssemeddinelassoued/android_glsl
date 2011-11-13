@@ -157,10 +157,29 @@ public final class GlslActivity extends Activity {
 			for (int i = 0; i < lightCount; ++i) {
 				mScene.getLightPosition(i, lightPositions, i * 4);
 			}
-			int shaderIds[] = mSceneShader.getHandles("uLightCount", "uLights");
+			int shaderIds[] = mSceneShader.getHandles("uLightCount", "uLights",
+					"uCocScale", "uCocBias");
 			GLES20.glUseProgram(mSceneShader.getProgram());
 			GLES20.glUniform1i(shaderIds[0], lightCount);
 			GLES20.glUniform4fv(shaderIds[1], 4, lightPositions, 0);
+
+			float zNear = mData.mZNear;
+			float zFar = mData.mZFar;
+
+			// TODO: Fixme
+			// http://en.wikipedia.org/wiki/Angle_of_view
+			float fLen = (float) ((180.0 * 3.0) / (Math.PI * mData.mFovY));
+			float fPlane = (fLen * 2) * mData.mFocalPlane * 20f;
+			float A = (fLen * 4) / mData.mFStop;
+
+			float cocScale = (A * fLen * fPlane * (zFar - zNear))
+					/ ((fPlane - fLen) * zNear * zFar);
+			float cocBias = (A * fLen * (zNear - fPlane))
+					/ ((fPlane + fLen) * zNear);
+
+			GLES20.glUniform1f(shaderIds[2], cocScale);
+			GLES20.glUniform1f(shaderIds[3], cocBias);
+
 			mScene.draw(mData);
 
 			if (mLensBlurEnabled) {
@@ -199,13 +218,14 @@ public final class GlslActivity extends Activity {
 			mData.mViewWidth = width;
 			mData.mViewHeight = height;
 			mData.mZNear = 1f;
-			mData.mZFar = 100f;
+			mData.mZFar = 101f;
+			mData.mFovY = 45f;
 
 			float ratio = (float) width / height;
 			// Matrix.frustumM(mData.mProjM, 0, -ratio, ratio, -1, 1,
 			// mData.mZNear, 20);
-			GlslMatrix.setPerspectiveM(mData.mProjM, 45f, ratio, mData.mZNear,
-					mData.mZFar);
+			GlslMatrix.setPerspectiveM(mData.mProjM, mData.mFovY, ratio,
+					mData.mZNear, mData.mZFar);
 			Matrix.setLookAtM(mData.mViewM, 0, 0f, 3f, -10f, 0f, 0f, 50f, 0f,
 					1.0f, 0.0f);
 
@@ -227,7 +247,8 @@ public final class GlslActivity extends Activity {
 			mSceneShader.setProgram(getString(R.string.shader_scene_vs),
 					getString(R.string.shader_scene_fs));
 			mSceneShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
-					"aPosition", "aNormal", "aColor", "uLightCount", "uLights");
+					"aPosition", "aNormal", "aColor", "uLightCount", "uLights",
+					"uCocScale", "uCocBias");
 
 			int shaderIds[] = mSceneShader.getHandles("uMVMatrix",
 					"uMVPMatrix", "uNormalMatrix", "aPosition", "aNormal",
@@ -243,11 +264,15 @@ public final class GlslActivity extends Activity {
 		public void setPreferences(Context ctx, SharedPreferences preferences) {
 			String key = ctx.getString(R.string.key_divide_screen);
 			mDivideScreen = preferences.getBoolean(key, false);
-			key = ctx.getString(R.string.key_bokeh_enable);
+			key = ctx.getString(R.string.key_lensblur_enable);
 			mLensBlurEnabled = preferences.getBoolean(key, true);
-			key = ctx.getString(R.string.key_bokeh_radius);
+			key = ctx.getString(R.string.key_lensblur_fstop);
+			mData.mFStop = preferences.getFloat(key, 0);
+			key = ctx.getString(R.string.key_lensblur_focal_plane);
+			mData.mFocalPlane = preferences.getFloat(key, 0);
+			key = ctx.getString(R.string.key_lensblur_steps);
 			mData.mLensBlurRadius = (int) preferences.getFloat(key, 0);
-			key = ctx.getString(R.string.key_bokeh_steps);
+			key = ctx.getString(R.string.key_lensblur_steps);
 			mData.mLensBlurSteps = (int) preferences.getFloat(key, 0);
 			mScene.setPreferences(ctx, preferences);
 		}

@@ -8,11 +8,12 @@
     <string name="key_divide_screen">divide_screen</string>
     <string name="key_per_pixel_lightning">per_pixel_lightning</string>
     <string name="key_reset">reset</string>
-    <string name="key_bokeh_enable">bokeh_enable</string>
-    <string name="key_bokeh_power">bokeh_power</string>
-    <string name="key_bokeh_radius">bokeh_radius</string>
-    <string name="key_bokeh_steps">bokeh_steps</string>
     <string name="key_scene">scene</string>
     <string name="key_light_count">light_count</string>
+    <string name="key_lensblur_enable">lensblur_enable</string>
+    <string name="key_lensblur_fstop">lensblur_fstop</string>
+    <string name="key_lensblur_focal_plane">lensblur_focal_plane</string>
+    <string name="key_lensblur_radius">lensblur_radius</string>
+    <string name="key_lensblur_steps">lensblur_steps</string>
 
 </resources>
