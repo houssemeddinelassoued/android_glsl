@@ -165,17 +165,21 @@ public final class GlslActivity extends Activity {
 
 			float zNear = mData.mZNear;
 			float zFar = mData.mZFar;
-
-			// TODO: Fixme
-			// http://en.wikipedia.org/wiki/Angle_of_view
-			float fLen = (float) ((180.0 * 3.0) / (Math.PI * mData.mFovY));
-			float fPlane = (fLen * 2) * mData.mFocalPlane * 20f;
-			float A = (fLen * 4) / mData.mFStop;
+			float fLen = 0.16f / (float) (2 * Math
+					.tan((mData.mFovY * Math.PI) / 360.0));
+			float fPlane = mData.mFocalPlane * mData.mZFar;
+			float A = fLen / (mData.mFStop / 1000f);
 
 			float cocScale = (A * fLen * fPlane * (zFar - zNear))
 					/ ((fPlane - fLen) * zNear * zFar);
 			float cocBias = (A * fLen * (zNear - fPlane))
 					/ ((fPlane + fLen) * zNear);
+
+			mData.mCocDivider = Math.max(Math.abs(cocScale + cocBias),
+					Math.abs(cocBias));
+			mData.mCocDivider = Math.min(mData.mCocDivider, 1f);
+			cocScale /= mData.mCocDivider;
+			cocBias /= mData.mCocDivider;
 
 			GLES20.glUniform1f(shaderIds[2], cocScale);
 			GLES20.glUniform1f(shaderIds[3], cocBias);
@@ -270,8 +274,8 @@ public final class GlslActivity extends Activity {
 			mData.mFStop = preferences.getFloat(key, 0);
 			key = ctx.getString(R.string.key_lensblur_focal_plane);
 			mData.mFocalPlane = preferences.getFloat(key, 0);
-			key = ctx.getString(R.string.key_lensblur_steps);
-			mData.mLensBlurRadius = (int) preferences.getFloat(key, 0);
+			key = ctx.getString(R.string.key_lensblur_radius);
+			mData.mCocRadius = preferences.getFloat(key, 0);
 			key = ctx.getString(R.string.key_lensblur_steps);
 			mData.mLensBlurSteps = (int) preferences.getFloat(key, 0);
 			mScene.setPreferences(ctx, preferences);

@@ -24,12 +24,20 @@ public class GlslFbo {
 		return mFramebufferHandle;
 	}
 
+	public int getHeight() {
+		return mHeight;
+	}
+
 	public int getRenderbuffer() {
 		return mRenderbufferHandle;
 	}
 
 	public int getTexture(int index) {
 		return mTextureHandles[index];
+	}
+
+	public int getWidth() {
+		return mWidth;
 	}
 
 	public void init(int width, int height, int textures) {

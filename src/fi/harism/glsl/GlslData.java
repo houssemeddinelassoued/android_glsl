@@ -14,11 +14,12 @@ public final class GlslData {
 	public float mFovY;
 	public float mZNear;
 	public float mZFar;
-	public float mFStop;
-	public float mFocalPlane;
 	public float[] mViewM = new float[16];
 	public float[] mProjM = new float[16];
 	// Lens blur values.
 	public int mLensBlurSteps;
-	public int mLensBlurRadius;
+	public float mFStop;
+	public float mFocalPlane;
+	public float mCocRadius;
+	public float mCocDivider;
 }

@@ -74,7 +74,8 @@
             const vec4 white = vec4(1.0);
             gl_FragColor = vColor * ambientPlusDiffuse;
             gl_FragColor = mix(gl_FragColor, white, specular);
-            gl_FragColor.a = abs(gl_FragCoord.z * uCocScale + uCocBias);
+            gl_FragColor.a = clamp(abs(gl_FragCoord.z * uCocScale + uCocBias), 0.0, 1.0);
+            /* gl_FragColor.rgb = vec3(gl_FragColor.a); */
         }
     </string>
     <string name="shader_filter_vs">
@@ -96,7 +97,8 @@
         void main() {
             const float minDivider = 1.0 / 255.0;
             gl_FragColor = texture2D(sTexture0, vTextureCoord);
-            gl_FragColor.rgb *= mix(minDivider, 1.0, gl_FragColor.a);
+            gl_FragColor.a = mix(minDivider, 1.0, gl_FragColor.a);
+            gl_FragColor.rgb *= gl_FragColor.a;
         }
     </string>
     <string name="shader_lensblur_out_fs">
@@ -107,41 +109,35 @@
         
         void main() {
             vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
-            const float minDivider = 1.0 / 255.0;
-            colSrc0.rgb /= mix(minDivider, 1.0, colSrc0.a);
+            colSrc0.rgb /= colSrc0.a;
             vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
             gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
+            /* gl_FragColor.rgb = vec3(colSrc0.a); */
         }
     </string>
     <string name="shader_lensblur_1_fs">
         precision mediump float;
-        uniform int uSteps;
+        uniform float uSteps;
         uniform sampler2D sTexture0;
         uniform vec2 uDelta0;
         varying vec2 vTextureCoord;
         
         void main() {
             gl_FragColor = vec4(0.0);
-            float coc0 = texture2D(sTexture0, vTextureCoord).a;
-            
-            float weightSum = 0.0;            
-            vec2 delta0 = vec2(uDelta0) * (coc0 / float(uSteps));
-            vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
-            vec4 color0;
-            for (int t = 0; t &lt;= uSteps; ++t) {
-                color0 = texture2D(sTexture0, textureCoord0);
+            float sum = 0.0;
+            vec2 textureCoord0 = vTextureCoord + uDelta0 * 0.5;
+            for (float t = 0.0; t &lt; uSteps; ++t) {
+                vec4 color0 = texture2D(sTexture0, textureCoord0);
                 gl_FragColor += color0 * color0.a;
-                weightSum += color0.a;
-                textureCoord0 += delta0;
+                sum += color0.a;
+                textureCoord0 += uDelta0;
             }
-            if (weightSum > 0.0) {
-                gl_FragColor /= weightSum;
-            }
+            gl_FragColor /= sum;
         }
     </string>
     <string name="shader_lensblur_2_fs">
         precision mediump float;
-        uniform int uSteps;
+        uniform float uSteps;
         uniform sampler2D sTexture0;
         uniform sampler2D sTexture1;
         uniform vec2 uDelta0;
@@ -149,27 +145,21 @@
         
         void main() {
             gl_FragColor = vec4(0.0);
-            float coc0 = texture2D(sTexture0, vTextureCoord).a;
-            
-            float weightSum = 0.0;            
-            vec2 delta0 = vec2(uDelta0) * (coc0 / float(uSteps));
-            vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
-            vec4 color0;
-            for (int t = 0; t &lt;= uSteps; ++t) {
-                color0 = texture2D(sTexture0, textureCoord0);
+            float sum = 0.0;
+            vec2 textureCoord0 = vTextureCoord + uDelta0 * 0.5;
+            for (float t = 0.0; t &lt;= uSteps; ++t) {
+                vec4 color0 = texture2D(sTexture0, textureCoord0);
                 gl_FragColor += color0 * color0.a;
-                weightSum += color0.a;
-                textureCoord0 += delta0;
+                sum += color0.a;
+                textureCoord0 += uDelta0;
             }
-            if (weightSum > 0.0) {
-                gl_FragColor /= weightSum;
-            }
+            gl_FragColor /= sum;
             gl_FragColor = (gl_FragColor + texture2D(sTexture1, vTextureCoord)) * 0.5;
         }
     </string>
     <string name="shader_lensblur_3_fs">
         precision mediump float;
-        uniform int uSteps;
+        uniform float uSteps;
         uniform sampler2D sTexture0;
         uniform sampler2D sTexture1;
         uniform vec2 uDelta0;
@@ -177,31 +167,24 @@
         varying vec2 vTextureCoord;
         
         void main() {
+            float sum = 0.0;
             gl_FragColor = vec4(0.0);
-            float coc0 = texture2D(sTexture0, vTextureCoord).a;
-            float coc1 = texture2D(sTexture1, vTextureCoord).a;
             
-            float weightSum = 0.0;            
-            vec2 delta0 = vec2(uDelta0) * (coc0 / float(uSteps));
-            vec2 delta1 = vec2(uDelta1) * (coc1 / float(uSteps));
-            vec2 textureCoord0 = vTextureCoord + delta0 * 0.5;
-            vec2 textureCoord1 = vTextureCoord + delta1 * 0.5;
+            vec2 textureCoord0 = vTextureCoord + uDelta0 * 0.5;
+            vec2 textureCoord1 = vTextureCoord + uDelta1 * 0.5;
             
-            vec4 color0, color1;
-            for (int t = 0; t &lt;= uSteps; ++t) {
-                color0 = texture2D(sTexture0, textureCoord0);
+            for (float t = 0.0; t &lt; uSteps; ++t) {
+                vec4 color0 = texture2D(sTexture0, textureCoord0);
                 gl_FragColor += color0 * color0.a;
-                weightSum += color0.a;
-                textureCoord0 += delta0;
+                sum += color0.a;
+                textureCoord0 += uDelta0;
                 
-                color1 = texture2D(sTexture1, textureCoord1);
+                vec4 color1 = texture2D(sTexture1, textureCoord1);
                 gl_FragColor += color1 * color1.a;
-                weightSum += color1.a;
-                textureCoord1 += delta1;
+                sum += color1.a;
+                textureCoord1 += uDelta1;
             }
-            if (weightSum > 0.0) {
-                gl_FragColor /= weightSum;
-            }
+            gl_FragColor /= sum;
         }
     </string>
     <string name="shader_copy_fs">

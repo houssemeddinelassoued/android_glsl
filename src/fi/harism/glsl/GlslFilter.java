@@ -63,14 +63,14 @@ public class GlslFilter {
 			int idxTmp3, GlslFbo fboOut, int idxOut, GlslData mData) {
 
 		float angle = (float) (Math.PI * (SystemClock.uptimeMillis() % 10000) / 5000);
+		float stepRadius = mData.mCocRadius * mData.mCocDivider
+				/ mData.mLensBlurSteps;
 
 		float[][] dir = new float[3][2];
 		for (int i = 0; i < 3; i++) {
 			float a = angle + i * (float) Math.PI * 2 / 3;
-			dir[i][0] = mData.mLensBlurRadius * (float) Math.sin(a)
-					/ mData.mViewWidth;
-			dir[i][1] = mData.mLensBlurRadius * (float) Math.cos(a)
-					/ mData.mViewHeight;
+			dir[i][0] = stepRadius * (float) Math.sin(a) / fboTmp.getWidth();
+			dir[i][1] = stepRadius * (float) Math.cos(a) / fboTmp.getHeight();
 		}
 
 		int idxPass1 = idxTmp1;
@@ -89,7 +89,7 @@ public class GlslFilter {
 		GLES20.glUseProgram(mLensBlur1.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass1));
-		GLES20.glUniform1i(mLensBlur1.getHandle("uSteps"), mData.mLensBlurSteps);
+		GLES20.glUniform1f(mLensBlur1.getHandle("uSteps"), mData.mLensBlurSteps);
 		GLES20.glUniform2fv(mLensBlur1.getHandle("uDelta0"), 1, dir[0], 0);
 		drawRect(mLensBlur1.getHandle("aPosition"));
 
@@ -100,7 +100,7 @@ public class GlslFilter {
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass2));
 		GLES20.glUniform1i(mLensBlur2.getHandle("sTexture1"), 1);
-		GLES20.glUniform1i(mLensBlur2.getHandle("uSteps"), mData.mLensBlurSteps);
+		GLES20.glUniform1f(mLensBlur2.getHandle("uSteps"), mData.mLensBlurSteps);
 		GLES20.glUniform2fv(mLensBlur2.getHandle("uDelta0"), 1, dir[1], 0);
 		drawRect(mLensBlur2.getHandle("aPosition"));
 
@@ -111,7 +111,7 @@ public class GlslFilter {
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass3));
 		GLES20.glUniform1i(mLensBlur3.getHandle("sTexture1"), 1);
-		GLES20.glUniform1i(mLensBlur3.getHandle("uSteps"), mData.mLensBlurSteps);
+		GLES20.glUniform1f(mLensBlur3.getHandle("uSteps"), mData.mLensBlurSteps);
 		GLES20.glUniform2fv(mLensBlur3.getHandle("uDelta0"), 1, dir[1], 0);
 		GLES20.glUniform2fv(mLensBlur3.getHandle("uDelta1"), 1, dir[2], 0);
 		drawRect(mLensBlur3.getHandle("aPosition"));
