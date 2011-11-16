@@ -145,12 +145,6 @@ public final class GlslActivity extends Activity {
 			GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 			GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
-			mFbo.bind();
-			mFbo.bindTexture(TEX_SCENE);
-			GLES20.glClearColor(0.2f, 0.3f, 0.5f, 1.0f);
-			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
-					| GLES20.GL_DEPTH_BUFFER_BIT);
-
 			int lightCount = mScene.getLightCount();
 			float lightPositions[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					0, 0, 0 };
@@ -184,6 +178,11 @@ public final class GlslActivity extends Activity {
 			GLES20.glUniform1f(shaderIds[2], cocScale);
 			GLES20.glUniform1f(shaderIds[3], cocBias);
 
+			mFbo.bind();
+			mFbo.bindTexture(TEX_SCENE);
+			GLES20.glClearColor(0.2f, 0.3f, 0.5f, 1.0f);
+			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
+					| GLES20.GL_DEPTH_BUFFER_BIT);
 			mScene.draw(mData);
 
 			if (mLensBlurEnabled) {
