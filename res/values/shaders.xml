@@ -109,10 +109,10 @@
         
         void main() {
             vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
-            colSrc0.rgb /= colSrc0.a;
+            /*colSrc0.rgb /= colSrc0.a;*/
             vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
             gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
-            /* gl_FragColor.rgb = vec3(colSrc0.a); */
+            /*gl_FragColor.rgb = vec3(colSrc0.rgb);*/
         }
     </string>
     <string name="shader_lensblur_1_fs">
@@ -123,14 +123,17 @@
         varying vec2 vTextureCoord;
         
         void main() {
+            float sum = 0.0, step = 1.0 / uSteps;
+            float coc = texture2D(sTexture0, vTextureCoord).a;
             gl_FragColor = vec4(0.0);
-            float sum = 0.0;
-            vec2 textureCoord0 = vTextureCoord + uDelta0 * 0.5;
-            for (float t = 0.0; t &lt; uSteps; ++t) {
-                vec4 color0 = texture2D(sTexture0, textureCoord0);
-                gl_FragColor += color0 * color0.a;
-                sum += color0.a;
+            vec2 textureCoord0 = vTextureCoord;
+            for (float t = 0.0; t &lt; 1.0 &amp;&amp; t &lt;= coc ; t += step) {
+                vec4 sample0 = texture2D(sTexture0, textureCoord0);
+                if (sample0.a >= coc || sample0.a >= t) {
+                    gl_FragColor += sample0;
+                }
                 textureCoord0 += uDelta0;
+                sum += 1.0;
             }
             gl_FragColor /= sum;
         }
@@ -144,14 +147,17 @@
         varying vec2 vTextureCoord;
         
         void main() {
+            float sum = 0.0, step = 1.0 / uSteps;
+            float coc = texture2D(sTexture0, vTextureCoord).a;
             gl_FragColor = vec4(0.0);
-            float sum = 0.0;
-            vec2 textureCoord0 = vTextureCoord + uDelta0 * 0.5;
-            for (float t = 0.0; t &lt;= uSteps; ++t) {
-                vec4 color0 = texture2D(sTexture0, textureCoord0);
-                gl_FragColor += color0 * color0.a;
-                sum += color0.a;
+            vec2 textureCoord0 = vTextureCoord;
+            for (float t = 0.0; t &lt; 1.0 &amp;&amp; t &lt;= coc; t += step) {
+                vec4 sample0 = texture2D(sTexture0, textureCoord0);
+                if (sample0.a >= coc || sample0.a >= t) {
+                    gl_FragColor += sample0;
+                }
                 textureCoord0 += uDelta0;
+                sum += 1.0;
             }
             gl_FragColor /= sum;
             gl_FragColor = (gl_FragColor + texture2D(sTexture1, vTextureCoord)) * 0.5;
@@ -169,22 +175,17 @@
         void main() {
             float sum = 0.0;
             gl_FragColor = vec4(0.0);
-            
-            vec2 textureCoord0 = vTextureCoord + uDelta0 * 0.5;
-            vec2 textureCoord1 = vTextureCoord + uDelta1 * 0.5;
-            
-            for (float t = 0.0; t &lt; uSteps; ++t) {
-                vec4 color0 = texture2D(sTexture0, textureCoord0);
-                gl_FragColor += color0 * color0.a;
-                sum += color0.a;
+            vec2 textureCoord0 = vec2(vTextureCoord);
+            vec2 textureCoord1 = vec2(vTextureCoord);
+            for (float t = 0.0; t &lt; uSteps; t++) {
+                gl_FragColor += texture2D(sTexture0, textureCoord0);
+                gl_FragColor += texture2D(sTexture1, textureCoord1);
                 textureCoord0 += uDelta0;
-                
-                vec4 color1 = texture2D(sTexture1, textureCoord1);
-                gl_FragColor += color1 * color1.a;
-                sum += color1.a;
                 textureCoord1 += uDelta1;
+                sum += 2.0;
             }
             gl_FragColor /= sum;
+            gl_FragColor.rgb /= gl_FragColor.a;
         }
     </string>
     <string name="shader_copy_fs">
