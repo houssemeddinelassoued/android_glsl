@@ -52,7 +52,7 @@ public class GlslFilter {
 		mLensBlur2.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_2_fs));
 		mLensBlur2.addHandles("aPosition", "uSteps", "sTexture0", "sTexture1",
-				"uDelta0");
+				"uDelta0", "uDelta1");
 		mLensBlur3.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_3_fs));
 		mLensBlur3.addHandles("aPosition", "uSteps", "sTexture0", "sTexture1",
@@ -95,25 +95,28 @@ public class GlslFilter {
 
 		fboTmp.bindTexture(idxPass3);
 		GLES20.glUseProgram(mLensBlur2.getProgram());
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass1));
+		// GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		// GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
+		// fboTmp.getTexture(idxPass1));
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass2));
 		GLES20.glUniform1i(mLensBlur2.getHandle("sTexture1"), 1);
 		GLES20.glUniform1f(mLensBlur2.getHandle("uSteps"), mData.mLensBlurSteps);
-		GLES20.glUniform2fv(mLensBlur2.getHandle("uDelta0"), 1, dir[1], 0);
+		GLES20.glUniform2fv(mLensBlur2.getHandle("uDelta0"), 1, dir[0], 0);
+		GLES20.glUniform2fv(mLensBlur2.getHandle("uDelta1"), 1, dir[1], 0);
 		drawRect(mLensBlur2.getHandle("aPosition"));
 
 		fboTmp.bindTexture(idxPass4);
 		GLES20.glUseProgram(mLensBlur3.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass2));
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTmp.getTexture(idxPass3));
+		// GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+		// GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
+		// fboTmp.getTexture(idxPass2));
 		GLES20.glUniform1i(mLensBlur3.getHandle("sTexture1"), 1);
 		GLES20.glUniform1f(mLensBlur3.getHandle("uSteps"), mData.mLensBlurSteps);
-		GLES20.glUniform2fv(mLensBlur3.getHandle("uDelta0"), 1, dir[1], 0);
-		GLES20.glUniform2fv(mLensBlur3.getHandle("uDelta1"), 1, dir[2], 0);
+		GLES20.glUniform2fv(mLensBlur3.getHandle("uDelta0"), 1, dir[2], 0);
+		GLES20.glUniform2fv(mLensBlur3.getHandle("uDelta1"), 1, dir[1], 0);
 		drawRect(mLensBlur3.getHandle("aPosition"));
 
 		fboOut.bind();
