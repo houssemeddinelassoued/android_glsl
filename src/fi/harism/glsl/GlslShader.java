@@ -3,6 +3,7 @@ package fi.harism.glsl;
 import java.util.HashMap;
 
 import android.opengl.GLES20;
+import android.util.Log;
 
 public class GlslShader {
 
@@ -20,8 +21,8 @@ public class GlslShader {
 				handle = GLES20.glGetUniformLocation(mProgram, name);
 			}
 			if (handle == -1) {
-				throw new RuntimeException("Could not get attrib location for "
-						+ name);
+				Log.d("GlslShader", "Could not get attrib location for " + name);
+				return;
 			}
 			mShaderHandleMap.put(name, handle);
 		}
@@ -31,7 +32,8 @@ public class GlslShader {
 		if (mShaderHandleMap.containsKey(name)) {
 			return mShaderHandleMap.get(name);
 		}
-		throw new RuntimeException("Attribute handle " + name + " not found.");
+		Log.d("GlslShader", "Attribute handle " + name + " not found.");
+		return -1;
 	}
 
 	public final int[] getHandles(String... names) {
