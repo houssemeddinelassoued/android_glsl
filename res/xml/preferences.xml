@@ -75,7 +75,7 @@
                 android:key="@string/key_lensblur_radius"
                 android:summary="Blur radius"
                 android:title="Radius (= %.0f)"
-                harism:valueMax="20"
+                harism:valueMax="50"
                 harism:valueMin="1"
                 harism:valuePrecision="1" />
 
@@ -85,7 +85,7 @@
                 android:key="@string/key_lensblur_steps"
                 android:summary="Steps during blurring"
                 android:title="Blur steps (= %.0f)"
-                harism:valueMax="10"
+                harism:valueMax="20"
                 harism:valueMin="1"
                 harism:valuePrecision="1" />
         </PreferenceScreen>
