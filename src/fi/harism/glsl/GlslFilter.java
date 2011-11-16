@@ -68,9 +68,9 @@ public class GlslFilter {
 
 		float[][] dir = new float[3][2];
 		for (int i = 0; i < 3; i++) {
-			float a = angle + i * (float) Math.PI * 2 / 3;
-			dir[i][0] = stepRadius * (float) Math.sin(a) / fboTmp.getWidth();
-			dir[i][1] = stepRadius * (float) Math.cos(a) / fboTmp.getHeight();
+			double a = angle + i * Math.PI * 2 / 3;
+			dir[i][0] = (float) (stepRadius * Math.sin(a) / fboTmp.getWidth());
+			dir[i][1] = (float) (stepRadius * Math.cos(a) / fboTmp.getHeight());
 		}
 
 		int idxPass1 = idxTmp1;
