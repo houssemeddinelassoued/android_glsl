@@ -14,7 +14,7 @@
         varying vec4 vMvPos;
         varying vec4 vNormal;
         varying vec4 vColor;
-               
+        
         void main() {
             gl_Position = uMVPMatrix * vec4(aPosition.xyz, 1.0);
             vPos = gl_Position;
@@ -109,7 +109,7 @@
         
         void main() {
             vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
-            /*colSrc0.rgb /= colSrc0.a;*/
+            colSrc0.rgb /= colSrc0.a;
             vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
             gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
             /*gl_FragColor.rgb = vec3(colSrc0.rgb);*/
@@ -123,17 +123,18 @@
         varying vec2 vTextureCoord;
         
         void main() {
-            float sum = 0.0, step = 1.0 / uSteps;
+            float sum = 0.0;
             float coc = texture2D(sTexture0, vTextureCoord).a;
-            gl_FragColor = vec4(0.0);
             vec2 textureCoord0 = vTextureCoord;
-            for (float t = 0.0; t &lt; 1.0 &amp;&amp; t &lt;= coc ; t += step) {
+            gl_FragColor = vec4(0.0);
+            for (float t = 0.0; t &lt; uSteps; ++t) {
                 vec4 sample0 = texture2D(sTexture0, textureCoord0);
-                if (sample0.a >= coc || sample0.a >= t) {
-                    gl_FragColor += sample0;
+                if (sample0.a * uSteps &gt;= t) {
+                    float c = 1.0 - abs(sample0.a - coc);
+                    gl_FragColor += sample0 * c;
+                    sum += c;
                 }
                 textureCoord0 += uDelta0;
-                sum += 1.0;
             }
             gl_FragColor /= sum;
         }
@@ -148,20 +149,22 @@
         varying vec2 vTextureCoord;
         
         void main() {
-            float sum = 0.0, step = 1.0 / uSteps;
+            float sum = 0.0;
             float coc = texture2D(sTexture0, vTextureCoord).a;
-            gl_FragColor = vec4(0.0);
             vec2 textureCoord1 = vTextureCoord - uDelta0 * 0.5;
-            for (float t = 0.0; t &lt; 1.0 &amp;&amp; t &lt;= coc; t += step) {
+            gl_FragColor = vec4(0.0);
+            for (float t = 0.0; t &lt; uSteps; ++t) {
                 vec4 sample0 = texture2D(sTexture0, textureCoord1);
-                if (sample0.a >= coc || sample0.a >= t) {
-                    gl_FragColor += sample0;
+                if (sample0.a * uSteps &gt;= t) {
+                    float c = 1.0 - abs(sample0.a - coc);
+                    gl_FragColor += sample0 * c;
+                    sum += c;
                 }
                 textureCoord1 += uDelta1;
-                sum += 1.0;
             }
             gl_FragColor /= sum;
-            gl_FragColor = (gl_FragColor + texture2D(sTexture1, vTextureCoord - uDelta1 * 0.5)) * 0.5;
+            gl_FragColor += texture2D(sTexture1, vTextureCoord - uDelta1 * 0.5);
+            gl_FragColor *= 0.5;
         }
     </string>
     <string name="shader_lensblur_3_fs">
@@ -175,18 +178,28 @@
         
         void main() {
             float sum = 0.0;
-            gl_FragColor = vec4(0.0);
             vec2 textureCoord0 = vTextureCoord;
             vec2 textureCoord1 = vTextureCoord - uDelta0 * 0.5;
+            float coc0 = texture2D(sTexture0, textureCoord0).a;
+            float coc1 = texture2D(sTexture1, textureCoord1).a;
+            gl_FragColor = vec4(0.0);
             for (float t = 0.0; t &lt; uSteps; t++) {
-                gl_FragColor += texture2D(sTexture0, textureCoord0);
-                gl_FragColor += texture2D(sTexture1, textureCoord1);
+                vec4 sample0 = texture2D(sTexture0, textureCoord0);
+                vec4 sample1 = texture2D(sTexture1, textureCoord1);
+                if (sample0.a * uSteps &gt;= t) {
+                    float c = 2.0 * (1.0 - abs(sample0.a - coc0));
+                    gl_FragColor += sample0 * c;
+                    sum += c;
+                }
+                if (sample1.a * uSteps &gt;= t) {
+                    float c = 1.0 - abs(sample1.a - coc1);
+                    gl_FragColor += sample1 * c;
+                    sum += c;
+                }
                 textureCoord0 += uDelta0;
                 textureCoord1 += uDelta1;
-                sum += 2.0;
             }
             gl_FragColor /= sum;
-            gl_FragColor.rgb /= gl_FragColor.a;
         }
     </string>
     <string name="shader_copy_fs">
