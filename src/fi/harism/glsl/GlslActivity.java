@@ -112,9 +112,6 @@ public final class GlslActivity extends Activity {
 
 		private static final int TEX_OUT = 0;
 		private static final int TEX_SCENE = 1;
-		private static final int TEX_BOKEH1 = 0;
-		private static final int TEX_BOKEH2 = 1;
-		private static final int TEX_BOKEH3 = 2;
 
 		private long mLastRenderTime = 0;
 
@@ -124,7 +121,6 @@ public final class GlslActivity extends Activity {
 
 		private boolean mResetFramebuffers;
 		private GlslFbo mFbo = new GlslFbo();
-		private GlslFbo mFboHalf = new GlslFbo();
 
 		private boolean mDivideScreen;
 		private boolean mLensBlurEnabled;
@@ -186,8 +182,7 @@ public final class GlslActivity extends Activity {
 			mScene.draw(mData);
 
 			if (mLensBlurEnabled) {
-				mFilter.lensBlur(mFbo.getTexture(TEX_SCENE), mFboHalf,
-						TEX_BOKEH1, TEX_BOKEH2, TEX_BOKEH3, mFbo, TEX_OUT,
+				mFilter.lensBlur(mFbo.getTexture(TEX_SCENE), mFbo, TEX_OUT,
 						mData);
 			} else {
 				mFbo.bindTexture(TEX_OUT);
@@ -234,12 +229,12 @@ public final class GlslActivity extends Activity {
 
 			if (mResetFramebuffers) {
 				mFbo.reset();
-				mFboHalf.reset();
+				mFilter.reset();
 			}
 			mResetFramebuffers = true;
 
 			mFbo.init(width, height, 2, true);
-			mFboHalf.init(width / 2, height / 2, 3, false);
+			mFilter.init(width, height);
 		}
 
 		@Override

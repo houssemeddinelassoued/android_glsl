@@ -90,8 +90,6 @@
     <string name="shader_lensblur_in_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
-        uniform float uCocScale;
-        uniform float uCocBias;
         varying vec2 vTextureCoord;
         
         void main() {
@@ -103,16 +101,38 @@
     </string>
     <string name="shader_lensblur_out_fs">
         precision mediump float;
-        uniform sampler2D sTexture0;
-        uniform sampler2D sTexture1;
+        uniform sampler2D sTextureSrc;
+        uniform sampler2D sTextureBokeh;
+        uniform sampler2D sTextureBokehHdr;
         varying vec2 vTextureCoord;
         
         void main() {
-            vec4 colSrc0 = texture2D(sTexture0, vTextureCoord);
-            colSrc0.rgb /= colSrc0.a;
-            vec4 colSrc1 = texture2D(sTexture1, vTextureCoord);
-            gl_FragColor = mix(colSrc1, colSrc0, colSrc0.a);
-            /*gl_FragColor.rgb = vec3(colSrc0.rgb);*/
+            vec4 colSrc = texture2D(sTextureSrc, vTextureCoord);
+            vec4 colBokeh = texture2D(sTextureBokeh, vTextureCoord);
+            vec4 colBokehHdr = texture2D(sTextureBokehHdr, vTextureCoord);
+            
+            gl_FragColor = mix(colSrc, colBokeh, colBokeh.a);
+            gl_FragColor.rgb += colBokehHdr.rgb * min(0.5, pow(colBokehHdr.a, 1.0 / 4.0));
+        }
+    </string>
+    <string name="shader_lensblur_hdr_in_fs">
+        precision mediump float;
+        uniform sampler2D sTexture0;
+        varying vec2 vTextureCoord;
+        
+        void main() {
+            const float minDivider = 1.0 / 255.0;
+            const float threshold = 0.3;
+            const vec3 perception = vec3(0.299, 0.587, 0.114);
+            
+            gl_FragColor = texture2D(sTexture0, vTextureCoord);
+            
+            float luminance = dot(perception, gl_FragColor.rgb);
+            if (luminance &lt; threshold)
+                gl_FragColor.rgb = vec3(0.0);
+            
+            gl_FragColor.a = mix(minDivider, 1.0, gl_FragColor.a);
+            gl_FragColor.rgb *= gl_FragColor.a;
         }
     </string>
     <string name="shader_lensblur_1_fs">
@@ -129,7 +149,7 @@
             gl_FragColor = vec4(0.0);
             for (float t = 0.0; t &lt; uSteps; ++t) {
                 vec4 sample0 = texture2D(sTexture0, textureCoord0);
-                if (sample0.a * uSteps &gt;= t) {
+                if (sample0.a * uSteps >= t) {
                     float c = 1.0 - abs(sample0.a - coc);
                     gl_FragColor += sample0 * c;
                     sum += c;
@@ -155,7 +175,7 @@
             gl_FragColor = vec4(0.0);
             for (float t = 0.0; t &lt; uSteps; ++t) {
                 vec4 sample0 = texture2D(sTexture0, textureCoord1);
-                if (sample0.a * uSteps &gt;= t) {
+                if (sample0.a * uSteps >= t) {
                     float c = 1.0 - abs(sample0.a - coc);
                     gl_FragColor += sample0 * c;
                     sum += c;
@@ -186,12 +206,12 @@
             for (float t = 0.0; t &lt; uSteps; t++) {
                 vec4 sample0 = texture2D(sTexture0, textureCoord0);
                 vec4 sample1 = texture2D(sTexture1, textureCoord1);
-                if (sample0.a * uSteps &gt;= t) {
+                if (sample0.a * uSteps >= t) {
                     float c = 2.0 * (1.0 - abs(sample0.a - coc0));
                     gl_FragColor += sample0 * c;
                     sum += c;
                 }
-                if (sample1.a * uSteps &gt;= t) {
+                if (sample1.a * uSteps >= t) {
                     float c = 1.0 - abs(sample1.a - coc1);
                     gl_FragColor += sample1 * c;
                     sum += c;
@@ -200,6 +220,7 @@
                 textureCoord1 += uDelta1;
             }
             gl_FragColor /= sum;
+            gl_FragColor.rgb /= gl_FragColor.a;
         }
     </string>
     <string name="shader_copy_fs">
