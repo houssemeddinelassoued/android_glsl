@@ -112,7 +112,7 @@
             vec4 colBokehHdr = texture2D(sTextureBokehHdr, vTextureCoord);
             
             gl_FragColor = mix(colSrc, colBokeh, colBokeh.a);
-            gl_FragColor.rgb += colBokehHdr.rgb * min(0.5, pow(colBokehHdr.a, 1.0 / 4.0));
+            /*gl_FragColor.rgb += colBokehHdr.rgb * min(0.5, pow(colBokehHdr.a, 1.0 / 4.0));*/
         }
     </string>
     <string name="shader_lensblur_hdr_in_fs">
@@ -147,7 +147,7 @@
             float coc = texture2D(sTexture0, vTextureCoord).a;
             vec2 textureCoord0 = vTextureCoord;
             gl_FragColor = vec4(0.0);
-            for (float t = 0.0; t &lt; uSteps; ++t) {
+            for (float t = 0.0; t &lt;= uSteps; ++t) {
                 vec4 sample0 = texture2D(sTexture0, textureCoord0);
                 if (sample0.a * uSteps >= t) {
                     float c = 1.0 - abs(sample0.a - coc);
@@ -173,7 +173,7 @@
             float coc = texture2D(sTexture0, vTextureCoord).a;
             vec2 textureCoord1 = vTextureCoord - uDelta0 * 0.5;
             gl_FragColor = vec4(0.0);
-            for (float t = 0.0; t &lt; uSteps; ++t) {
+            for (float t = 0.0; t &lt;= uSteps; ++t) {
                 vec4 sample0 = texture2D(sTexture0, textureCoord1);
                 if (sample0.a * uSteps >= t) {
                     float c = 1.0 - abs(sample0.a - coc);
@@ -203,7 +203,7 @@
             float coc0 = texture2D(sTexture0, textureCoord0).a;
             float coc1 = texture2D(sTexture1, textureCoord1).a;
             gl_FragColor = vec4(0.0);
-            for (float t = 0.0; t &lt; uSteps; t++) {
+            for (float t = 0.0; t &lt;= uSteps; t++) {
                 vec4 sample0 = texture2D(sTexture0, textureCoord0);
                 vec4 sample1 = texture2D(sTexture1, textureCoord1);
                 if (sample0.a * uSteps >= t) {

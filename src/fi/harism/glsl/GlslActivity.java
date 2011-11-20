@@ -12,14 +12,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.opengl.Matrix;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.Menu;
 import android.view.MenuItem;
+import fi.harism.glsl.scene.GlslLight;
 import fi.harism.glsl.scene.GlslScene;
+import fi.harism.glsl.scene.GlslShaderIds;
 
 public final class GlslActivity extends Activity {
 
@@ -110,6 +111,9 @@ public final class GlslActivity extends Activity {
 
 	private final class Renderer implements GLSurfaceView.Renderer {
 
+		public static final int SCENE_BOXES1 = 0;
+		public static final int SCENE_BOXES2 = 1;
+
 		private static final int TEX_OUT = 0;
 		private static final int TEX_SCENE = 1;
 
@@ -117,7 +121,8 @@ public final class GlslActivity extends Activity {
 
 		private GlslScene mScene = new GlslScene();
 		private GlslFilter mFilter = new GlslFilter();
-		private GlslData mData = new GlslData();
+		private GlslCamera mCamera = new GlslCamera();
+		private GlslShaderIds mShaderIds = new GlslShaderIds();
 
 		private boolean mResetFramebuffers;
 		private GlslFbo mFbo = new GlslFbo();
@@ -134,7 +139,7 @@ public final class GlslActivity extends Activity {
 		@Override
 		public void onDrawFrame(GL10 glUnused) {
 
-			mScene.setMVP(mData.mViewM, mData.mProjM);
+			mScene.setMVP(mCamera.mViewM, mCamera.mProjM);
 
 			GLES20.glEnable(GLES20.GL_CULL_FACE);
 			GLES20.glFrontFace(GLES20.GL_CCW);
@@ -145,7 +150,8 @@ public final class GlslActivity extends Activity {
 			float lightPositions[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					0, 0, 0 };
 			for (int i = 0; i < lightCount; ++i) {
-				mScene.getLightPosition(i, lightPositions, i * 4);
+				GlslLight light = mScene.getLight(i);
+				light.getPosition(lightPositions, i * 4);
 			}
 			int shaderIds[] = mSceneShader.getHandles("uLightCount", "uLights",
 					"uCocScale", "uCocBias");
@@ -153,44 +159,26 @@ public final class GlslActivity extends Activity {
 			GLES20.glUniform1i(shaderIds[0], lightCount);
 			GLES20.glUniform4fv(shaderIds[1], 4, lightPositions, 0);
 
-			float zNear = mData.mZNear;
-			float zFar = mData.mZFar;
-			float fLen = 0.16f / (float) (2 * Math
-					.tan((mData.mFovY * Math.PI) / 360.0));
-			float fPlane = mData.mFocalPlane * mData.mZFar;
-			float A = fLen / (mData.mFStop / 1000f);
-
-			float cocScale = (A * fLen * fPlane * (zFar - zNear))
-					/ ((fPlane - fLen) * zNear * zFar);
-			float cocBias = (A * fLen * (zNear - fPlane))
-					/ ((fPlane + fLen) * zNear);
-
-			mData.mCocDivider = Math.max(Math.abs(cocScale + cocBias),
-					Math.abs(cocBias));
-			mData.mCocDivider = Math.min(mData.mCocDivider, 1f);
-			cocScale /= mData.mCocDivider;
-			cocBias /= mData.mCocDivider;
-
-			GLES20.glUniform1f(shaderIds[2], cocScale);
-			GLES20.glUniform1f(shaderIds[3], cocBias);
+			GLES20.glUniform1f(shaderIds[2], mCamera.mCocScale);
+			GLES20.glUniform1f(shaderIds[3], mCamera.mCocBias);
 
 			mFbo.bind();
 			mFbo.bindTexture(TEX_SCENE);
 			GLES20.glClearColor(0.2f, 0.3f, 0.5f, 1.0f);
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
 					| GLES20.GL_DEPTH_BUFFER_BIT);
-			mScene.draw(mData);
+			mScene.draw(mShaderIds);
 
 			if (mLensBlurEnabled) {
 				mFilter.lensBlur(mFbo.getTexture(TEX_SCENE), mFbo, TEX_OUT,
-						mData);
+						mCamera);
 			} else {
 				mFbo.bindTexture(TEX_OUT);
 				mFilter.copy(mFbo.getTexture(TEX_SCENE));
 			}
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-			GLES20.glViewport(0, 0, mData.mViewWidth, mData.mViewHeight);
+			GLES20.glViewport(0, 0, mCamera.mViewWidth, mCamera.mViewHeight);
 			if (mDivideScreen) {
 				mFilter.setClipCoords(-1f, 1f, 0f, -1f);
 				mFilter.copy(mFbo.getTexture(TEX_SCENE));
@@ -213,19 +201,12 @@ public final class GlslActivity extends Activity {
 
 		@Override
 		public void onSurfaceChanged(GL10 glUnused, int width, int height) {
-			mData.mViewWidth = width;
-			mData.mViewHeight = height;
-			mData.mZNear = 1f;
-			mData.mZFar = 101f;
-			mData.mFovY = 45f;
-
+			mCamera.mViewWidth = width;
+			mCamera.mViewHeight = height;
 			float ratio = (float) width / height;
-			// Matrix.frustumM(mData.mProjM, 0, -ratio, ratio, -1, 1,
-			// mData.mZNear, 20);
-			GlslMatrix.setPerspectiveM(mData.mProjM, mData.mFovY, ratio,
-					mData.mZNear, mData.mZFar);
-			Matrix.setLookAtM(mData.mViewM, 0, 0f, 3f, -10f, 0f, 0f, 50f, 0f,
-					1.0f, 0.0f);
+
+			mCamera.setProjectionM(ratio, 45f, 1f, 101f);
+			mCamera.setViewM(0f, 3f, -10f, 0f, 0f, 50f, 0f, 1.0f, 0.0f);
 
 			if (mResetFramebuffers) {
 				mFbo.reset();
@@ -251,12 +232,12 @@ public final class GlslActivity extends Activity {
 			int shaderIds[] = mSceneShader.getHandles("uMVMatrix",
 					"uMVPMatrix", "uNormalMatrix", "aPosition", "aNormal",
 					"aColor", "uLightCount", "uLights");
-			mData.uMVMatrix = shaderIds[0];
-			mData.uMVPMatrix = shaderIds[1];
-			mData.uNormalMatrix = shaderIds[2];
-			mData.aPosition = shaderIds[3];
-			mData.aNormal = shaderIds[4];
-			mData.aColor = shaderIds[5];
+			mShaderIds.uMVMatrix = shaderIds[0];
+			mShaderIds.uMVPMatrix = shaderIds[1];
+			mShaderIds.uNormalMatrix = shaderIds[2];
+			mShaderIds.aPosition = shaderIds[3];
+			mShaderIds.aNormal = shaderIds[4];
+			mShaderIds.aColor = shaderIds[5];
 		}
 
 		public void setPreferences(Context ctx, SharedPreferences preferences) {
@@ -264,15 +245,27 @@ public final class GlslActivity extends Activity {
 			mDivideScreen = preferences.getBoolean(key, false);
 			key = ctx.getString(R.string.key_lensblur_enable);
 			mLensBlurEnabled = preferences.getBoolean(key, true);
-			key = ctx.getString(R.string.key_lensblur_fstop);
-			mData.mFStop = preferences.getFloat(key, 0);
-			key = ctx.getString(R.string.key_lensblur_focal_plane);
-			mData.mFocalPlane = preferences.getFloat(key, 0);
-			key = ctx.getString(R.string.key_lensblur_radius);
-			mData.mCocRadius = preferences.getFloat(key, 0);
+
 			key = ctx.getString(R.string.key_lensblur_steps);
-			mData.mLensBlurSteps = (int) preferences.getFloat(key, 0);
-			mScene.setPreferences(ctx, preferences);
+			mCamera.mBlurSteps = (int) preferences.getFloat(key, 0);
+			key = ctx.getString(R.string.key_lensblur_fstop);
+			float fStop = preferences.getFloat(key, 0);
+			key = ctx.getString(R.string.key_lensblur_focal_plane);
+			float focalPlane = preferences.getFloat(key, 0);
+			mCamera.setLensBlur(fStop, focalPlane);
+
+			key = ctx.getString(R.string.key_light_count);
+			int lightCount = (int) preferences.getFloat(key, 1);
+			key = ctx.getString(R.string.key_scene);
+			int scene = Integer.parseInt(preferences.getString(key, "0"));
+			switch (scene) {
+			case SCENE_BOXES1:
+				mScene.initSceneBoxes1(lightCount);
+				break;
+			case SCENE_BOXES2:
+				mScene.initSceneBoxes2(lightCount);
+				break;
+			}
 		}
 	}
 

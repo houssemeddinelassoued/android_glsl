@@ -5,7 +5,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import android.opengl.GLES20;
-import fi.harism.glsl.GlslData;
 
 public final class GlslCube extends GlslObject {
 
@@ -71,7 +70,7 @@ public final class GlslCube extends GlslObject {
 	}
 
 	@Override
-	public void draw(GlslData mData) {
+	public void draw(GlslShaderIds mData) {
 
 		super.draw(mData);
 

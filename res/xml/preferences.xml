@@ -54,7 +54,7 @@
                 android:dependency="@string/key_lensblur_enable"
                 android:key="@string/key_lensblur_fstop"
                 android:summary="f/Stop"
-                android:title="f/Stop (f/%.1f)"
+                android:title="F/Stop (f/%.1f)"
                 harism:valueMax="8"
                 harism:valueMin="1"
                 harism:valuePrecision="0.1" />
@@ -68,16 +68,6 @@
                 harism:valueMax="1"
                 harism:valueMin="0"
                 harism:valuePrecision="0.01" />
-
-            <fi.harism.glsl.prefs.GlslSliderPreference
-                android:defaultValue="10"
-                android:dependency="@string/key_lensblur_enable"
-                android:key="@string/key_lensblur_radius"
-                android:summary="Blur radius"
-                android:title="Radius (= %.0f)"
-                harism:valueMax="50"
-                harism:valueMin="1"
-                harism:valuePrecision="1" />
 
             <fi.harism.glsl.prefs.GlslSliderPreference
                 android:defaultValue="5"
