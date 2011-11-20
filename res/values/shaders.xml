@@ -99,22 +99,6 @@
             gl_FragColor.rgb *= gl_FragColor.a;
         }
     </string>
-    <string name="shader_lensblur_out_fs">
-        precision mediump float;
-        uniform sampler2D sTextureSrc;
-        uniform sampler2D sTextureBokeh;
-        uniform sampler2D sTextureBokehHdr;
-        varying vec2 vTextureCoord;
-        
-        void main() {
-            vec4 colSrc = texture2D(sTextureSrc, vTextureCoord);
-            vec4 colBokeh = texture2D(sTextureBokeh, vTextureCoord);
-            vec4 colBokehHdr = texture2D(sTextureBokehHdr, vTextureCoord);
-            
-            gl_FragColor = mix(colSrc, colBokeh, colBokeh.a);
-            /*gl_FragColor.rgb += colBokehHdr.rgb * min(0.5, pow(colBokehHdr.a, 1.0 / 4.0));*/
-        }
-    </string>
     <string name="shader_lensblur_hdr_in_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -133,6 +117,22 @@
             
             gl_FragColor.a = mix(minDivider, 1.0, gl_FragColor.a);
             gl_FragColor.rgb *= gl_FragColor.a;
+        }
+    </string>
+    <string name="shader_lensblur_out_fs">
+        precision mediump float;
+        uniform sampler2D sTextureSrc;
+        uniform sampler2D sTextureBokeh;
+        uniform sampler2D sTextureBokehHdr;
+        varying vec2 vTextureCoord;
+        
+        void main() {
+            vec4 colSrc = texture2D(sTextureSrc, vTextureCoord);
+            vec4 colBokeh = texture2D(sTextureBokeh, vTextureCoord);
+            vec4 colBokehHdr = texture2D(sTextureBokehHdr, vTextureCoord);
+            
+            gl_FragColor = mix(colSrc, colBokeh, colBokeh.a);
+            gl_FragColor.rgb += colBokehHdr.rgb * colBokehHdr.a;
         }
     </string>
     <string name="shader_lensblur_1_fs">
