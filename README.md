@@ -24,3 +24,5 @@ http://www.khronos.org/opengles/sdk/docs/man/
 http://evanw.github.com/glfx.js/
 - Bokeh dof ideas etc..<br>
 http://publications.dice.se/
+- OpenGL ES Glsl information<br>
+http://ofps.oreilly.com/titles/9780596804824/
