@@ -449,7 +449,7 @@ public final class GlslActivity extends Activity {
 			mCamera.mViewHeight = height;
 			float ratio = (float) width / height;
 
-			mCamera.setProjectionM(ratio, 45f, 1f, 101f);
+			mCamera.setProjectionM(ratio, 45f, 1f, 21f);
 			mCamera.setViewM(0f, 3f, -10f, 0f, 0f, 50f, 0f, 1.0f, 0.0f);
 
 			if (mResetFramebuffers) {
