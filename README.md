@@ -15,7 +15,7 @@ used in this application. Besides these exceptions, let it be as-is implementati
 maybe more preferably - as an example for implementing your own rendering environment.
 
 You can find music used in this application, and more, composed by Mosaik, licensed under
-Creative Commons license, at http://www.mosaik.se.
+Creative Commons license, at www.mosaik.se.
 
 ToDo
 ====
@@ -30,12 +30,12 @@ Useful Links/Resources
 ======================
 
 - OpenGL ES man pages<br>
-http://www.khronos.org/opengles/sdk/docs/man/
+www.khronos.org/opengles/sdk/docs/man/
 - OpenGL ES Glsl specification<br>
-http://www.khronos.org/registry/gles/specs/2.0/GLSL_ES_Specification_1.0.17.pdf
+www.khronos.org/registry/gles/specs/2.0/GLSL_ES_Specification_1.0.17.pdf
 - Lots of OpenGL examples<br>
-http://evanw.github.com/glfx.js/
+evanw.github.com/glfx.js/
 - Depth of Field implementation is based on this paper<br>
-http://publications.dice.se/
+publications.dice.se/attachments/BF3_NFS_WhiteBarreBrisebois_Siggraph2011.pdf
 - OpenGL ES Glsl tutorials etc<br>
-http://ofps.oreilly.com/titles/9780596804824/
+ofps.oreilly.com/titles/9780596804824/
