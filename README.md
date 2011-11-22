@@ -34,8 +34,8 @@ www.khronos.org/opengles/sdk/docs/man/
 - OpenGL ES Glsl specification<br>
 www.khronos.org/registry/gles/specs/2.0/GLSL_ES_Specification_1.0.17.pdf
 - Lots of OpenGL examples<br>
-evanw.github.com/glfx.js/
+http://evanw.github.com/glfx.js/
 - Depth of Field implementation is based on this paper<br>
-publications.dice.se/attachments/BF3_NFS_WhiteBarreBrisebois_Siggraph2011.pdf
+http://publications.dice.se/attachments/BF3_NFS_WhiteBarreBrisebois_Siggraph2011.pdf
 - OpenGL ES Glsl tutorials etc<br>
-ofps.oreilly.com/titles/9780596804824/
+http://ofps.oreilly.com/titles/9780596804824/
