@@ -55,7 +55,7 @@
                 android:title="Enable" />
 
             <fi.harism.glsl.prefs.GlslSliderPreference
-                android:defaultValue="50"
+                android:defaultValue="30"
                 android:dependency="@string/key_bloom_enable"
                 android:key="@string/key_bloom_threshold"
                 android:summary="Bloom threshold"
