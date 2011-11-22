@@ -5,16 +5,12 @@ import java.util.HashMap;
 import android.opengl.GLES20;
 import android.util.Log;
 
-public class GlslShader {
+public final class GlslShader {
 
 	private int mProgram = 0;
-	private HashMap<String, Integer> mShaderHandleMap;
+	private final HashMap<String, Integer> mShaderHandleMap = new HashMap<String, Integer>();
 
-	public GlslShader() {
-		mShaderHandleMap = new HashMap<String, Integer>();
-	}
-
-	public final void addHandles(String... names) {
+	public void addHandles(String... names) {
 		for (String name : names) {
 			int handle = GLES20.glGetAttribLocation(mProgram, name);
 			if (handle == -1) {
@@ -28,7 +24,7 @@ public class GlslShader {
 		}
 	}
 
-	public final int getHandle(String name) {
+	public int getHandle(String name) {
 		if (mShaderHandleMap.containsKey(name)) {
 			return mShaderHandleMap.get(name);
 		}
@@ -36,7 +32,7 @@ public class GlslShader {
 		return -1;
 	}
 
-	public final int[] getHandles(String... names) {
+	public int[] getHandles(String... names) {
 		int[] res = new int[names.length];
 		for (int i = 0; i < names.length; ++i) {
 			res[i] = getHandle(names[i]);
@@ -44,11 +40,11 @@ public class GlslShader {
 		return res;
 	}
 
-	public final int getProgram() {
+	public int getProgram() {
 		return mProgram;
 	}
 
-	public final void setProgram(String vertexSource, String fragmentSource) {
+	public void setProgram(String vertexSource, String fragmentSource) {
 		int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource);
 		int pixelShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource);
 		int program = GLES20.glCreateProgram();
@@ -65,9 +61,10 @@ public class GlslShader {
 			}
 		}
 		mProgram = program;
+		mShaderHandleMap.clear();
 	}
 
-	private final int loadShader(int shaderType, String source) {
+	private int loadShader(int shaderType, String source) {
 		int shader = GLES20.glCreateShader(shaderType);
 		if (shader != 0) {
 			GLES20.glShaderSource(shader, source);

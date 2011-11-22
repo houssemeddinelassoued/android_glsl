@@ -1,7 +1,28 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:harism="http://schemas.android.com/apk/res/fi.harism.glsl" >
 
-    <PreferenceCategory android:title="Scene" >
+    <PreferenceCategory android:title="General" >
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/key_play_music"
+            android:summary="Play music in the backround"
+            android:title="Play Music" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/key_show_title"
+            android:summary="Show/hide title with fps counter"
+            android:title="Show Title" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/key_divide_screen"
+            android:summary="Divides screen into two - showing original renderered image and filtered one side by side"
+            android:title="Divide Screen" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Rendering" >
 
         <ListPreference
             android:defaultValue="0"
@@ -10,15 +31,6 @@
             android:key="@string/key_scene"
             android:summary="Select scene for rendering"
             android:title="Select scene" />
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="Rendering" >
-
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="@string/key_divide_screen"
-            android:summary="Divides screen into two - showing original renderered image and filtered one side by side"
-            android:title="Divide Screen" />
 
         <fi.harism.glsl.prefs.GlslSliderPreference
             android:defaultValue="2.0"
@@ -28,16 +40,30 @@
             harism:valueMax="4.0"
             harism:valueMin="1.0"
             harism:valuePrecision="1.0" />
-
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:enabled="false"
-            android:key="@string/key_per_pixel_lightning"
-            android:summary="Calculates per pixel lightning"
-            android:title="Per pixel lightning" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Filters" >
+
+        <PreferenceScreen
+            android:summary="bloom filter settings"
+            android:title="Bloom" >
+
+            <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="@string/key_bloom_enable"
+                android:summary="Enable / disable bloom"
+                android:title="Enable" />
+
+            <fi.harism.glsl.prefs.GlslSliderPreference
+                android:defaultValue="50"
+                android:dependency="@string/key_bloom_enable"
+                android:key="@string/key_bloom_threshold"
+                android:summary="Bloom threshold"
+                android:title="Threshold (%.0f%%)"
+                harism:valueMax="100"
+                harism:valueMin="0"
+                harism:valuePrecision="1" />
+        </PreferenceScreen>
 
         <PreferenceScreen
             android:summary="Lens blur filter settings"
@@ -60,14 +86,14 @@
                 harism:valuePrecision="0.1" />
 
             <fi.harism.glsl.prefs.GlslSliderPreference
-                android:defaultValue="0.5"
+                android:defaultValue="50"
                 android:dependency="@string/key_lensblur_enable"
                 android:key="@string/key_lensblur_focal_plane"
                 android:summary="Focal plane"
-                android:title="Focal plane (= %.2f)"
-                harism:valueMax="1"
+                android:title="Focal plane (= %.0f%%)"
+                harism:valueMax="100"
                 harism:valueMin="0"
-                harism:valuePrecision="0.01" />
+                harism:valuePrecision="1" />
 
             <fi.harism.glsl.prefs.GlslSliderPreference
                 android:defaultValue="5"

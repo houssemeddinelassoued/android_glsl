@@ -19,6 +19,9 @@ public class GlslCamera {
 	private float mLookX, mLookY, mLookZ;
 	private float mUpX, mUpY, mUpZ;
 
+	// Bloom values.
+	public float mBloomThreshold;
+
 	// Lens blur values.
 	private float mFStop;
 	private float mFocalPlane;

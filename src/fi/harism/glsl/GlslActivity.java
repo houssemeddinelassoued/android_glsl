@@ -1,5 +1,7 @@
 package fi.harism.glsl;
 
+import java.io.FileDescriptor;
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -7,27 +9,34 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.TextView;
 import fi.harism.glsl.scene.GlslLight;
 import fi.harism.glsl.scene.GlslScene;
 import fi.harism.glsl.scene.GlslShaderIds;
 
 public final class GlslActivity extends Activity {
 
-	private SurfaceView mSurfaceView;
+	private MusicPlayer mMusicPlayer;
 	private Renderer mRenderer;
+	private SurfaceView mSurfaceView;
 
-	private float mFps;
 	private Timer mFpsTimer;
 	private Runnable mFpsRunnable;
 
@@ -37,7 +46,15 @@ public final class GlslActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		mRenderer = new Renderer();
+		if (getLastNonConfigurationInstance() != null) {
+			GlslActivity self = (GlslActivity) getLastNonConfigurationInstance();
+			mRenderer = self.mRenderer;
+			mMusicPlayer = self.mMusicPlayer;
+		} else {
+			mRenderer = new Renderer();
+			mMusicPlayer = new MusicPlayer(500, 50);
+		}
+
 		mSurfaceView = new SurfaceView(this);
 		mSurfaceView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR
 				| GLSurfaceView.DEBUG_LOG_GL_CALLS);
@@ -49,7 +66,11 @@ public final class GlslActivity extends Activity {
 		mFpsRunnable = new FpsRunnable();
 
 		PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
-		setContentView(mSurfaceView);
+
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.main);
+		ViewGroup container = (ViewGroup) findViewById(R.id.layout_container);
+		container.addView(mSurfaceView);
 	}
 
 	@Override
@@ -61,6 +82,12 @@ public final class GlslActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
+		case R.id.menu_about:
+			Dialog dlg = new Dialog(this);
+			dlg.requestWindowFeature(Window.FEATURE_NO_TITLE);
+			dlg.setContentView(R.layout.about);
+			dlg.show();
+			return true;
 		case R.id.menu_settings:
 			startActivity(new Intent(this,
 					fi.harism.glsl.prefs.GlslPreferenceActivity.class));
@@ -75,6 +102,8 @@ public final class GlslActivity extends Activity {
 		mSurfaceView.onPause();
 		mFpsTimer.cancel();
 		mFpsTimer = null;
+
+		mMusicPlayer.stop();
 	}
 
 	@Override
@@ -82,15 +111,39 @@ public final class GlslActivity extends Activity {
 		super.onResume();
 		mSurfaceView.onResume();
 		mFpsTimer = new Timer();
-		mFpsTimer.scheduleAtFixedRate(new FpsTimerTask(), 0, 200);
-		mRenderer.setPreferences(this,
-				PreferenceManager.getDefaultSharedPreferences(this));
+
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		mRenderer.setPreferences(this, prefs);
+
+		String key = getString(R.string.key_show_title);
+		if (prefs.getBoolean(key, true)) {
+			findViewById(R.id.layout_header).setVisibility(View.VISIBLE);
+			mFpsTimer.scheduleAtFixedRate(new FpsTimerTask(), 0, 500);
+		} else {
+			findViewById(R.id.layout_header).setVisibility(View.GONE);
+		}
+
+		key = getString(R.string.key_play_music);
+		if (prefs.getBoolean(key, true)) {
+			try {
+				mMusicPlayer.start(getResources().openRawResourceFd(
+						R.raw.mosaik_01_leandi).getFileDescriptor());
+			} catch (IOException ex) {
+				mMusicPlayer.stop();
+			}
+		}
+	}
+
+	@Override
+	public Object onRetainNonConfigurationInstance() {
+		return this;
 	}
 
 	private class FpsRunnable implements Runnable {
 		@Override
 		public void run() {
-			String fps = Float.toString(mFps);
+			String fps = Float.toString(mRenderer.getFps());
 			int separator = fps.indexOf('.');
 			if (separator == -1) {
 				separator = fps.indexOf(',');
@@ -98,7 +151,8 @@ public final class GlslActivity extends Activity {
 			if (separator != -1) {
 				fps = fps.substring(0, separator + 2);
 			}
-			setTitle(mAppName + " (" + fps + "fps)");
+			TextView tv = (TextView) findViewById(R.id.layout_title);
+			tv.setText(mAppName + " (" + fps + "fps)");
 		}
 	}
 
@@ -106,6 +160,101 @@ public final class GlslActivity extends Activity {
 		@Override
 		public void run() {
 			runOnUiThread(mFpsRunnable);
+		}
+	}
+
+	private final class MusicPlayer implements MediaPlayer.OnPreparedListener {
+
+		private MediaPlayer mMediaPlayer;
+		private int mMediaPlayerPosition;
+
+		private int mFadeTime;
+		private int mFadeInterval;
+
+		public MusicPlayer(int fadeTime, int fadeInterval) {
+			mFadeTime = fadeTime;
+			mFadeInterval = fadeInterval;
+		}
+
+		@Override
+		public void onPrepared(MediaPlayer mp) {
+			mMediaPlayer.setVolume(0f, 0f);
+			mMediaPlayer.setLooping(true);
+			mMediaPlayer.seekTo(mMediaPlayerPosition);
+			mMediaPlayer.start();
+			new FadeInTimer(mMediaPlayer, mFadeTime, mFadeInterval).start();
+		}
+
+		public void start(FileDescriptor fileDescriptor) throws IOException {
+			if (mMediaPlayer != null) {
+				new FadeOutTimer(mMediaPlayer, mFadeTime, mFadeInterval)
+						.start();
+			}
+			mMediaPlayer = new MediaPlayer();
+			mMediaPlayer.setOnPreparedListener(this);
+			mMediaPlayer.setDataSource(fileDescriptor);
+			mMediaPlayer.prepareAsync();
+		}
+
+		public void stop() {
+			if (mMediaPlayer != null) {
+				mMediaPlayerPosition = mMediaPlayer.getCurrentPosition()
+						+ mFadeTime;
+				new FadeOutTimer(mMediaPlayer, mFadeTime, mFadeInterval)
+						.start();
+				mMediaPlayer = null;
+			}
+		}
+
+		private class FadeInTimer extends CountDownTimer {
+
+			private MediaPlayer mMediaPlayerIn;
+			private long mFadeTime;
+
+			public FadeInTimer(MediaPlayer mediaPlayerIn, long fadeTime,
+					long fadeInterval) {
+				super(fadeTime, fadeInterval);
+				mMediaPlayerIn = mediaPlayerIn;
+				mFadeTime = fadeTime;
+			}
+
+			@Override
+			public void onFinish() {
+				mMediaPlayerIn.setVolume(1f, 1f);
+			}
+
+			@Override
+			public void onTick(long millisUntilFinish) {
+				float v = (float) millisUntilFinish / mFadeTime;
+				mMediaPlayerIn.setVolume(1f - v, 1f - v);
+			}
+
+		}
+
+		private class FadeOutTimer extends CountDownTimer {
+
+			private MediaPlayer mMediaPlayerOut;
+			private long mFadeTime;
+
+			public FadeOutTimer(MediaPlayer mediaPlayerOut, long fadeTime,
+					long fadeInterval) {
+				super(fadeTime, fadeInterval);
+				mMediaPlayerOut = mediaPlayerOut;
+				mFadeTime = fadeTime;
+			}
+
+			@Override
+			public void onFinish() {
+				mMediaPlayerOut.release();
+				mMediaPlayerOut = null;
+			}
+
+			@Override
+			public void onTick(long millisUntilFinish) {
+				float v = (float) millisUntilFinish / mFadeTime;
+				mMediaPlayerOut.setVolume(v, v);
+			}
+
 		}
 	}
 
@@ -117,6 +266,7 @@ public final class GlslActivity extends Activity {
 		private static final int TEX_OUT = 0;
 		private static final int TEX_SCENE = 1;
 
+		private long mRenderTime = 0;
 		private long mLastRenderTime = 0;
 
 		private GlslScene mScene = new GlslScene();
@@ -128,12 +278,17 @@ public final class GlslActivity extends Activity {
 		private GlslFbo mFbo = new GlslFbo();
 
 		private boolean mDivideScreen;
+		private boolean mBloomEnabled;
 		private boolean mLensBlurEnabled;
 
 		private GlslShader mSceneShader = new GlslShader();
 
 		public Renderer() {
-			mLastRenderTime = SystemClock.uptimeMillis();
+			mRenderTime = mLastRenderTime = SystemClock.uptimeMillis();
+		}
+
+		public float getFps() {
+			return 1000f / (mRenderTime - mLastRenderTime);
 		}
 
 		@Override
@@ -169,12 +324,14 @@ public final class GlslActivity extends Activity {
 					| GLES20.GL_DEPTH_BUFFER_BIT);
 			mScene.draw(mShaderIds);
 
+			if (mBloomEnabled) {
+				mFilter.bloom(mFbo.getTexture(TEX_SCENE), mFbo, TEX_OUT,
+						mCamera);
+			}
+
 			if (mLensBlurEnabled) {
 				mFilter.lensBlur(mFbo.getTexture(TEX_SCENE), mFbo, TEX_OUT,
 						mCamera);
-			} else {
-				mFbo.bindTexture(TEX_OUT);
-				mFilter.copy(mFbo.getTexture(TEX_SCENE));
 			}
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
@@ -189,14 +346,9 @@ public final class GlslActivity extends Activity {
 				mFilter.copy(mFbo.getTexture(TEX_OUT));
 			}
 
-			long time = SystemClock.uptimeMillis();
-			if (mLastRenderTime != 0) {
-				long diff = time - mLastRenderTime;
-				mFps = 1000f / diff;
-				mScene.animate();
-			}
-			mLastRenderTime = time;
-
+			mLastRenderTime = mRenderTime;
+			mRenderTime = SystemClock.uptimeMillis();
+			mScene.animate();
 		}
 
 		@Override
@@ -251,8 +403,13 @@ public final class GlslActivity extends Activity {
 			key = ctx.getString(R.string.key_lensblur_fstop);
 			float fStop = preferences.getFloat(key, 0);
 			key = ctx.getString(R.string.key_lensblur_focal_plane);
-			float focalPlane = preferences.getFloat(key, 0);
+			float focalPlane = preferences.getFloat(key, 0) / 100f;
 			mCamera.setLensBlur(fStop, focalPlane);
+
+			key = ctx.getString(R.string.key_bloom_enable);
+			mBloomEnabled = preferences.getBoolean(key, true);
+			key = ctx.getString(R.string.key_bloom_threshold);
+			mCamera.mBloomThreshold = preferences.getFloat(key, 50f) / 100f;
 
 			key = ctx.getString(R.string.key_light_count);
 			int lightCount = (int) preferences.getFloat(key, 1);

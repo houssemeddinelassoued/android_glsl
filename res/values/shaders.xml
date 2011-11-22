@@ -10,20 +10,14 @@
         attribute vec4 aNormal;
         attribute vec4 aColor;
         
-        varying vec4 vPos;
-        varying vec4 vMvPos;
-        varying vec4 vNormal;
+        varying vec3 vPos;
+        varying vec3 vNormal;
         varying vec4 vColor;
         
         void main() {
             gl_Position = uMVPMatrix * vec4(aPosition.xyz, 1.0);
-            vPos = gl_Position;
-            vPos.xy *= 0.5;
-            vMvPos = uMVMatrix * aPosition, 1.0;
-            vMvPos.w = 0.0;
-            vNormal = uNormalMatrix * aNormal;
-            vNormal.w = 0.0;
-            vNormal.xyz *= 1.0 / length(vNormal);
+            vNormal = vec3(uNormalMatrix * aNormal);
+            vPos = vec3(uMVMatrix * aPosition);
             vColor = aColor;
         }
     </string>
@@ -33,39 +27,36 @@
         uniform int uLightCount;
         uniform float uCocScale;
         uniform float uCocBias;
-        varying vec4 vPos;
-        varying vec4 vMvPos;
-        varying vec4 vNormal;
+        varying vec3 vPos;
+        varying vec3 vNormal;
         varying vec4 vColor;
         
-        vec2 calcLight(vec4 normal, vec4 lightDir, vec4 eyeVec) {
+        vec2 calcLight(vec3 N, vec3 lightDir, vec3 E) {
             vec2 lightVal = vec2(0.0);
-            vec4 lightNormal = vec4(normalize(lightDir.xyz), 0.0);
+            vec3 L = normalize(lightDir);
             
-            float lambert = dot(normal, lightNormal);
+            float lambert = dot(N, L);
             if (lambert > 0.0) {
-                float corr = inversesqrt(length(lightDir.xyz));
-                lightVal[0] = lambert * corr;
-                vec4 reflection = reflect(-lightNormal, normal);
-                lightVal[1] = pow(max(dot(reflection, eyeVec), 0.0), 8.0) * corr;
+                float r = inversesqrt(length(lightDir));
+                lightVal[0] = lambert * r;
+                vec3 R = reflect(-L, N);
+                lightVal[1] = pow(max(dot(R, E), 0.0), 8.0) * r;
             }
             return lightVal;
         }
         
         void main() {
-            vec2 pos = (vPos.xy / vPos.w) + 0.5;
-            
             vec2 lightVal = vec2(0.0);
-            vec4 normal = normalize(vNormal);
-            vec4 eyeVec = normalize(-vMvPos);
+            vec3 N = normalize(vNormal);
+            vec3 E = normalize(-vPos);
             if (uLightCount > 0)
-                lightVal += calcLight(normal, uLights[0] - vMvPos, eyeVec);
+                lightVal += calcLight(N, uLights[0].xyz - vPos, E);
             if (uLightCount > 1)
-                lightVal += calcLight(normal, uLights[1] - vMvPos, eyeVec);
+                lightVal += calcLight(N, uLights[1].xyz - vPos, E);
             if (uLightCount > 2)
-                lightVal += calcLight(normal, uLights[2] - vMvPos, eyeVec);
+                lightVal += calcLight(N, uLights[2].xyz - vPos, E);
             if (uLightCount > 3)
-                lightVal += calcLight(normal, uLights[3] - vMvPos, eyeVec);
+                lightVal += calcLight(N, uLights[3].xyz - vPos, E);
             
             const float ambient = 0.3;
             float ambientPlusDiffuse = min(ambient + lightVal[0], 1.0);
@@ -87,39 +78,77 @@
             vTextureCoord = (gl_Position.xy + 1.0) * 0.5;
         }
     </string>
-    <string name="shader_lensblur_in_fs">
+    <string name="shader_copy_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
         varying vec2 vTextureCoord;
         
         void main() {
-            const float minDivider = 1.0 / 255.0;
             gl_FragColor = texture2D(sTexture0, vTextureCoord);
-            gl_FragColor.a = mix(minDivider, 1.0, gl_FragColor.a);
-            gl_FragColor.rgb *= gl_FragColor.a;
         }
     </string>
-    <string name="shader_lensblur_hdr_in_fs">
+    <string name="shader_bloom_pass1_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
+        uniform float uThreshold;
         varying vec2 vTextureCoord;
         
         void main() {
-            const float minDivider = 1.0 / 255.0;
-            const float threshold = 0.3;
+            gl_FragColor = texture2D(sTexture0, vTextureCoord);
+            
             const vec3 perception = vec3(0.299, 0.587, 0.114);
-            
-            gl_FragColor = texture2D(sTexture0, vTextureCoord);
-            
             float luminance = dot(perception, gl_FragColor.rgb);
-            if (luminance &lt; threshold)
-                gl_FragColor.rgb = vec3(0.0);
-            
+            if (luminance > uThreshold)
+                gl_FragColor.a = luminance - uThreshold;
+            else
+                gl_FragColor = vec4(0.0);
+        }
+    </string>
+    <string name="shader_bloom_pass2_fs">
+        precision mediump float;
+        uniform sampler2D sTexture0;
+        uniform vec2 uOffset;
+        varying vec2 vTextureCoord;
+        
+        void main() {
+            float sum = 0.0;
+            vec2 offset = uOffset;
+            gl_FragColor = vec4(0.0);
+            for (int i = 0; i &lt; 4; ++i) {
+                gl_FragColor += texture2D(sTexture0, vTextureCoord + offset);
+                gl_FragColor += texture2D(sTexture0, vTextureCoord - offset);
+                offset += uOffset;
+                sum += 2.0;
+            }
+            gl_FragColor /= sum;
+        }
+    </string>
+    <string name="shader_bloom_pass3_fs">
+        precision mediump float;
+        uniform sampler2D sTexture0;
+        uniform sampler2D sTexture1;
+        varying vec2 vTextureCoord;
+        
+        void main() {
+            vec4 color1 = texture2D(sTexture1, vTextureCoord);
+            gl_FragColor = texture2D(sTexture0, vTextureCoord);
+            gl_FragColor.rgb += color1.rgb * color1.a;
+            /*gl_FragColor.rgb = mix(gl_FragColor.rgb, color1.rgb, color1.a);*/
+        }
+    </string>
+    <string name="shader_lensblur_pass1_fs">
+        precision mediump float;
+        uniform sampler2D sTexture0;
+        varying vec2 vTextureCoord;
+        
+        void main() {
+            const float minDivider = 1.0 / 255.0;
+            gl_FragColor = texture2D(sTexture0, vTextureCoord);
             gl_FragColor.a = mix(minDivider, 1.0, gl_FragColor.a);
             gl_FragColor.rgb *= gl_FragColor.a;
         }
     </string>
-    <string name="shader_lensblur_out_fs">
+    <string name="shader_lensblur_pass5_fs">
         precision mediump float;
         uniform sampler2D sTextureSrc;
         uniform sampler2D sTextureBokeh;
@@ -129,13 +158,11 @@
         void main() {
             vec4 colSrc = texture2D(sTextureSrc, vTextureCoord);
             vec4 colBokeh = texture2D(sTextureBokeh, vTextureCoord);
-            vec4 colBokehHdr = texture2D(sTextureBokehHdr, vTextureCoord);
-            
             gl_FragColor = mix(colSrc, colBokeh, colBokeh.a);
-            gl_FragColor.rgb += colBokehHdr.rgb * colBokehHdr.a;
+            /*gl_FragColor.rgb += colBokehHdr.rgb * colBokehHdr.a;*/
         }
     </string>
-    <string name="shader_lensblur_1_fs">
+    <string name="shader_lensblur_pass2_fs">
         precision mediump float;
         uniform float uSteps;
         uniform sampler2D sTexture0;
@@ -159,7 +186,7 @@
             gl_FragColor /= sum;
         }
     </string>
-    <string name="shader_lensblur_2_fs">
+    <string name="shader_lensblur_pass3_fs">
         precision mediump float;
         uniform float uSteps;
         uniform sampler2D sTexture0;
@@ -187,7 +214,7 @@
             gl_FragColor *= 0.5;
         }
     </string>
-    <string name="shader_lensblur_3_fs">
+    <string name="shader_lensblur_pass4_fs">
         precision mediump float;
         uniform float uSteps;
         uniform sampler2D sTexture0;
@@ -221,15 +248,6 @@
             }
             gl_FragColor /= sum;
             gl_FragColor.rgb /= gl_FragColor.a;
-        }
-    </string>
-    <string name="shader_copy_fs">
-        precision mediump float;
-        uniform sampler2D sTexture0;
-        varying vec2 vTextureCoord;
-        
-        void main() {
-            gl_FragColor = texture2D(sTexture0, vTextureCoord);
         }
     </string>
 
