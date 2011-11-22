@@ -7,31 +7,31 @@
         uniform mat4 uMVPMatrix;
         uniform mat4 uNormalMatrix;
         
-        attribute vec4 aPosition;
-        attribute vec4 aNormal;
-        attribute vec4 aColor;
+        attribute vec3 aPosition;
+        attribute vec3 aNormal;
+        attribute vec3 aColor;
         
         varying vec3 vPos;
         varying vec3 vNormal;
-        varying vec4 vColor;
+        varying vec3 vColor;
         
         void main() {
-            gl_Position = uMVPMatrix * vec4(aPosition.xyz, 1.0);
-            vNormal = vec3(uNormalMatrix * aNormal);
-            vPos = vec3(uMVMatrix * aPosition);
+            gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
+            vNormal = vec3(uNormalMatrix * vec4(aNormal, 0.0));
+            vPos = vec3(uMVMatrix * vec4(aPosition, 1.0));
             vColor = aColor;
         }
     </string>
     <!-- Fragment shader for rendering Phong shaded scene -->
     <string name="shader_scene_phong_fs">
         precision mediump float;
-        uniform vec4 uLights[4];
+        uniform vec3 uLights[4];
         uniform int uLightCount;
         uniform float uCocScale;
         uniform float uCocBias;
         varying vec3 vPos;
         varying vec3 vNormal;
-        varying vec4 vColor;
+        varying vec3 vColor;
         
         vec2 calcLight(vec3 N, vec3 lightDir, vec3 E) {
             vec2 lightVal = vec2(0.0);
@@ -52,23 +52,45 @@
             vec3 N = normalize(vNormal);
             vec3 E = normalize(-vPos);
             if (uLightCount > 0)
-                lightVal += calcLight(N, uLights[0].xyz - vPos, E);
+                lightVal += calcLight(N, uLights[0] - vPos, E);
             if (uLightCount > 1)
-                lightVal += calcLight(N, uLights[1].xyz - vPos, E);
+                lightVal += calcLight(N, uLights[1] - vPos, E);
             if (uLightCount > 2)
-                lightVal += calcLight(N, uLights[2].xyz - vPos, E);
+                lightVal += calcLight(N, uLights[2] - vPos, E);
             if (uLightCount > 3)
-                lightVal += calcLight(N, uLights[3].xyz - vPos, E);
+                lightVal += calcLight(N, uLights[3] - vPos, E);
             
             const float ambient = 0.3;
             float ambientPlusDiffuse = min(ambient + lightVal[0], 1.0);
             float specular = min(lightVal[1], 1.0);
             
-            const vec4 white = vec4(1.0);
-            gl_FragColor = vColor * ambientPlusDiffuse;
-            gl_FragColor = mix(gl_FragColor, white, specular);
+            const vec3 white = vec3(1.0);
+            gl_FragColor.rgb = vColor * ambientPlusDiffuse;
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, white, specular);
             gl_FragColor.a = clamp(abs(gl_FragCoord.z * uCocScale + uCocBias), 0.0, 1.0);
             /* gl_FragColor.rgb = vec3(gl_FragColor.a); */
+        }
+    </string>
+    <!-- Vertex shader for rendering lights -->
+    <string name="shader_light_vs">
+        uniform mat4 uPMatrix;
+        attribute vec3 aPosition;
+        attribute vec2 aTexPosition;
+        varying vec2 vTexPosition;
+        
+        void main() {
+            gl_Position = uPMatrix * vec4(aPosition, 1.0);
+            vTexPosition = aTexPosition;
+        }
+    </string>
+    <!-- Fragment shader for rendering lights -->
+    <string name="shader_light_fs">
+        precision mediump float;
+        varying vec2 vTexPosition;
+        
+        void main() {
+            float dist = pow(length(vTexPosition), 3.0);
+            gl_FragColor = vec4(1.0 - dist);
         }
     </string>
     <!-- General purpose vertex shader for texture filters -->
@@ -198,7 +220,7 @@
             gl_FragColor /= sum;
         }
     </string>
-    <!--  Second blur pass for lens blur -->
+    <!-- Second blur pass for lens blur -->
     <string name="shader_lensblur_pass3_fs">
         precision mediump float;
         uniform float uSteps;

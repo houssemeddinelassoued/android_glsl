@@ -353,6 +353,7 @@ public final class GlslActivity extends Activity {
 		private boolean mLensBlurEnabled;
 
 		private GlslShader mSceneShader = new GlslShader();
+		private GlslShader mLightShader = new GlslShader();
 
 		public Renderer() {
 			mRenderTime = mLastRenderTime = SystemClock.uptimeMillis();
@@ -373,18 +374,16 @@ public final class GlslActivity extends Activity {
 			GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
 			int lightCount = mScene.getLightCount();
-			float lightPositions[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0 };
+			float lightPositions[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			for (int i = 0; i < lightCount; ++i) {
 				GlslLight light = mScene.getLight(i);
-				light.getPosition(lightPositions, i * 4);
+				light.getPosition(lightPositions, i * 3);
 			}
 			int shaderIds[] = mSceneShader.getHandles("uLightCount", "uLights",
 					"uCocScale", "uCocBias");
 			GLES20.glUseProgram(mSceneShader.getProgram());
 			GLES20.glUniform1i(shaderIds[0], lightCount);
-			GLES20.glUniform4fv(shaderIds[1], 4, lightPositions, 0);
-
+			GLES20.glUniform3fv(shaderIds[1], 4, lightPositions, 0);
 			GLES20.glUniform1f(shaderIds[2], mCamera.mCocScale);
 			GLES20.glUniform1f(shaderIds[3], mCamera.mCocBias);
 
@@ -394,6 +393,21 @@ public final class GlslActivity extends Activity {
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
 					| GLES20.GL_DEPTH_BUFFER_BIT);
 			mScene.draw(mShaderIds);
+
+			GLES20.glEnable(GLES20.GL_BLEND);
+			GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
+			// GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,
+			// GLES20.GL_ONE_MINUS_SRC_ALPHA);
+			GLES20.glUseProgram(mLightShader.getProgram());
+			GLES20.glUniformMatrix4fv(mShaderIds.uLightPMatrix, 1, false,
+					mCamera.mProjM, 0);
+			for (int i = 0; i < lightCount; ++i) {
+				float pos[] = { 0, 0, 0 };
+				GlslLight light = mScene.getLight(i);
+				light.getPosition(pos, 0);
+				light.render(mShaderIds, pos[0], pos[1], pos[2], 0.3f);
+			}
+			GLES20.glDisable(GLES20.GL_BLEND);
 
 			int texIdxIn = TEX_IDX_SCENE;
 			int texIdxOut = TEX_IDX_OUT_1;
@@ -468,6 +482,16 @@ public final class GlslActivity extends Activity {
 			mShaderIds.aPosition = shaderIds[3];
 			mShaderIds.aNormal = shaderIds[4];
 			mShaderIds.aColor = shaderIds[5];
+
+			mLightShader.setProgram(getString(R.string.shader_light_vs),
+					getString(R.string.shader_light_fs));
+			mLightShader.addHandles("uPMatrix", "aPosition", "aTexPosition");
+
+			shaderIds = mLightShader.getHandles("uPMatrix", "aPosition",
+					"aTexPosition");
+			mShaderIds.uLightPMatrix = shaderIds[0];
+			mShaderIds.aLightPosition = shaderIds[1];
+			mShaderIds.aLightTexPosition = shaderIds[2];
 		}
 
 		public void setPreferences(Context ctx, SharedPreferences preferences) {

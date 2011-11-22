@@ -16,24 +16,78 @@
 
 package fi.harism.glsl.scene;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
+import android.opengl.GLES20;
 import android.opengl.Matrix;
 
 public class GlslLight {
 	private float[] mPosition = new float[4];
-	private float[] mProjPos = new float[4];
+	private float[] mViewPos = new float[4];
 	private float[] mTempM = new float[16];
 
-	public void getPosition(float[] pos, int posIdx) {
-		pos[posIdx] = mProjPos[0];
-		pos[posIdx + 1] = mProjPos[1];
-		pos[posIdx + 2] = mProjPos[2];
+	private FloatBuffer mTriangleVertices;
+
+	public GlslLight() {
+		ByteBuffer buffer = ByteBuffer.allocateDirect(3 * 2 * 4 * 4);
+		mTriangleVertices = buffer.order(ByteOrder.nativeOrder())
+				.asFloatBuffer();
+		mTriangleVertices.position(0);
+	}
+
+	public void getPosition(float[] viewPos, int startIdx) {
+		viewPos[startIdx] = mViewPos[0];
+		viewPos[startIdx + 1] = mViewPos[1];
+		viewPos[startIdx + 2] = mViewPos[2];
+	}
+
+	public void render(GlslShaderIds ids, float x, float y, float z, float size) {
+		mTriangleVertices.position(0);
+
+		mTriangleVertices.put(x - size);
+		mTriangleVertices.put(y + size);
+		mTriangleVertices.put(z);
+		mTriangleVertices.put(-1);
+		mTriangleVertices.put(1);
+
+		mTriangleVertices.put(x - size);
+		mTriangleVertices.put(y - size);
+		mTriangleVertices.put(z);
+		mTriangleVertices.put(-1);
+		mTriangleVertices.put(-1);
+
+		mTriangleVertices.put(x + size);
+		mTriangleVertices.put(y + size);
+		mTriangleVertices.put(z);
+		mTriangleVertices.put(1);
+		mTriangleVertices.put(1);
+
+		mTriangleVertices.put(x + size);
+		mTriangleVertices.put(y - size);
+		mTriangleVertices.put(z);
+		mTriangleVertices.put(1);
+		mTriangleVertices.put(-1);
+
+		mTriangleVertices.position(0);
+		GLES20.glVertexAttribPointer(ids.aLightPosition, 3, GLES20.GL_FLOAT,
+				false, 5 * 4, mTriangleVertices);
+		GLES20.glEnableVertexAttribArray(ids.aLightPosition);
+
+		mTriangleVertices.position(3);
+		GLES20.glVertexAttribPointer(ids.aLightTexPosition, 2, GLES20.GL_FLOAT,
+				false, 5 * 4, mTriangleVertices);
+		GLES20.glEnableVertexAttribArray(ids.aLightTexPosition);
+
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 	}
 
 	public void setMVP(float[] viewM) {
 		Matrix.setIdentityM(mTempM, 0);
 		Matrix.translateM(mTempM, 0, mPosition[0], mPosition[1], mPosition[2]);
 		Matrix.multiplyMM(mTempM, 0, viewM, 0, mTempM, 0);
-		Matrix.multiplyMV(mProjPos, 0, mTempM, 0, mPosition, 0);
+		Matrix.multiplyMV(mViewPos, 0, mTempM, 0, mPosition, 0);
 	}
 
 	public void setPosition(float x, float y, float z) {
