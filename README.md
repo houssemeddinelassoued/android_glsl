@@ -15,7 +15,7 @@ used in this application. Besides these exceptions, let it be as-is implementati
 maybe more preferably - as an example for implementing your own rendering environment.
 
 You can find music used in this application, and more, composed by Mosaik, licensed under
-Creative Commons license, at www.mosaik.se.
+[Creative Commons license](http://creativecommons.org/licenses/by-nc-nd/3.0/), at www.mosaik.se.
 
 ToDo
 ====
