@@ -8,8 +8,8 @@
     </declare-styleable>
 
     <string-array name="scene_entries">
-        <item>Boxes 1</item>
-        <item>Boxes 2</item>
+        <item>Scene 1</item>
+        <item>Scene 2</item>
     </string-array>
     <string-array name="scene_values">
         <item>0</item>
