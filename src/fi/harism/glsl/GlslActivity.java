@@ -391,8 +391,8 @@ public final class GlslActivity extends Activity {
 			mFilter.init(GlslActivity.this);
 			mResetFramebuffers = false;
 
-			mSceneShader.setProgram(getString(R.string.shader_scene_vs),
-					getString(R.string.shader_scene_fs));
+			mSceneShader.setProgram(getString(R.string.shader_scene_phong_vs),
+					getString(R.string.shader_scene_phong_fs));
 			mSceneShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
 					"aPosition", "aNormal", "aColor", "uLightCount", "uLights",
 					"uCocScale", "uCocBias");
