@@ -101,7 +101,7 @@
                 android:key="@string/key_lensblur_steps"
                 android:summary="Steps during blurring"
                 android:title="Blur steps (= %.0f)"
-                harism:valueMax="20"
+                harism:valueMax="10"
                 harism:valueMin="1"
                 harism:valuePrecision="1" />
         </PreferenceScreen>
