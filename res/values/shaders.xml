@@ -103,10 +103,8 @@
             
             const vec3 perception = vec3(0.299, 0.587, 0.114);
             float luminance = dot(perception, gl_FragColor.rgb);
-            if (luminance > uThreshold)
-                gl_FragColor.a = luminance - uThreshold;
-            else
-                gl_FragColor = vec4(0.0);
+            luminance = (luminance - uThreshold) / (1.0 - uThreshold);
+            gl_FragColor.a = clamp(luminance, 0.0, 1.0);
         }
     </string>
     <!-- Blur shader for bloom -->
@@ -120,13 +118,18 @@
             float sum = 0.0;
             vec2 offset = uOffset;
             gl_FragColor = vec4(0.0);
-            for (int i = 0; i &lt; 4; ++i) {
-                gl_FragColor += texture2D(sTexture0, vTextureCoord + offset);
-                gl_FragColor += texture2D(sTexture0, vTextureCoord - offset);
-                offset += uOffset;
+            const float steps = 5.0;
+            for (float i = 0.0; i &lt; steps; ++i) {
+                vec4 color0 = texture2D(sTexture0, vTextureCoord + offset);
+                vec4 color1 = texture2D(sTexture0, vTextureCoord - offset);
+                gl_FragColor.rgb += color0.rgb * color0.a;
+                gl_FragColor.rgb += color1.rgb * color1.a;
+                gl_FragColor.a += color0.a + color1.a;
                 sum += 2.0;
+                offset += uOffset;
             }
-            gl_FragColor /= sum;
+            gl_FragColor.rgb /= gl_FragColor.a;
+            gl_FragColor.a /= sum;
         }
     </string>
     <!-- Output shader for bloom filter -->
@@ -140,7 +143,6 @@
             vec4 color1 = texture2D(sTexture1, vTextureCoord);
             gl_FragColor = texture2D(sTexture0, vTextureCoord);
             gl_FragColor.rgb += color1.rgb * color1.a;
-            /*gl_FragColor.rgb = mix(gl_FragColor.rgb, color1.rgb, color1.a);*/
         }
     </string>
     <!-- Input shader for lens blur filter -->
