@@ -47,6 +47,9 @@ import fi.harism.glsl.scene.GlslLight;
 import fi.harism.glsl.scene.GlslScene;
 import fi.harism.glsl.scene.GlslShaderIds;
 
+/**
+ * Main Activity class.
+ */
 public final class GlslActivity extends Activity {
 
 	private MusicPlayer mMusicPlayer;
@@ -156,6 +159,9 @@ public final class GlslActivity extends Activity {
 		return this;
 	}
 
+	/**
+	 * Helper class for handling FPS related Activity.runOnUiThread() calls.
+	 */
 	private class FpsRunnable implements Runnable {
 		@Override
 		public void run() {
@@ -172,6 +178,9 @@ public final class GlslActivity extends Activity {
 		}
 	}
 
+	/**
+	 * Timer task which triggers FPS updating periodically.
+	 */
 	private class FpsTimerTask extends TimerTask {
 		@Override
 		public void run() {
@@ -179,6 +188,9 @@ public final class GlslActivity extends Activity {
 		}
 	}
 
+	/**
+	 * Helper class for handling music playback.
+	 */
 	private final class MusicPlayer implements MediaPlayer.OnPreparedListener {
 
 		private MediaPlayer mMediaPlayer;
@@ -187,6 +199,15 @@ public final class GlslActivity extends Activity {
 		private int mFadeTime;
 		private int mFadeInterval;
 
+		/**
+		 * Constructor takes fade in/out time, and fade interval, as a
+		 * parameter.
+		 * 
+		 * @param fadeTime
+		 *            Fade in and fade out time
+		 * @param fadeInterval
+		 *            Fade 'accuracy'
+		 */
 		public MusicPlayer(int fadeTime, int fadeInterval) {
 			mFadeTime = fadeTime;
 			mFadeInterval = fadeInterval;
@@ -194,13 +215,24 @@ public final class GlslActivity extends Activity {
 
 		@Override
 		public void onPrepared(MediaPlayer mp) {
-			mMediaPlayer.setVolume(0f, 0f);
-			mMediaPlayer.setLooping(true);
-			mMediaPlayer.seekTo(mMediaPlayerPosition);
-			mMediaPlayer.start();
-			new FadeInTimer(mMediaPlayer, mFadeTime, mFadeInterval).start();
+			if (mMediaPlayer != null) {
+				mMediaPlayer.setVolume(0f, 0f);
+				mMediaPlayer.setLooping(true);
+				mMediaPlayer.seekTo(mMediaPlayerPosition);
+				mMediaPlayer.start();
+				new FadeInTimer(mMediaPlayer, mFadeTime, mFadeInterval).start();
+			}
 		}
 
+		/**
+		 * Starts music playback. Music is faded in once MediaPlayer has been
+		 * prepared for given FileDescriptor. If there is music playing already,
+		 * it will be stopped before starting new one.
+		 * 
+		 * @param fileDescriptor
+		 *            Music file to play
+		 * @throws IOException
+		 */
 		public void start(FileDescriptor fileDescriptor) throws IOException {
 			if (mMediaPlayer != null) {
 				new FadeOutTimer(mMediaPlayer, mFadeTime, mFadeInterval)
@@ -212,6 +244,11 @@ public final class GlslActivity extends Activity {
 			mMediaPlayer.prepareAsync();
 		}
 
+		/**
+		 * Stops playing music. Music is first faded out and MediaPlayer
+		 * destroyed once fade out has been finished. Calling this method does
+		 * not require previous call to start().
+		 */
 		public void stop() {
 			if (mMediaPlayer != null) {
 				mMediaPlayerPosition = mMediaPlayer.getCurrentPosition()
@@ -222,16 +259,19 @@ public final class GlslActivity extends Activity {
 			}
 		}
 
+		/**
+		 * Helper class for handling music fade in.
+		 */
 		private class FadeInTimer extends CountDownTimer {
 
 			private MediaPlayer mMediaPlayerIn;
-			private long mFadeTime;
+			private long mFadeInTime;
 
-			public FadeInTimer(MediaPlayer mediaPlayerIn, long fadeTime,
-					long fadeInterval) {
-				super(fadeTime, fadeInterval);
+			public FadeInTimer(MediaPlayer mediaPlayerIn, long fadeInTime,
+					long fadeInInterval) {
+				super(fadeInTime, fadeInInterval);
 				mMediaPlayerIn = mediaPlayerIn;
-				mFadeTime = fadeTime;
+				mFadeInTime = fadeInTime;
 			}
 
 			@Override
@@ -241,22 +281,36 @@ public final class GlslActivity extends Activity {
 
 			@Override
 			public void onTick(long millisUntilFinish) {
-				float v = (float) millisUntilFinish / mFadeTime;
+				float v = (float) millisUntilFinish / mFadeInTime;
 				mMediaPlayerIn.setVolume(1f - v, 1f - v);
 			}
 
 		}
 
+		/**
+		 * Helper class for handling music fade out / stopping.
+		 */
 		private class FadeOutTimer extends CountDownTimer {
 
 			private MediaPlayer mMediaPlayerOut;
-			private long mFadeTime;
+			private long mFadeOutTime;
 
-			public FadeOutTimer(MediaPlayer mediaPlayerOut, long fadeTime,
-					long fadeInterval) {
-				super(fadeTime, fadeInterval);
+			/**
+			 * Constructor for MediaPlayer fade out class. FadeOutTimer releases
+			 * given MediaPlayer instance once underlying timer has finished.
+			 * 
+			 * @param mediaPlayerOut
+			 *            MediaPlayer instance to be released.
+			 * @param fadeOutTime
+			 *            Fade out time
+			 * @param fadeOutInterval
+			 *            Fade out interval
+			 */
+			public FadeOutTimer(MediaPlayer mediaPlayerOut, long fadeOutTime,
+					long fadeOutInterval) {
+				super(fadeOutTime, fadeOutInterval);
 				mMediaPlayerOut = mediaPlayerOut;
-				mFadeTime = fadeTime;
+				mFadeOutTime = fadeOutTime;
 			}
 
 			@Override
@@ -267,7 +321,7 @@ public final class GlslActivity extends Activity {
 
 			@Override
 			public void onTick(long millisUntilFinish) {
-				float v = (float) millisUntilFinish / mFadeTime;
+				float v = (float) millisUntilFinish / mFadeOutTime;
 				mMediaPlayerOut.setVolume(v, v);
 			}
 
@@ -279,8 +333,9 @@ public final class GlslActivity extends Activity {
 		public static final int SCENE_BOXES1 = 0;
 		public static final int SCENE_BOXES2 = 1;
 
-		private static final int TEX_OUT = 0;
-		private static final int TEX_SCENE = 1;
+		private static final int TEX_IDX_SCENE = 0;
+		private static final int TEX_IDX_OUT_1 = 1;
+		private static final int TEX_IDX_OUT_2 = 2;
 
 		private long mRenderTime = 0;
 		private long mLastRenderTime = 0;
@@ -334,32 +389,39 @@ public final class GlslActivity extends Activity {
 			GLES20.glUniform1f(shaderIds[3], mCamera.mCocBias);
 
 			mFbo.bind();
-			mFbo.bindTexture(TEX_SCENE);
+			mFbo.bindTexture(TEX_IDX_SCENE);
 			GLES20.glClearColor(0.2f, 0.3f, 0.5f, 1.0f);
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT
 					| GLES20.GL_DEPTH_BUFFER_BIT);
 			mScene.draw(mShaderIds);
 
+			int texIdxIn = TEX_IDX_SCENE;
+			int texIdxOut = TEX_IDX_OUT_1;
 			if (mBloomEnabled) {
-				mFilter.bloom(mFbo.getTexture(TEX_SCENE), mFbo, TEX_OUT,
+				mFilter.bloom(mFbo.getTexture(texIdxIn), mFbo, texIdxOut,
 						mCamera);
+				texIdxIn = texIdxOut;
+				texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
+						: TEX_IDX_OUT_1;
 			}
-
 			if (mLensBlurEnabled) {
-				mFilter.lensBlur(mFbo.getTexture(TEX_SCENE), mFbo, TEX_OUT,
+				mFilter.lensBlur(mFbo.getTexture(texIdxIn), mFbo, texIdxOut,
 						mCamera);
+				texIdxIn = texIdxOut;
+				texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
+						: TEX_IDX_OUT_1;
 			}
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 			GLES20.glViewport(0, 0, mCamera.mViewWidth, mCamera.mViewHeight);
 			if (mDivideScreen) {
 				mFilter.setClipCoords(-1f, 1f, 0f, -1f);
-				mFilter.copy(mFbo.getTexture(TEX_SCENE));
+				mFilter.copy(mFbo.getTexture(TEX_IDX_SCENE));
 				mFilter.setClipCoords(0f, 1f, 1f, -1f);
-				mFilter.copy(mFbo.getTexture(TEX_OUT));
+				mFilter.copy(mFbo.getTexture(texIdxIn));
 				mFilter.setClipCoords(-1f, 1f, 1f, -1f);
 			} else {
-				mFilter.copy(mFbo.getTexture(TEX_OUT));
+				mFilter.copy(mFbo.getTexture(texIdxIn));
 			}
 
 			mLastRenderTime = mRenderTime;
@@ -382,7 +444,7 @@ public final class GlslActivity extends Activity {
 			}
 			mResetFramebuffers = true;
 
-			mFbo.init(width, height, 2, true);
+			mFbo.init(width, height, 3, true);
 			mFilter.init(width, height);
 		}
 
