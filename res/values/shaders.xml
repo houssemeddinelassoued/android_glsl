@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="shader_scene_vs">
+    <!-- Vertex shader for rendering Phong shaded scene -->
+    <string name="shader_scene_phong_vs">
         uniform mat4 uMVMatrix;
         uniform mat4 uMVPMatrix;
         uniform mat4 uNormalMatrix;
@@ -21,7 +22,8 @@
             vColor = aColor;
         }
     </string>
-    <string name="shader_scene_fs">
+    <!-- Fragment shader for rendering Phong shaded scene -->
+    <string name="shader_scene_phong_fs">
         precision mediump float;
         uniform vec4 uLights[4];
         uniform int uLightCount;
@@ -69,6 +71,7 @@
             /* gl_FragColor.rgb = vec3(gl_FragColor.a); */
         }
     </string>
+    <!-- General purpose vertex shader for texture filters -->
     <string name="shader_filter_vs">
         attribute vec4 aPosition;
         varying vec2 vTextureCoord;
@@ -78,6 +81,7 @@
             vTextureCoord = (gl_Position.xy + 1.0) * 0.5;
         }
     </string>
+    <!-- Copy fragment shader -->
     <string name="shader_copy_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -87,6 +91,7 @@
             gl_FragColor = texture2D(sTexture0, vTextureCoord);
         }
     </string>
+    <!-- Input pass for bloom filter -->
     <string name="shader_bloom_pass1_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -104,6 +109,7 @@
                 gl_FragColor = vec4(0.0);
         }
     </string>
+    <!-- Blur shader for bloom -->
     <string name="shader_bloom_pass2_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -123,6 +129,7 @@
             gl_FragColor /= sum;
         }
     </string>
+    <!-- Output shader for bloom filter -->
     <string name="shader_bloom_pass3_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -136,6 +143,7 @@
             /*gl_FragColor.rgb = mix(gl_FragColor.rgb, color1.rgb, color1.a);*/
         }
     </string>
+    <!-- Input shader for lens blur filter -->
     <string name="shader_lensblur_pass1_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
@@ -148,6 +156,7 @@
             gl_FragColor.rgb *= gl_FragColor.a;
         }
     </string>
+    <!-- Output shader for lens blur filter -->
     <string name="shader_lensblur_pass5_fs">
         precision mediump float;
         uniform sampler2D sTextureSrc;
@@ -162,6 +171,7 @@
             /*gl_FragColor.rgb += colBokehHdr.rgb * colBokehHdr.a;*/
         }
     </string>
+    <!-- First blur pass for lens blur -->
     <string name="shader_lensblur_pass2_fs">
         precision mediump float;
         uniform float uSteps;
@@ -186,6 +196,7 @@
             gl_FragColor /= sum;
         }
     </string>
+    <!--  Second blur pass for lens blur -->
     <string name="shader_lensblur_pass3_fs">
         precision mediump float;
         uniform float uSteps;
@@ -214,6 +225,7 @@
             gl_FragColor *= 0.5;
         }
     </string>
+    <!-- Third pass for lens blur filter -->
     <string name="shader_lensblur_pass4_fs">
         precision mediump float;
         uniform float uSteps;
