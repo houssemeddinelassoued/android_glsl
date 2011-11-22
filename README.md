@@ -14,12 +14,14 @@ See LICENSE for more information. See NOTICE for any exceptions, these include n
 used in this application. Besides these exceptions, let it be as-is implementation or -
 maybe more preferably - as an example for implementing your own rendering environment.
 
-You can find more tunes composed by Mosaik, licensed under Creative Commons license, at 
-http://www.mosaik.se.
+You can find music used in this application, and more, composed by Mosaik, licensed under
+Creative Commons license, at http://www.mosaik.se.
 
 ToDo
 ====
 
+- Add proper comments
+- Bloom isn't working properly yet
 - Blinn-Phong shading (currently Phong shading only)
 - Shadows (most likely will give shadow volumes a go)
 - Ideas yet to come..
