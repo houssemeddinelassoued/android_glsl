@@ -19,6 +19,11 @@ package fi.harism.glsl;
 import android.opengl.Matrix;
 import fi.harism.glsl.scene.GlslAnimator;
 
+/**
+ * Holder class for view and projection matrices plus additional parameters for
+ * filters. Unlike pre OpenGL ES 2.0, all matrix calculations are made by
+ * ourselves.
+ */
 public class GlslCamera implements GlslAnimator.PathInterface {
 	// Camera values.
 	public int mViewWidth, mViewHeight;
@@ -32,7 +37,7 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 	private float mZFar;
 
 	// View matrix
-	private float mViewX, mViewY, mViewZ;
+	// private float mViewX, mViewY, mViewZ;
 	private float mLookX, mLookY, mLookZ;
 	private float mUpX, mUpY, mUpZ;
 
@@ -47,6 +52,14 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 	public float mCocScale;
 	public float mCocBias;
 
+	/**
+	 * Calculates circle of confusion values based on given parameters.
+	 * 
+	 * @param fStop
+	 *            F/Stop value
+	 * @param focalPlane
+	 *            Value between [0, 1]
+	 */
 	public void setLensBlur(float fStop, float focalPlane) {
 		mFStop = fStop;
 		mFocalPlane = focalPlane;
@@ -69,13 +82,33 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 		setPosition(position[0], position[1], position[2]);
 	}
 
+	/**
+	 * Updates view matrix 'camera location'. Look at position and up -vector
+	 * remain unaffected.
+	 * 
+	 * @param x
+	 *            camera x position
+	 * @param y
+	 *            camera y position
+	 * @param z
+	 *            camera z position
+	 */
 	public void setPosition(float x, float y, float z) {
-		mViewX = x;
-		mViewY = y;
-		mViewZ = z;
 		setViewM(x, y, z, mLookX, mLookY, mLookZ, mUpX, mUpY, mUpZ);
 	}
 
+	/**
+	 * Sets projection matrix.
+	 * 
+	 * @param ratio
+	 *            width/height ratio
+	 * @param fovY
+	 *            field of view in degrees
+	 * @param zNear
+	 *            near clipping plane
+	 * @param zFar
+	 *            far clipping plane
+	 */
 	public void setProjectionM(float ratio, float fovY, float zNear, float zFar) {
 		mRatio = ratio;
 		mFovY = fovY;
@@ -89,11 +122,30 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 		setLensBlur(mFStop, mFocalPlane);
 	}
 
+	/**
+	 * Generate view matrix.
+	 * 
+	 * @param x
+	 *            camera x position
+	 * @param y
+	 *            camera y position
+	 * @param z
+	 *            camera z position
+	 * @param lookX
+	 *            camera look at x position
+	 * @param lookY
+	 *            camera look at y position
+	 * @param lookZ
+	 *            camera look at z position
+	 * @param upX
+	 *            up vector x
+	 * @param upY
+	 *            up vector y
+	 * @param upZ
+	 *            up vector z
+	 */
 	public void setViewM(float x, float y, float z, float lookX, float lookY,
 			float lookZ, float upX, float upY, float upZ) {
-		mViewX = x;
-		mViewY = y;
-		mViewZ = z;
 		mLookX = lookX;
 		mLookY = lookY;
 		mLookZ = lookZ;
