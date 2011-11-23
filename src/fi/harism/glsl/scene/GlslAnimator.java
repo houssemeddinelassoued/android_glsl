@@ -22,7 +22,7 @@ import java.util.Vector;
 public final class GlslAnimator {
 
 	private HashMap<RotationInterface, RotationData> mRotationMap = new HashMap<RotationInterface, RotationData>();
-	private HashMap<PathInterface, Vector<PathElement>> mPathMap = new HashMap<PathInterface, Vector<PathElement>>();
+	private HashMap<PathInterface, Path> mPathMap = new HashMap<PathInterface, Path>();
 
 	/**
 	 * Animates all objects within this animator according to given time. Time
@@ -37,8 +37,8 @@ public final class GlslAnimator {
 			rotate(object, data, time);
 		}
 		for (PathInterface object : mPathMap.keySet()) {
-			Vector<PathElement> path = mPathMap.get(object);
-			move(object, path, time);
+			Path path = mPathMap.get(object);
+			move(object, path.mPath, time);
 		}
 	}
 
@@ -59,7 +59,7 @@ public final class GlslAnimator {
 	 * @param path
 	 *            Array of path elements.
 	 */
-	public void setPath(PathInterface object, Vector<PathElement> path) {
+	public void setPath(PathInterface object, Path path) {
 		mPathMap.put(object, path);
 	}
 
@@ -188,32 +188,26 @@ public final class GlslAnimator {
 	}
 
 	/**
-	 * Path element for creating movement paths for objects.
+	 * Path for animating object positions.
 	 */
-	public final class PathElement {
-		private float[] mPos = new float[3];
-		private long mTime;
+	public final class Path {
+		private Vector<PathElement> mPath = new Vector<PathElement>();
 
 		/**
-		 * PathElement takes four parameters. X, y and z is the position at
-		 * particular time. Time parameter should start from zero for the first
-		 * elements, and increase for the latter ones giving the the when that
-		 * particular point is reached. Time is given in milliseconds.
+		 * Adds new position to this path. Positions should be given with
+		 * increasing time stamp. And time starting from zero for first element.
 		 * 
 		 * @param x
-		 *            position x
+		 *            X coordinate at given time.
 		 * @param y
-		 *            position y
+		 *            Y coordinate at given time.
 		 * @param z
-		 *            position z
+		 *            Z coordinate at given time.
 		 * @param time
-		 *            time value in millis
+		 *            Time in milliseconds.
 		 */
-		public PathElement(float x, float y, float z, long time) {
-			mPos[0] = x;
-			mPos[1] = y;
-			mPos[2] = z;
-			mTime = time;
+		public void addPosition(float x, float y, float z, long time) {
+			mPath.add(new PathElement(x, y, z, time));
 		}
 	}
 
@@ -270,5 +264,35 @@ public final class GlslAnimator {
 		 *            Array containing x, y and z values.
 		 */
 		public void setRotation(float rotation[]);
+	}
+
+	/**
+	 * Path element for creating movement paths for objects.
+	 */
+	private final class PathElement {
+		private float[] mPos = new float[3];
+		private long mTime;
+
+		/**
+		 * PathElement takes four parameters. X, y and z is the position at
+		 * particular time. Time parameter should start from zero for the first
+		 * elements, and increase for the latter ones giving the the when that
+		 * particular point is reached. Time is given in milliseconds.
+		 * 
+		 * @param x
+		 *            position x
+		 * @param y
+		 *            position y
+		 * @param z
+		 *            position z
+		 * @param time
+		 *            time value in millis
+		 */
+		public PathElement(float x, float y, float z, long time) {
+			mPos[0] = x;
+			mPos[1] = y;
+			mPos[2] = z;
+			mTime = time;
+		}
 	}
 }
