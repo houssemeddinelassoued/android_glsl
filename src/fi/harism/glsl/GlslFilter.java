@@ -143,7 +143,7 @@ public class GlslFilter {
 	 * @param texSrc
 	 *            Source texture id.
 	 * @param camera
-	 *            Camera for retreiving displacement values.
+	 *            Camera for retrieving displacement values.
 	 */
 	public void displace(int texSrc, GlslCamera camera) {
 		GLES20.glUseProgram(mDisplace.getProgram());
