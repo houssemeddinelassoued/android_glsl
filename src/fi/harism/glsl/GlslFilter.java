@@ -36,6 +36,7 @@ public class GlslFilter {
 
 	// Shader instances.
 	private GlslShader mCopy = new GlslShader();
+	private GlslShader mDisplace = new GlslShader();
 	private GlslShader mBloomPass1 = new GlslShader();
 	private GlslShader mBloomPass2 = new GlslShader();
 	private GlslShader mBloomPass3 = new GlslShader();
@@ -137,6 +138,25 @@ public class GlslFilter {
 	}
 
 	/**
+	 * Renders a displaced image of source texture into currently active FBO.
+	 * 
+	 * @param texSrc
+	 *            Source texture id.
+	 * @param camera
+	 *            Camera for retreiving displacement values.
+	 */
+	public void displace(int texSrc, GlslCamera camera) {
+		GLES20.glUseProgram(mDisplace.getProgram());
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
+		GLES20.glUniform2f(mDisplace.getHandle("uPosition"), camera.mTouchX,
+				camera.mTouchY);
+		GLES20.glUniform2f(mDisplace.getHandle("uDiff"), camera.mTouchDX,
+				camera.mTouchDY);
+		drawRect(mDisplace.getHandle("aPosition"));
+	}
+
+	/**
 	 * Initialized shaders.
 	 * 
 	 * @param ctx
@@ -146,6 +166,10 @@ public class GlslFilter {
 		mCopy.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_copy_fs));
 		mCopy.addHandles("aPosition", "sTexture0");
+
+		mDisplace.setProgram(ctx.getString(R.string.shader_filter_vs),
+				ctx.getString(R.string.shader_displace_fs));
+		mDisplace.addHandles("aPosition", "sTexture0", "uPosition", "uDiff");
 
 		mBloomPass1.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass1_fs));
