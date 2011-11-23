@@ -26,15 +26,13 @@ import android.opengl.Matrix;
 public class GlslLight implements GlslAnimator.PathInterface {
 	private float[] mPosition = new float[4];
 	private float[] mViewPos = new float[4];
-	private float[] mTempM = new float[16];
 
-	private FloatBuffer mTriangleVertices;
+	private FloatBuffer mVertexBuffer;
 
 	public GlslLight() {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(3 * 2 * 4 * 4);
-		mTriangleVertices = buffer.order(ByteOrder.nativeOrder())
-				.asFloatBuffer();
-		mTriangleVertices.position(0);
+		mVertexBuffer = buffer.order(ByteOrder.nativeOrder()).asFloatBuffer();
+		mVertexBuffer.position(0);
 	}
 
 	public void getPosition(float[] viewPos, int startIdx) {
@@ -44,50 +42,50 @@ public class GlslLight implements GlslAnimator.PathInterface {
 	}
 
 	public void render(GlslShaderIds ids, float x, float y, float z, float size) {
-		mTriangleVertices.position(0);
+		mVertexBuffer.position(0);
 
-		mTriangleVertices.put(x - size);
-		mTriangleVertices.put(y + size);
-		mTriangleVertices.put(z);
-		mTriangleVertices.put(-1);
-		mTriangleVertices.put(1);
+		mVertexBuffer.put(x - size);
+		mVertexBuffer.put(y + size);
+		mVertexBuffer.put(z);
+		mVertexBuffer.put(-1);
+		mVertexBuffer.put(1);
 
-		mTriangleVertices.put(x - size);
-		mTriangleVertices.put(y - size);
-		mTriangleVertices.put(z);
-		mTriangleVertices.put(-1);
-		mTriangleVertices.put(-1);
+		mVertexBuffer.put(x - size);
+		mVertexBuffer.put(y - size);
+		mVertexBuffer.put(z);
+		mVertexBuffer.put(-1);
+		mVertexBuffer.put(-1);
 
-		mTriangleVertices.put(x + size);
-		mTriangleVertices.put(y + size);
-		mTriangleVertices.put(z);
-		mTriangleVertices.put(1);
-		mTriangleVertices.put(1);
+		mVertexBuffer.put(x + size);
+		mVertexBuffer.put(y + size);
+		mVertexBuffer.put(z);
+		mVertexBuffer.put(1);
+		mVertexBuffer.put(1);
 
-		mTriangleVertices.put(x + size);
-		mTriangleVertices.put(y - size);
-		mTriangleVertices.put(z);
-		mTriangleVertices.put(1);
-		mTriangleVertices.put(-1);
+		mVertexBuffer.put(x + size);
+		mVertexBuffer.put(y - size);
+		mVertexBuffer.put(z);
+		mVertexBuffer.put(1);
+		mVertexBuffer.put(-1);
 
-		mTriangleVertices.position(0);
+		mVertexBuffer.position(0);
 		GLES20.glVertexAttribPointer(ids.aLightPosition, 3, GLES20.GL_FLOAT,
-				false, 5 * 4, mTriangleVertices);
+				false, 5 * 4, mVertexBuffer);
 		GLES20.glEnableVertexAttribArray(ids.aLightPosition);
 
-		mTriangleVertices.position(3);
+		mVertexBuffer.position(3);
 		GLES20.glVertexAttribPointer(ids.aLightTexPosition, 2, GLES20.GL_FLOAT,
-				false, 5 * 4, mTriangleVertices);
+				false, 5 * 4, mVertexBuffer);
 		GLES20.glEnableVertexAttribArray(ids.aLightTexPosition);
 
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 	}
 
 	public void setMVP(float[] viewM) {
-		Matrix.setIdentityM(mTempM, 0);
-		Matrix.translateM(mTempM, 0, mPosition[0], mPosition[1], mPosition[2]);
-		Matrix.multiplyMM(mTempM, 0, viewM, 0, mTempM, 0);
-		Matrix.multiplyMV(mViewPos, 0, mTempM, 0, mPosition, 0);
+		Matrix.multiplyMV(mViewPos, 0, viewM, 0, mPosition, 0);
+		for (int i = 0; i < 3; ++i) {
+			mViewPos[i] /= mViewPos[3];
+		}
 	}
 
 	@Override
