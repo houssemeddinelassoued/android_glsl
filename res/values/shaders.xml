@@ -126,7 +126,7 @@
             gl_FragColor = texture2D(sTexture0, vTextureCoord + c * uDiff);
         }
     </string>
-        <!-- Input pass for bloom filter -->
+    <!-- Input pass for bloom filter -->
     <string name="shader_bloom_pass1_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
