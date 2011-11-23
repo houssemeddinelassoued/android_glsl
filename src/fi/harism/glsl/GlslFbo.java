@@ -18,6 +18,9 @@ package fi.harism.glsl;
 
 import android.opengl.GLES20;
 
+/**
+ * Helper class for handling frame buffer objects.
+ */
 public class GlslFbo {
 
 	private int mWidth, mHeight;
@@ -25,42 +28,86 @@ public class GlslFbo {
 	private int mRenderbufferHandle = -1;
 	private int[] mTextureHandles = {};
 
+	/**
+	 * Binds this FBO into use.
+	 */
 	public void bind() {
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFramebufferHandle);
 		GLES20.glViewport(0, 0, mWidth, mHeight);
 	}
 
+	/**
+	 * Bind certain texture into target texture. This method should be called
+	 * only after a call to bind().
+	 * 
+	 * @param index
+	 *            Index of texture to bind.
+	 */
 	public void bindTexture(int index) {
 		GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
 				GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D,
 				mTextureHandles[index], 0);
 	}
 
-	public int getFramebuffer() {
-		return mFramebufferHandle;
-	}
-
+	/**
+	 * Getter for FBO height.
+	 * 
+	 * @return FBO height in pixels.
+	 */
 	public int getHeight() {
 		return mHeight;
 	}
 
-	public int getRenderbuffer() {
-		return mRenderbufferHandle;
-	}
-
+	/**
+	 * Getter for texture ids.
+	 * 
+	 * @param index
+	 *            Index of texture.
+	 * @return Texture id.
+	 */
 	public int getTexture(int index) {
 		return mTextureHandles[index];
 	}
 
+	/**
+	 * Getter for FBO width.
+	 * 
+	 * @return FBO width in pixels.
+	 */
 	public int getWidth() {
 		return mWidth;
 	}
 
-	public void init(int width, int height, int textures) {
-		init(width, height, textures, false);
+	/**
+	 * Initializes FBO with given parameters. Calls simply init(int, int, int,
+	 * boolean) without render buffer generation.
+	 * 
+	 * @param width
+	 *            Width in pixels.
+	 * @param height
+	 *            Height in pixels.
+	 * @param textureCount
+	 *            Number of textures to generate.
+	 */
+	public void init(int width, int height, int textureCount) {
+		init(width, height, textureCount, false);
 	}
 
-	public void init(int width, int height, int textures,
+	/**
+	 * Initializes FBO with given parameters. Width and height are used to
+	 * generate textures out of which all are sized same to this FBO. If you
+	 * give genRenderBuffer a value 'true', depth buffer will be generated also.
+	 * 
+	 * @param width
+	 *            FBO width in pixels.
+	 * @param height
+	 *            FBO height.
+	 * @param textureCount
+	 *            Number of textures to generate.
+	 * @param genRenderbuffer
+	 *            If true, depth buffer is allocated for this FBO.
+	 */
+	public void init(int width, int height, int textureCount,
 			boolean genRenderbuffer) {
 		mWidth = width;
 		mHeight = height;
@@ -70,8 +117,8 @@ public class GlslFbo {
 		mFramebufferHandle = handle[0];
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFramebufferHandle);
 
-		mTextureHandles = new int[textures];
-		GLES20.glGenTextures(textures, mTextureHandles, 0);
+		mTextureHandles = new int[textureCount];
+		GLES20.glGenTextures(textureCount, mTextureHandles, 0);
 		for (int texture : mTextureHandles) {
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
 			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,
@@ -100,6 +147,10 @@ public class GlslFbo {
 		}
 	}
 
+	/**
+	 * Resets this FBO to its initial state, releasing all resources that were
+	 * allocated.
+	 */
 	public void reset() {
 		int[] handle = { mFramebufferHandle };
 		GLES20.glDeleteFramebuffers(1, handle, 0);
