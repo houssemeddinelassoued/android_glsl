@@ -442,7 +442,7 @@ public final class GlslActivity extends Activity implements
 				float pos[] = { 0, 0, 0 };
 				GlslLight light = mScene.getLight(i);
 				light.getPosition(pos, 0);
-				light.render(mShaderIds, pos[0], pos[1], pos[2], 0.3f);
+				light.render(mShaderIds, pos[0], pos[1], pos[2], 0.1f);
 			}
 			GLES20.glDisable(GLES20.GL_BLEND);
 
@@ -492,7 +492,7 @@ public final class GlslActivity extends Activity implements
 			mCamera.mViewHeight = height;
 			float ratio = (float) width / height;
 
-			mCamera.setProjectionM(ratio, 45f, 1f, 21f);
+			mCamera.setProjectionM(ratio, 45f, .1f, 20f);
 			mCamera.setViewM(0f, 3f, -10f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
 			if (mResetFramebuffers) {
