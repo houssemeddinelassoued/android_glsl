@@ -89,7 +89,7 @@
         varying vec2 vTexPosition;
         
         void main() {
-            float dist = pow(length(vTexPosition), 3.0);
+            float dist = length(vTexPosition);
             gl_FragColor = vec4(1.0 - dist);
         }
     </string>
