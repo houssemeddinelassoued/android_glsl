@@ -68,8 +68,8 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 		mFStop = fStop;
 		mFocalPlane = focalPlane;
 
-		float fLen = 0.16f / (float) (2 * Math.tan((mFovY * Math.PI) / 360.0));
-		float fPlane = focalPlane * mZFar;
+		float fLen = 0.04f / (float) (2 * Math.tan((mFovY * Math.PI) / 360.0));
+		float fPlane = mZNear + focalPlane * mZFar;
 		float A = 400f / fStop;
 
 		mCocScale = (A * fLen * fPlane * (mZFar - mZNear))
