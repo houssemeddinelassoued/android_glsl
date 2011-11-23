@@ -52,6 +52,10 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 	public float mCocScale;
 	public float mCocBias;
 
+	// Touch filter values.
+	public float mTouchX, mTouchY;
+	public float mTouchDX, mTouchDY;
+
 	/**
 	 * Calculates circle of confusion values based on given parameters.
 	 * 
