@@ -45,7 +45,6 @@ public final class GlslShader {
 			}
 			if (handle == -1) {
 				Log.d("GlslShader", "Could not get attrib location for " + name);
-				return;
 			}
 			mShaderHandleMap.put(name, handle);
 		}
