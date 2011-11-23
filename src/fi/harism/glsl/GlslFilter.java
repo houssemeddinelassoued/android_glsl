@@ -24,12 +24,17 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.os.SystemClock;
 
+/**
+ * Class for handling 2d filter shaders.
+ */
 public class GlslFilter {
 
+	// Named texture indexes.
 	private static final int TEX_IDX_1 = 0;
 	private static final int TEX_IDX_2 = 1;
 	private static final int TEX_IDX_3 = 2;
 
+	// Shader instances.
 	private GlslShader mCopy = new GlslShader();
 	private GlslShader mBloomPass1 = new GlslShader();
 	private GlslShader mBloomPass2 = new GlslShader();
@@ -40,10 +45,13 @@ public class GlslFilter {
 	private GlslShader mLensBlurPass4 = new GlslShader();
 	private GlslShader mLensBlurPass5 = new GlslShader();
 
+	// Half sized FBO
 	private GlslFbo mFboHalf = new GlslFbo();
+	// Quarter sized FBO
 	private GlslFbo mFboQuarter = new GlslFbo();
-	private FloatBuffer mTriangleVertices;
 
+	// Buffer for 2d coordinates.
+	private FloatBuffer mTriangleVertices;
 	private static final float[] mCoords = { -1f, 1f, -1f, -1f, 1f, 1f, 1f, -1f };
 
 	public GlslFilter() {
@@ -54,11 +62,25 @@ public class GlslFilter {
 		mTriangleVertices.put(mCoords);
 	}
 
+	/**
+	 * Bloom filter.
+	 * 
+	 * @param texSrc
+	 *            Source texture id.
+	 * @param fboOut
+	 *            Output FBO.
+	 * @param idxOut
+	 *            Output FBO texture index.
+	 * @param camera
+	 *            Camera instance.
+	 */
 	public void bloom(int texSrc, GlslFbo fboOut, int idxOut, GlslCamera camera) {
 
 		float dx = 2f / mFboQuarter.getWidth();
 		float dy = 2f / mFboQuarter.getHeight();
 
+		// First pass reads color values exceeding given threshold into
+		// TEX_IDX_1 texture.
 		mFboQuarter.bind();
 		mFboQuarter.bindTexture(TEX_IDX_1);
 		GLES20.glUseProgram(mBloomPass1.getProgram());
@@ -68,6 +90,7 @@ public class GlslFilter {
 				camera.mBloomThreshold);
 		drawRect(mBloomPass1.getHandle("aPosition"));
 
+		// Second pass blurs TEX_IDX_1 horizontally.
 		mFboQuarter.bindTexture(TEX_IDX_2);
 		GLES20.glUseProgram(mBloomPass2.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -76,6 +99,7 @@ public class GlslFilter {
 		GLES20.glUniform2f(mBloomPass2.getHandle("uOffset"), dx, 0f);
 		drawRect(mBloomPass2.getHandle("aPosition"));
 
+		// Third pass blurs TEX_IDX_2 vertically.
 		mFboQuarter.bindTexture(TEX_IDX_1);
 		GLES20.glUseProgram(mBloomPass2.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -84,6 +108,8 @@ public class GlslFilter {
 		GLES20.glUniform2f(mBloomPass2.getHandle("uOffset"), 0f, dy);
 		drawRect(mBloomPass2.getHandle("aPosition"));
 
+		// Fourth pass combines source texture and calculated bloom texture into
+		// given output texture.
 		fboOut.bind();
 		fboOut.bindTexture(idxOut);
 		GLES20.glUseProgram(mBloomPass3.getProgram());
@@ -96,6 +122,13 @@ public class GlslFilter {
 		drawRect(mBloomPass3.getHandle("aPosition"));
 	}
 
+	/**
+	 * Copy filter copies given texture id as a source into currently binded
+	 * FBO.
+	 * 
+	 * @param src
+	 *            Source texture id.
+	 */
 	public void copy(int src) {
 		GLES20.glUseProgram(mCopy.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -103,6 +136,12 @@ public class GlslFilter {
 		drawRect(mCopy.getHandle("aPosition"));
 	}
 
+	/**
+	 * Initialized shaders.
+	 * 
+	 * @param ctx
+	 *            Context to read shader sources from.
+	 */
 	public void init(Context ctx) {
 		mCopy.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_copy_fs));
@@ -139,11 +178,31 @@ public class GlslFilter {
 				"sTextureBokehHdr", "sTexture1");
 	}
 
+	/**
+	 * Initializes internal FBOs.
+	 * 
+	 * @param width
+	 *            parent width
+	 * @param height
+	 *            parent height
+	 */
 	public void init(int width, int height) {
 		mFboHalf.init(width / 2, height / 2, 3);
 		mFboQuarter.init(width / 4, height / 4, 3);
 	}
 
+	/**
+	 * Lens blur filter.
+	 * 
+	 * @param texSrc
+	 *            Source texture id.
+	 * @param fboOut
+	 *            Output FBO.
+	 * @param idxOut
+	 *            Output FBO texture index.
+	 * @param camera
+	 *            Camera instance.
+	 */
 	public void lensBlur(int texSrc, GlslFbo fboOut, int idxOut,
 			GlslCamera camera) {
 
@@ -216,14 +275,25 @@ public class GlslFilter {
 				mFboHalf.getTexture(TEX_IDX_3));
 		GLES20.glUniform1i(mLensBlurPass5.getHandle("sTextureBokeh"), 1);
 		drawRect(mLensBlurPass5.getHandle("aPosition"));
-
 	}
 
+	/**
+	 * Resets internal FBOs.
+	 */
 	public void reset() {
 		mFboHalf.reset();
 		mFboQuarter.reset();
 	}
 
+	/**
+	 * Updates clipping coordinates filters are applied into. Values are between
+	 * [-1, 1], where (-1, 1) is top left corner and (1, -1) lower right corner.
+	 * 
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 */
 	public void setClipCoords(float x1, float y1, float x2, float y2) {
 		mTriangleVertices.put(0, x1);
 		mTriangleVertices.put(1, y1);
@@ -235,6 +305,12 @@ public class GlslFilter {
 		mTriangleVertices.put(7, y2);
 	}
 
+	/**
+	 * Private helper method to execute filters.
+	 * 
+	 * @param positionHandle
+	 *            Position attribute id to feed current vertex shader with.
+	 */
 	private void drawRect(int positionHandle) {
 		mTriangleVertices.position(0);
 		GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false,
