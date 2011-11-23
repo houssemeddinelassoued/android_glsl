@@ -21,11 +21,22 @@ import java.util.HashMap;
 import android.opengl.GLES20;
 import android.util.Log;
 
+/**
+ * Helper class for handling shaders.
+ */
 public final class GlslShader {
 
 	private int mProgram = 0;
 	private final HashMap<String, Integer> mShaderHandleMap = new HashMap<String, Integer>();
 
+	/**
+	 * Searches for given attribute/uniform names for loaded shader and stores
+	 * their ids for later use. getHandle() and getHandles() should be called
+	 * only after calling this method.
+	 * 
+	 * @param names
+	 *            List of attribute/uniform names to search for.
+	 */
 	public void addHandles(String... names) {
 		for (String name : names) {
 			int handle = GLES20.glGetAttribLocation(mProgram, name);
@@ -40,6 +51,13 @@ public final class GlslShader {
 		}
 	}
 
+	/**
+	 * Get id for given handle name.
+	 * 
+	 * @param name
+	 *            Name of handle.
+	 * @return Id for given handle or -1 if none found.
+	 */
 	public int getHandle(String name) {
 		if (mShaderHandleMap.containsKey(name)) {
 			return mShaderHandleMap.get(name);
@@ -48,6 +66,14 @@ public final class GlslShader {
 		return -1;
 	}
 
+	/**
+	 * Get array of ids with given names. Returned array is sized to given
+	 * amount name elements.
+	 * 
+	 * @param names
+	 *            List of handle names.
+	 * @return array of handle ids.
+	 */
 	public int[] getHandles(String... names) {
 		int[] res = new int[names.length];
 		for (int i = 0; i < names.length; ++i) {
@@ -56,10 +82,24 @@ public final class GlslShader {
 		return res;
 	}
 
+	/**
+	 * Getter for program id loaded into this shader object.
+	 * 
+	 * @return program id.
+	 */
 	public int getProgram() {
 		return mProgram;
 	}
 
+	/**
+	 * Compiles vertex and fragment shaders and links them into a progtam one
+	 * can use for rendering.
+	 * 
+	 * @param vertexSource
+	 *            String presentation for vertex shader
+	 * @param fragmentSource
+	 *            String presentation for fragment shader
+	 */
 	public void setProgram(String vertexSource, String fragmentSource) {
 		int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource);
 		int pixelShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource);
@@ -80,6 +120,15 @@ public final class GlslShader {
 		mShaderHandleMap.clear();
 	}
 
+	/**
+	 * Helper method for compiling a shader.
+	 * 
+	 * @param shaderType
+	 *            Type of shader to compile
+	 * @param source
+	 *            String presentation for shader
+	 * @return id for compiled shader
+	 */
 	private int loadShader(int shaderType, String source) {
 		int shader = GLES20.glCreateShader(shaderType);
 		if (shader != 0) {
