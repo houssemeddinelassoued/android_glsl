@@ -17,8 +17,9 @@
 package fi.harism.glsl;
 
 import android.opengl.Matrix;
+import fi.harism.glsl.scene.GlslAnimator;
 
-public class GlslCamera {
+public class GlslCamera implements GlslAnimator.PathInterface {
 	// Camera values.
 	public int mViewWidth, mViewHeight;
 	public float[] mViewM = new float[16];
@@ -61,6 +62,11 @@ public class GlslCamera {
 		mCocRadius = Math.max(Math.abs(mCocScale + mCocBias),
 				Math.abs(mCocBias));
 		mCocRadius = Math.min(mCocRadius, 20f);
+	}
+
+	@Override
+	public void setPosition(float position[]) {
+		setPosition(position[0], position[1], position[2]);
 	}
 
 	public void setPosition(float x, float y, float z) {

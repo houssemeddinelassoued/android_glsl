@@ -18,14 +18,16 @@ package fi.harism.glsl.scene;
 
 import java.util.Vector;
 
+import fi.harism.glsl.GlslCamera;
+
 public final class GlslScene {
 
 	private GlslAnimator mAnimator = new GlslAnimator();
 	private Vector<GlslObject> mObjects = new Vector<GlslObject>();
 	private Vector<GlslLight> mLights = new Vector<GlslLight>();
 
-	public void animate() {
-		mAnimator.animate();
+	public void animate(long time) {
+		mAnimator.animate(time);
 	}
 
 	public void draw(GlslShaderIds mData) {
@@ -47,7 +49,7 @@ public final class GlslScene {
 
 		GlslObject rootObject = new GlslObject();
 		mObjects.add(rootObject);
-		mAnimator.setRotation(rootObject, 3f, 20f, 6f);
+		mAnimator.setRotation(rootObject, 3000, 5000, 6000);
 
 		GlslCube cube = new GlslCube();
 		cube.setScaling(15f);
@@ -97,7 +99,7 @@ public final class GlslScene {
 		cube.setColor((float) Math.random(), (float) Math.random(),
 				(float) Math.random());
 		rootObject.addChild(cube);
-		mAnimator.setRotation(cube, 15f, -5f, 7f);
+		mAnimator.setRotation(cube, 4000, -5000, 7000);
 
 		for (int i = 0; i < lightCount; ++i) {
 			GlslLight light = new GlslLight();
@@ -108,17 +110,17 @@ public final class GlslScene {
 		}
 	}
 
-	public void initSceneBoxes2(int lightCount) {
+	public void initSceneBoxes2(GlslCamera camera, int lightCount) {
 		reset();
 
-		final int CUBE_SCROLLER_COUNT = 100;
+		final int CUBE_SCROLLER_COUNT = 50;
 		final int CUBE_ARCH_COUNT = 10;
-		final float CUBE_SCROLLER_NEAR = 90f;
-		final float CUBE_SCROLLER_FAR = -90f;
+		final float CUBE_SCROLLER_NEAR = 30f;
+		final float CUBE_SCROLLER_FAR = -30f;
 
 		GlslObject rootObject = new GlslObject();
 		mObjects.add(rootObject);
-		mAnimator.setRotation(rootObject, 0f, 20f, 0f);
+		// mAnimator.setRotation(rootObject, 0, 20000, 0);
 
 		GlslCube floor = new GlslCube();
 		floor.setScaling(200f);
@@ -163,6 +165,16 @@ public final class GlslScene {
 			light.setPosition(0f, 1f, i * 8);
 			mLights.add(light);
 		}
+
+		Vector<GlslAnimator.PathElement> path = new Vector<GlslAnimator.PathElement>();
+		path.add(mAnimator.new PathElement(0, 3, -20, 0));
+		path.add(mAnimator.new PathElement(-20, 3, -10, 5000));
+		path.add(mAnimator.new PathElement(-20, 6, 10, 10000));
+		path.add(mAnimator.new PathElement(0, 8, 20, 15000));
+		path.add(mAnimator.new PathElement(20, 3, 10, 20000));
+		path.add(mAnimator.new PathElement(20, 0, -10, 25000));
+		path.add(mAnimator.new PathElement(0, 3, -20, 30000));
+		mAnimator.setPath(camera, path);
 	}
 
 	public void reset() {

@@ -21,7 +21,8 @@ import java.util.Vector;
 import android.opengl.Matrix;
 import fi.harism.glsl.GlslMatrix;
 
-public class GlslObject {
+public class GlslObject implements GlslAnimator.RotationInterface,
+		GlslAnimator.PathInterface {
 
 	private static final float[] mModelM = new float[16];
 	private final float[] mModelViewM = new float[16];
@@ -80,6 +81,7 @@ public class GlslObject {
 		copy(position, mPosition, 3);
 	}
 
+	@Override
 	public final void setPosition(float[] position) {
 		copy(position, mPosition, 3);
 	}
@@ -89,6 +91,7 @@ public class GlslObject {
 		copy(rotation, mRotation, 3);
 	}
 
+	@Override
 	public final void setRotation(float[] rotation) {
 		copy(rotation, mRotation, 3);
 	}

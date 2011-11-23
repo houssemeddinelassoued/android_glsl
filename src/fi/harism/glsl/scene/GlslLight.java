@@ -23,7 +23,7 @@ import java.nio.FloatBuffer;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 
-public class GlslLight {
+public class GlslLight implements GlslAnimator.PathInterface {
 	private float[] mPosition = new float[4];
 	private float[] mViewPos = new float[4];
 	private float[] mTempM = new float[16];
@@ -88,6 +88,14 @@ public class GlslLight {
 		Matrix.translateM(mTempM, 0, mPosition[0], mPosition[1], mPosition[2]);
 		Matrix.multiplyMM(mTempM, 0, viewM, 0, mTempM, 0);
 		Matrix.multiplyMV(mViewPos, 0, mTempM, 0, mPosition, 0);
+	}
+
+	@Override
+	public void setPosition(float position[]) {
+		mPosition[0] = position[0];
+		mPosition[1] = position[1];
+		mPosition[2] = position[2];
+		mPosition[3] = 1;
 	}
 
 	public void setPosition(float x, float y, float z) {

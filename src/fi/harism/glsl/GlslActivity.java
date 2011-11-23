@@ -366,6 +366,7 @@ public final class GlslActivity extends Activity {
 		@Override
 		public void onDrawFrame(GL10 glUnused) {
 
+			mScene.animate(SystemClock.uptimeMillis());
 			mScene.setMVP(mCamera.mViewM, mCamera.mProjM);
 
 			GLES20.glEnable(GLES20.GL_CULL_FACE);
@@ -440,7 +441,6 @@ public final class GlslActivity extends Activity {
 
 			mLastRenderTime = mRenderTime;
 			mRenderTime = SystemClock.uptimeMillis();
-			mScene.animate();
 		}
 
 		@Override
@@ -450,7 +450,7 @@ public final class GlslActivity extends Activity {
 			float ratio = (float) width / height;
 
 			mCamera.setProjectionM(ratio, 45f, 1f, 21f);
-			mCamera.setViewM(0f, 3f, -10f, 0f, 0f, 50f, 0f, 1.0f, 0.0f);
+			mCamera.setViewM(0f, 3f, -10f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
 			if (mResetFramebuffers) {
 				mFbo.reset();
@@ -522,7 +522,7 @@ public final class GlslActivity extends Activity {
 				mScene.initSceneBoxes1(lightCount);
 				break;
 			case SCENE_BOXES2:
-				mScene.initSceneBoxes2(lightCount);
+				mScene.initSceneBoxes2(mCamera, lightCount);
 				break;
 			}
 		}
