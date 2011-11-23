@@ -113,7 +113,20 @@
             gl_FragColor = texture2D(sTexture0, vTextureCoord);
         }
     </string>
-    <!-- Input pass for bloom filter -->
+    <!-- Displace fragment shader -->
+    <string name="shader_displace_fs">
+        precision mediump float;
+        uniform sampler2D sTexture0;
+        uniform vec2 uPosition;
+        uniform vec2 uDiff;
+        varying vec2 vTextureCoord;
+        
+        void main() {
+        	float c = 1.0 - sqrt(length(vTextureCoord - (uPosition - uDiff)));
+            gl_FragColor = texture2D(sTexture0, vTextureCoord + c * uDiff);
+        }
+    </string>
+        <!-- Input pass for bloom filter -->
     <string name="shader_bloom_pass1_fs">
         precision mediump float;
         uniform sampler2D sTexture0;
