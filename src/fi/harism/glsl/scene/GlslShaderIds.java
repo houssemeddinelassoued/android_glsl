@@ -16,6 +16,9 @@
 
 package fi.harism.glsl.scene;
 
+/**
+ * Holder class for shader ids to use for rendering scene.
+ */
 public final class GlslShaderIds {
 	// Main shader ids
 	public int uMVMatrix = -1;
