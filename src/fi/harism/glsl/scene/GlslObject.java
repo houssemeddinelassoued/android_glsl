@@ -38,12 +38,6 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 		mChildObjects.add(obj);
 	}
 
-	public void animate() {
-		for (GlslObject obj : mChildObjects) {
-			obj.animate();
-		}
-	}
-
 	public void draw(GlslShaderIds mData) {
 		for (GlslObject obj : mChildObjects) {
 			obj.draw(mData);

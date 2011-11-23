@@ -80,12 +80,6 @@ public final class GlslCube extends GlslObject {
 	}
 
 	@Override
-	public void animate() {
-		// TODO:
-		super.animate();
-	}
-
-	@Override
 	public void draw(GlslShaderIds ids) {
 
 		super.draw(ids);
