@@ -36,9 +36,9 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.util.AttributeSet;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -50,11 +50,14 @@ import fi.harism.glsl.scene.GlslShaderIds;
 /**
  * Main Activity class.
  */
-public final class GlslActivity extends Activity {
+public final class GlslActivity extends Activity implements
+		View.OnTouchListener {
 
 	private MusicPlayer mMusicPlayer;
 	private Renderer mRenderer;
-	private SurfaceView mSurfaceView;
+	private GLSurfaceView mSurfaceView;
+
+	private float mTouchX, mTouchY;
 
 	private Timer mFpsTimer;
 	private Runnable mFpsRunnable;
@@ -74,12 +77,13 @@ public final class GlslActivity extends Activity {
 			mMusicPlayer = new MusicPlayer(500, 50);
 		}
 
-		mSurfaceView = new SurfaceView(this);
+		mSurfaceView = new GLSurfaceView(this);
 		mSurfaceView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR
 				| GLSurfaceView.DEBUG_LOG_GL_CALLS);
 		mSurfaceView.setEGLContextClientVersion(2);
 		mSurfaceView.setRenderer(mRenderer);
 		mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+		mSurfaceView.setOnTouchListener(this);
 
 		mAppName = getString(R.string.app_name);
 		mFpsRunnable = new FpsRunnable();
@@ -157,6 +161,28 @@ public final class GlslActivity extends Activity {
 	@Override
 	public Object onRetainNonConfigurationInstance() {
 		return this;
+	}
+
+	@Override
+	public boolean onTouch(View v, MotionEvent me) {
+		if (v != mSurfaceView)
+			return false;
+
+		switch (me.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+			mTouchX = me.getX();
+			mTouchY = me.getY();
+			mRenderer.onTouch(mTouchX, mTouchY, mTouchX, mTouchY);
+			return true;
+		case MotionEvent.ACTION_MOVE:
+			mRenderer.onTouch(mTouchX, mTouchY, me.getX(), me.getY());
+			return true;
+		case MotionEvent.ACTION_UP:
+			mRenderer.onTouchRelease();
+			return true;
+		default:
+			return false;
+		}
 	}
 
 	/**
@@ -338,7 +364,9 @@ public final class GlslActivity extends Activity {
 		private static final int TEX_IDX_OUT_2 = 2;
 
 		private long mRenderTime = 0;
-		private long mLastRenderTime = 0;
+		private long mAnimationTime = 0;
+		private long mAnimationPauseTime = 0;
+		private float mFps = 0f;
 
 		private GlslScene mScene = new GlslScene();
 		private GlslFilter mFilter = new GlslFilter();
@@ -348,6 +376,7 @@ public final class GlslActivity extends Activity {
 		private boolean mResetFramebuffers;
 		private GlslFbo mFbo = new GlslFbo();
 
+		private boolean mAnimationPaused;
 		private boolean mDivideScreen;
 		private boolean mBloomEnabled;
 		private boolean mLensBlurEnabled;
@@ -356,17 +385,24 @@ public final class GlslActivity extends Activity {
 		private GlslShader mLightShader = new GlslShader();
 
 		public Renderer() {
-			mRenderTime = mLastRenderTime = SystemClock.uptimeMillis();
+			mRenderTime = SystemClock.uptimeMillis();
 		}
 
 		public float getFps() {
-			return 1000f / (mRenderTime - mLastRenderTime);
+			return mFps;
 		}
 
 		@Override
 		public void onDrawFrame(GL10 glUnused) {
 
-			mScene.animate(SystemClock.uptimeMillis());
+			long lastRenderTime = mRenderTime;
+			mRenderTime = SystemClock.uptimeMillis();
+			mFps = 1000f / (mRenderTime - lastRenderTime);
+
+			if (!mAnimationPaused) {
+				mAnimationTime += mRenderTime - lastRenderTime;
+			}
+			mScene.animate(mAnimationTime);
 			mScene.setMVP(mCamera.mViewM, mCamera.mProjM);
 
 			GLES20.glEnable(GLES20.GL_CULL_FACE);
@@ -433,14 +469,21 @@ public final class GlslActivity extends Activity {
 				mFilter.setClipCoords(-1f, 1f, 0f, -1f);
 				mFilter.copy(mFbo.getTexture(TEX_IDX_SCENE));
 				mFilter.setClipCoords(0f, 1f, 1f, -1f);
-				mFilter.copy(mFbo.getTexture(texIdxIn));
+
+				if (mCamera.mTouchDX == 0 && mCamera.mTouchDY == 0) {
+					mFilter.copy(mFbo.getTexture(texIdxIn));
+				} else {
+					mFilter.displace(mFbo.getTexture(texIdxIn), mCamera);
+				}
 				mFilter.setClipCoords(-1f, 1f, 1f, -1f);
 			} else {
-				mFilter.copy(mFbo.getTexture(texIdxIn));
+				if (mCamera.mTouchDX == 0 && mCamera.mTouchDY == 0) {
+					mFilter.copy(mFbo.getTexture(texIdxIn));
+				} else {
+					mFilter.displace(mFbo.getTexture(texIdxIn), mCamera);
+				}
 			}
 
-			mLastRenderTime = mRenderTime;
-			mRenderTime = SystemClock.uptimeMillis();
 		}
 
 		@Override
@@ -494,6 +537,49 @@ public final class GlslActivity extends Activity {
 			mShaderIds.aLightTexPosition = shaderIds[2];
 		}
 
+		/**
+		 * Updates renderer drag position.
+		 * 
+		 * @param x1
+		 *            First touch point x
+		 * @param y1
+		 *            First touch point y
+		 * @param x2
+		 *            Current touch point x
+		 * @param y2
+		 *            Current touch point y
+		 */
+		public void onTouch(float x1, float y1, float x2, float y2) {
+			// On first call initiate paused state.
+			if (!mAnimationPaused) {
+				mAnimationPaused = true;
+				mAnimationPauseTime = mAnimationTime;
+			}
+
+			// Readjust animation time based on drag position.
+			float ratio = (float) mCamera.mViewWidth / mCamera.mViewHeight;
+			mAnimationTime = (long) (mAnimationPauseTime + 5000 * ratio
+					* ((x2 - x1) / mCamera.mViewWidth));
+
+			// Map touch coordinates into texture coordinates.
+			x1 /= mCamera.mViewWidth;
+			x2 /= mCamera.mViewWidth;
+			y1 = 1f - y1 / mCamera.mViewHeight;
+			y2 = 1f - y2 / mCamera.mViewHeight;
+			mCamera.mTouchX = x1;
+			mCamera.mTouchY = y1;
+			mCamera.mTouchDX = x1 - x2;
+			mCamera.mTouchDY = y1 - y2;
+		}
+
+		/**
+		 * Method for releasing renderer from touch mode.
+		 */
+		public void onTouchRelease() {
+			mAnimationPaused = false;
+			new ReleaseDragTimer(mCamera, 300, 30).start();
+		}
+
 		public void setPreferences(Context ctx, SharedPreferences preferences) {
 			String key = ctx.getString(R.string.key_divide_screen);
 			mDivideScreen = preferences.getBoolean(key, false);
@@ -519,26 +605,52 @@ public final class GlslActivity extends Activity {
 			int scene = Integer.parseInt(preferences.getString(key, "0"));
 			switch (scene) {
 			case SCENE_BOXES1:
-				mScene.initSceneBoxes1(lightCount);
+				mScene.initSceneBoxes1(mCamera, lightCount);
 				break;
 			case SCENE_BOXES2:
 				mScene.initSceneBoxes2(mCamera, lightCount);
 				break;
 			}
 		}
-	}
 
-	private final class SurfaceView extends GLSurfaceView {
+		/**
+		 * Helper class to enable smooth transiton from drag position.
+		 */
+		private class ReleaseDragTimer extends CountDownTimer {
+			private GlslCamera mReleasedCamera;
+			private long mTotalLength;
 
-		public SurfaceView(Context context) {
-			super(context);
-			// TODO Auto-generated constructor stub
+			/**
+			 * Constructor.
+			 * 
+			 * @param camera
+			 *            Camera for releasing
+			 * @param millisInFuture
+			 *            Length of transition
+			 * @param countDownInterval
+			 *            Transition interval
+			 */
+			public ReleaseDragTimer(GlslCamera camera, long millisInFuture,
+					long countDownInterval) {
+				super(millisInFuture, countDownInterval);
+				mReleasedCamera = camera;
+				mTotalLength = millisInFuture;
+			}
+
+			@Override
+			public void onFinish() {
+				mReleasedCamera.mTouchX = mReleasedCamera.mTouchY = mReleasedCamera.mTouchDX = mReleasedCamera.mTouchDY = 0f;
+			}
+
+			@Override
+			public void onTick(long millisUntilFinished) {
+				float c = (float) millisUntilFinished / mTotalLength;
+				mReleasedCamera.mTouchDX *= c;
+				mReleasedCamera.mTouchDY *= c;
+			}
+
 		}
 
-		public SurfaceView(Context context, AttributeSet attrs) {
-			super(context, attrs);
-			// TODO Auto-generated constructor stub
-		}
-
 	}
+
 }
