@@ -86,64 +86,47 @@ public final class GlslScene {
 		GlslObject rootObject = new GlslObject();
 		mObjects.add(rootObject);
 
-		GlslCube cube = new GlslCube();
-		cube.setScaling(15f);
-		cube.setPosition(15f, 0f, 0f);
-		cube.setColor((float) Math.random(), (float) Math.random(),
-				(float) Math.random());
-		rootObject.addChild(cube);
+		GlslBox box = new GlslBox();
+		box.setSize(-6, -6, -20);
+		for (int i = 0; i < 6; ++i) {
+			box.setColor(i, rand(.2f, 1f), rand(.2f, 1f), rand(.2f, 1f));
+		}
+		mObjects.add(box);
 
-		cube = new GlslCube();
-		cube.setScaling(15f);
-		cube.setPosition(-15f, 0f, 0f);
-		cube.setColor((float) Math.random(), (float) Math.random(),
-				(float) Math.random());
-		rootObject.addChild(cube);
-
-		cube = new GlslCube();
-		cube.setScaling(15f);
-		cube.setPosition(0f, 15f, 0f);
-		cube.setColor((float) Math.random(), (float) Math.random(),
-				(float) Math.random());
-		rootObject.addChild(cube);
-
-		cube = new GlslCube();
-		cube.setScaling(15f);
-		cube.setPosition(0f, -15f, 0f);
-		cube.setColor((float) Math.random(), (float) Math.random(),
-				(float) Math.random());
-		rootObject.addChild(cube);
-
-		cube = new GlslCube();
-		cube.setScaling(15f);
-		cube.setPosition(0f, 0f, 15f);
-		cube.setColor((float) Math.random(), (float) Math.random(),
-				(float) Math.random());
-		rootObject.addChild(cube);
-
-		cube = new GlslCube();
-		cube.setScaling(15f);
-		cube.setPosition(0f, 0f, -15f);
-		cube.setColor((float) Math.random(), (float) Math.random(),
-				(float) Math.random());
-		rootObject.addChild(cube);
-
-		cube = new GlslCube();
-		cube.setScaling(2f);
-		cube.setPosition(0f, 0f, 0f);
-		cube.setColor((float) Math.random(), (float) Math.random(),
-				(float) Math.random());
-		rootObject.addChild(cube);
-		mAnimator.setRotation(cube, mAnimator.new RotationData(10000, -15000,
+		box = new GlslBox();
+		box.setPosition(0f, 0f, 0f);
+		box.setColor(rand(.2f, 1f), rand(.2f, 1f), rand(.2f, 1f));
+		rootObject.addChild(box);
+		mAnimator.setRotation(box, mAnimator.new RotationData(10000, -15000,
 				17000));
 
 		for (int i = 0; i < lightCount; ++i) {
 			GlslLight light = new GlslLight();
-			light.setPosition((float) (Math.random() * 8f) - 4f,
-					(float) (Math.random() * 8f) - 4f,
-					(float) (Math.random() * 8f) - 4f);
+			GlslAnimator.Path path = mAnimator.new Path();
+			float x = rand(-2.8f, 2.8f);
+			float y = rand(-2.8f, 2.8f);
+			float z = rand(-9f, 9f);
+			path.addPosition(x, y, z, 0);
+			for (int j = 1; j < 10; ++j) {
+				path.addPosition(rand(-2.8f, 2.8f), rand(-2.8f, 2.8f),
+						rand(-9f, 9f), j * 4000);
+			}
+			path.addPosition(x, y, z, 40000);
+			mAnimator.setPath(light, path);
 			mLights.add(light);
 		}
+
+		GlslAnimator.Path path = mAnimator.new Path();
+		float x = rand(-2.5f, 2.5f);
+		float y = rand(-2.5f, 2.5f);
+		float z = rand(-9f, 9f);
+		path.addPosition(x, y, z, 0);
+		for (int j = 1; j < 10; ++j) {
+			path.addPosition(rand(-2.5f, 2.5f), rand(-2.5f, 2.5f),
+					rand(-9f, 9f), j * 4000);
+		}
+		path.addPosition(x, y, z, 40000);
+		mAnimator.setPath(camera, path);
 	}
 
 	/**
@@ -158,22 +141,21 @@ public final class GlslScene {
 		reset();
 
 		final int CUBE_SCROLLER_COUNT = 20;
-		final int CUBE_ARCH_COUNT = 10;
+		final int CUBE_ARCH_COUNT = 20;
 		final float CUBE_SCROLLER_NEAR = 10f;
 		final float CUBE_SCROLLER_FAR = -10f;
 
 		GlslObject rootObject = new GlslObject();
 		mObjects.add(rootObject);
-		// mAnimator.setRotation(rootObject, 0, 20000, 0);
 
-		GlslCube floor = new GlslCube();
-		floor.setScaling(200f);
-		floor.setPosition(0, -101f, 0f);
+		GlslBox floor = new GlslBox();
+		floor.setSize(100f, 2f, 100f);
+		floor.setPosition(0, -1f, 0f);
 		floor.setColor(.5f, .5f, .5f);
 		rootObject.addChild(floor);
 
 		for (int idx = 0; idx < CUBE_SCROLLER_COUNT; ++idx) {
-			GlslCube cube = new GlslCube();
+			GlslBox cube = new GlslBox();
 
 			cube.setScaling(rand(.8f, 1.2f));
 			cube.setRotation(rand(0f, 360f), rand(0f, 360f), rand(0f, 360f));
@@ -183,33 +165,49 @@ public final class GlslScene {
 			rootObject.addChild(cube);
 		}
 
+		GlslObject archContainer = new GlslObject();
+		rootObject.addChild(archContainer);
+		mAnimator.setRotation(archContainer, mAnimator.new RotationData(15000,
+				0, 10000));
 		for (int idx = 0; idx < CUBE_ARCH_COUNT; ++idx) {
-			GlslCube cube = new GlslCube();
+			GlslBox cube = new GlslBox();
 
-			double t = Math.PI * idx / (CUBE_ARCH_COUNT - 1);
+			double t = 2 * Math.PI * idx / CUBE_ARCH_COUNT;
 
-			cube.setScaling(rand(1f, 2f));
+			cube.setScaling(rand(0.5f, 1f));
 			cube.setRotation(rand(0f, 360f), rand(0f, 360f), rand(0f, 360f));
-			cube.setPosition((float) (5 * Math.cos(t)),
-					(float) (5 * Math.sin(t)), 0f);
+			cube.setPosition((float) (3f * Math.cos(t)),
+					(float) (3f * Math.sin(t)), 0f);
 			cube.setColor(rand(.2f, 1f), rand(.2f, 1f), rand(.2f, 1f));
-			rootObject.addChild(cube);
+			archContainer.addChild(cube);
 		}
 
 		for (int i = 0; i < lightCount; ++i) {
 			GlslLight light = new GlslLight();
-			light.setPosition(0f, 1f, i * 8);
+			GlslAnimator.Path path = mAnimator.new Path();
+			float x = rand(-5f, 5f);
+			float y = rand(1f, 10f);
+			float z = rand(-5f, 5f);
+			path.addPosition(x, y, z, 0);
+			for (int j = 1; j < 10; ++j) {
+				path.addPosition(rand(-5f, 5f), rand(1f, 10f), rand(-5f, 5f),
+						j * 4000);
+			}
+			path.addPosition(x, y, z, 40000);
+			mAnimator.setPath(light, path);
 			mLights.add(light);
 		}
 
-		Vector<GlslAnimator.PathElement> path = new Vector<GlslAnimator.PathElement>();
-		path.add(mAnimator.new PathElement(0, 3, -20, 0));
-		path.add(mAnimator.new PathElement(-20, 3, -10, 5000));
-		path.add(mAnimator.new PathElement(-20, 6, 10, 10000));
-		path.add(mAnimator.new PathElement(0, 8, 20, 15000));
-		path.add(mAnimator.new PathElement(20, 3, 10, 20000));
-		path.add(mAnimator.new PathElement(20, 0, -10, 25000));
-		path.add(mAnimator.new PathElement(0, 3, -20, 30000));
+		GlslAnimator.Path path = mAnimator.new Path();
+		float x = rand(-10f, 10f);
+		float y = rand(1f, 10f);
+		float z = rand(-10f, 10f);
+		path.addPosition(x, y, z, 0);
+		for (int j = 1; j < 10; ++j) {
+			path.addPosition(rand(-10f, 10f), rand(1f, 10f), rand(-10f, 10f),
+					j * 4000);
+		}
+		path.addPosition(x, y, z, 40000);
 		mAnimator.setPath(camera, path);
 	}
 
