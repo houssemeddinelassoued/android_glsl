@@ -77,8 +77,16 @@ public class GlslFilter {
 	 */
 	public void bloom(int texSrc, GlslFbo fboOut, int idxOut, GlslCamera camera) {
 
-		float dx = 2f / mFboQuarter.getWidth();
-		float dy = 2f / mFboQuarter.getHeight();
+		float ratioX = 1f;
+		float ratioY = (float) mFboHalf.getWidth() / mFboHalf.getHeight();
+		if (ratioY > ratioX) {
+			ratioX = (float) mFboHalf.getHeight() / mFboHalf.getWidth();
+			ratioY = 1f;
+		}
+
+		float steps = 5;
+		float dx = ratioX / (50f * steps);
+		float dy = ratioY / (50f * steps);
 
 		// First pass reads color values exceeding given threshold into
 		// TEX_IDX_1 texture.
@@ -98,11 +106,11 @@ public class GlslFilter {
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 				mFboQuarter.getTexture(TEX_IDX_1));
 		GLES20.glUniform2f(mBloomPass2.getHandle("uOffset"), dx, 0f);
+		GLES20.glUniform1f(mBloomPass2.getHandle("uSteps"), steps);
 		drawRect(mBloomPass2.getHandle("aPosition"));
 
 		// Third pass blurs TEX_IDX_2 vertically.
 		mFboQuarter.bindTexture(TEX_IDX_1);
-		GLES20.glUseProgram(mBloomPass2.getProgram());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 				mFboQuarter.getTexture(TEX_IDX_2));
@@ -176,7 +184,7 @@ public class GlslFilter {
 		mBloomPass1.addHandles("aPosition", "sTexture0", "uThreshold");
 		mBloomPass2.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass2_fs));
-		mBloomPass2.addHandles("aPosition", "sTexture0", "uOffset");
+		mBloomPass2.addHandles("aPosition", "sTexture0", "uOffset", "uSteps");
 		mBloomPass3.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass3_fs));
 		mBloomPass3.addHandles("aPosition", "sTexture0", "sTexture1");
@@ -230,15 +238,21 @@ public class GlslFilter {
 	public void lensBlur(int texSrc, GlslFbo fboOut, int idxOut,
 			GlslCamera camera) {
 
+		float ratioX = 1f;
+		float ratioY = (float) mFboHalf.getWidth() / mFboHalf.getHeight();
+		if (ratioY > ratioX) {
+			ratioX = (float) mFboHalf.getHeight() / mFboHalf.getWidth();
+			ratioY = 1f;
+		}
+
 		float angle = (float) (Math.PI * (SystemClock.uptimeMillis() % 10000) / 5000);
-		float stepRadius = camera.mCocRadius / camera.mBlurSteps;
+		float stepRadius = Math.min(camera.mCocRadius, 50f) / camera.mBlurSteps;
 
 		float[][] dir = new float[3][2];
 		for (int i = 0; i < 3; i++) {
 			double a = angle + i * Math.PI * 2 / 3;
-			dir[i][0] = (float) (stepRadius * Math.sin(a) / mFboHalf.getWidth());
-			dir[i][1] = (float) (stepRadius * Math.cos(a) / mFboHalf
-					.getHeight());
+			dir[i][0] = (float) (stepRadius * Math.sin(a) * ratioX / 1000f);
+			dir[i][1] = (float) (stepRadius * Math.cos(a) * ratioY / 1000f);
 		}
 
 		mFboHalf.bind();
