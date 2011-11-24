@@ -147,14 +147,14 @@
         precision mediump float;
         uniform sampler2D sTexture0;
         uniform vec2 uOffset;
+        uniform float uSteps;
         varying vec2 vTextureCoord;
         
         void main() {
             float sum = 0.0;
             vec2 offset = uOffset;
             gl_FragColor = vec4(0.0);
-            const float steps = 5.0;
-            for (float i = 0.0; i &lt; steps; ++i) {
+            for (float i = 0.0; i &lt; uSteps; ++i) {
                 vec4 color0 = texture2D(sTexture0, vTextureCoord + offset);
                 vec4 color1 = texture2D(sTexture0, vTextureCoord - offset);
                 gl_FragColor.rgb += color0.rgb * color0.a;
