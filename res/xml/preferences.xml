@@ -99,7 +99,7 @@
                 android:defaultValue="5"
                 android:dependency="@string/key_lensblur_enable"
                 android:key="@string/key_lensblur_steps"
-                android:summary="Step count during blur to emulate point's circle of confusion"
+                android:summary="Step count during blur to emulate point&apos;s circle of confusion"
                 android:title="Blur steps (= %.0f)"
                 harism:valueMax="10"
                 harism:valueMin="1"
