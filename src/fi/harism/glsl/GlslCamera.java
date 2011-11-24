@@ -78,7 +78,6 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 
 		mCocRadius = Math.max(Math.abs(mCocScale + mCocBias),
 				Math.abs(mCocBias));
-		mCocRadius = Math.min(mCocRadius, 20f);
 	}
 
 	@Override
