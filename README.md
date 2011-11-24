@@ -17,11 +17,13 @@ maybe more preferably - as an example for implementing your own rendering enviro
 You can find music used in this application, and more, composed by Mosaik, licensed under
 [Creative Commons license](http://creativecommons.org/licenses/by-nc-nd/3.0/), at www.mosaik.se.
 
+Compiled application will be released on Android market from time to time. Check
+http://market.android.com/details?id=fi.harism.glsl for taking a brief look on the project.
+
 ToDo
 ====
 
 - Add proper comments
-- Bloom isn't working properly yet
 - Blinn-Phong shading (currently Phong shading only)
 - Shadows (most likely will give shadow volumes a go)
 - Ideas yet to come..
