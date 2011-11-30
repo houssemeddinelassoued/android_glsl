@@ -20,7 +20,6 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -303,9 +302,6 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 	 */
 	public void setOwnerActivity(Activity activity) {
 		mOwnerActivity = activity;
-	}
-
-	public void setPreferences(Context ctx, SharedPreferences preferences) {
 	}
 
 	/**
