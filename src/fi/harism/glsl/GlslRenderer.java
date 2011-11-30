@@ -99,7 +99,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 		}
 		int shaderIds[] = mSceneShader.getHandles("uLightCount", "uLights",
 				"uCocScale", "uCocBias");
-		GLES20.glUseProgram(mSceneShader.getProgram());
+		mSceneShader.useProgram();
 		GLES20.glUniform1i(shaderIds[0], lightCount);
 		GLES20.glUniform3fv(shaderIds[1], 4, lightPositions, 0);
 		GLES20.glUniform1f(shaderIds[2], mCamera.mCocScale);
@@ -113,7 +113,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 
 		GLES20.glEnable(GLES20.GL_BLEND);
 		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
-		GLES20.glUseProgram(mLightShader.getProgram());
+		mLightShader.useProgram();
 		GLES20.glUniformMatrix4fv(mShaderIds.uLightPMatrix, 1, false,
 				mCamera.mProjM, 0);
 		for (int i = 0; i < lightCount; ++i) {
@@ -184,6 +184,9 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 
 	@Override
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
+		mResetFramebuffers = false;
+		mFilter.init(mOwnerActivity);
+
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(mOwnerActivity);
 		String key = mOwnerActivity.getString(R.string.key_divide_screen);
@@ -216,9 +219,6 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 			mScene.initSceneBoxes2(mCamera, lightCount);
 			break;
 		}
-
-		mFilter.init(mOwnerActivity);
-		mResetFramebuffers = false;
 
 		mSceneShader.setProgram(
 				mOwnerActivity.getString(R.string.shader_scene_phong_vs),
