@@ -78,8 +78,6 @@ public final class GlslActivity extends Activity implements
 		}
 
 		mSurfaceView = new GLSurfaceView(this);
-		mSurfaceView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR
-				| GLSurfaceView.DEBUG_LOG_GL_CALLS);
 		mSurfaceView.setEGLContextClientVersion(2);
 		mSurfaceView.setRenderer(mRenderer);
 		mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
