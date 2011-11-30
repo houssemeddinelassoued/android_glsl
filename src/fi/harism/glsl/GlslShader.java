@@ -26,7 +26,7 @@ import android.util.Log;
  */
 public final class GlslShader {
 
-	private int mProgram = 0;
+	private int mProgram = -1;
 	private final HashMap<String, Integer> mShaderHandleMap = new HashMap<String, Integer>();
 
 	/**
@@ -82,17 +82,10 @@ public final class GlslShader {
 	}
 
 	/**
-	 * Getter for program id loaded into this shader object.
-	 * 
-	 * @return program id.
-	 */
-	public int getProgram() {
-		return mProgram;
-	}
-
-	/**
-	 * Compiles vertex and fragment shaders and links them into a progtam one
-	 * can use for rendering.
+	 * Compiles vertex and fragment shaders and links them into a program one
+	 * can use for rendering. Once OpenGL context is lost and onSurfaceCreated
+	 * is called, there is no need to reset existing GlslShader objects but one
+	 * can simply reload shader.
 	 * 
 	 * @param vertexSource
 	 *            String presentation for vertex shader
@@ -101,11 +94,12 @@ public final class GlslShader {
 	 */
 	public void setProgram(String vertexSource, String fragmentSource) {
 		int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource);
-		int pixelShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource);
+		int fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER,
+				fragmentSource);
 		int program = GLES20.glCreateProgram();
 		if (program != 0) {
 			GLES20.glAttachShader(program, vertexShader);
-			GLES20.glAttachShader(program, pixelShader);
+			GLES20.glAttachShader(program, fragmentShader);
 			GLES20.glLinkProgram(program);
 			int[] linkStatus = new int[1];
 			GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
@@ -117,6 +111,13 @@ public final class GlslShader {
 		}
 		mProgram = program;
 		mShaderHandleMap.clear();
+	}
+
+	/**
+	 * Activates this shader program.
+	 */
+	public void useProgram() {
+		GLES20.glUseProgram(mProgram);
 	}
 
 	/**
