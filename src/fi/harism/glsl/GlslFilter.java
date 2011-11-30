@@ -92,7 +92,7 @@ public class GlslFilter {
 		// TEX_IDX_1 texture.
 		mFboQuarter.bind();
 		mFboQuarter.bindTexture(TEX_IDX_1);
-		GLES20.glUseProgram(mBloomPass1.getProgram());
+		mBloomPass1.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
 		GLES20.glUniform1f(mBloomPass1.getHandle("uThreshold"),
@@ -101,7 +101,7 @@ public class GlslFilter {
 
 		// Second pass blurs TEX_IDX_1 horizontally.
 		mFboQuarter.bindTexture(TEX_IDX_2);
-		GLES20.glUseProgram(mBloomPass2.getProgram());
+		mBloomPass2.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 				mFboQuarter.getTexture(TEX_IDX_1));
@@ -121,7 +121,7 @@ public class GlslFilter {
 		// given output texture.
 		fboOut.bind();
 		fboOut.bindTexture(idxOut);
-		GLES20.glUseProgram(mBloomPass3.getProgram());
+		mBloomPass3.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
@@ -139,7 +139,7 @@ public class GlslFilter {
 	 *            Source texture id.
 	 */
 	public void copy(int src) {
-		GLES20.glUseProgram(mCopy.getProgram());
+		mCopy.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src);
 		drawRect(mCopy.getHandle("aPosition"));
@@ -154,7 +154,7 @@ public class GlslFilter {
 	 *            Camera for retrieving displacement values.
 	 */
 	public void displace(int texSrc, GlslCamera camera) {
-		GLES20.glUseProgram(mDisplace.getProgram());
+		mDisplace.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
 		GLES20.glUniform2f(mDisplace.getHandle("uPosition"), camera.mTouchX,
@@ -165,7 +165,7 @@ public class GlslFilter {
 	}
 
 	/**
-	 * Initialized shaders.
+	 * Initializes shaders which are read from given Context.
 	 * 
 	 * @param ctx
 	 *            Context to read shader sources from.
@@ -211,12 +211,12 @@ public class GlslFilter {
 	}
 
 	/**
-	 * Initializes internal FBOs.
+	 * Initializes internal FBOs needed for filter rendering steps.
 	 * 
 	 * @param width
-	 *            parent width
+	 *            Parent width
 	 * @param height
-	 *            parent height
+	 *            Parent height
 	 */
 	public void init(int width, int height) {
 		mFboHalf.init(width / 2, height / 2, 3);
@@ -257,13 +257,13 @@ public class GlslFilter {
 
 		mFboHalf.bind();
 		mFboHalf.bindTexture(TEX_IDX_3);
-		GLES20.glUseProgram(mLensBlurPass1.getProgram());
+		mLensBlurPass1.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
 		drawRect(mLensBlurPass1.getHandle("aPosition"));
 
 		mFboHalf.bindTexture(TEX_IDX_1);
-		GLES20.glUseProgram(mLensBlurPass2.getProgram());
+		mLensBlurPass2.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 				mFboHalf.getTexture(TEX_IDX_3));
@@ -273,7 +273,7 @@ public class GlslFilter {
 		drawRect(mLensBlurPass2.getHandle("aPosition"));
 
 		mFboHalf.bindTexture(TEX_IDX_2);
-		GLES20.glUseProgram(mLensBlurPass3.getProgram());
+		mLensBlurPass3.useProgram();
 		// GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		// GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 		// mFboHalf.getTexture(TEX_IDX_3));
@@ -288,7 +288,7 @@ public class GlslFilter {
 		drawRect(mLensBlurPass3.getHandle("aPosition"));
 
 		mFboHalf.bindTexture(TEX_IDX_3);
-		GLES20.glUseProgram(mLensBlurPass4.getProgram());
+		mLensBlurPass4.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 				mFboHalf.getTexture(TEX_IDX_2));
@@ -305,7 +305,7 @@ public class GlslFilter {
 
 		fboOut.bind();
 		fboOut.bindTexture(idxOut);
-		GLES20.glUseProgram(mLensBlurPass5.getProgram());
+		mLensBlurPass5.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
