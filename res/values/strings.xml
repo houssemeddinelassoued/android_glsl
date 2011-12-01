@@ -23,6 +23,7 @@ harism@gmail.com
     <string name="key_show_title">show_title</string>
     <string name="key_reset">reset</string>
     <string name="key_scene">scene</string>
+    <string name="key_quality">quality</string>
     <string name="key_light_count">light_count</string>
     <string name="key_bloom_enable">bloom_enable</string>
     <string name="key_bloom_threshold">bloom_threshold</string>

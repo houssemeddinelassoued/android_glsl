@@ -25,6 +25,14 @@
     <PreferenceCategory android:title="Rendering" >
 
         <ListPreference
+            android:defaultValue="1"
+            android:entries="@array/quality_entries"
+            android:entryValues="@array/quality_values"
+            android:key="@string/key_quality"
+            android:summary="High quality uses screen sized textures as offscreen buffers, medium half the size and low third the size of rendering area"
+            android:title="Render Quality" />
+
+        <ListPreference
             android:defaultValue="0"
             android:entries="@array/scene_entries"
             android:entryValues="@array/scene_values"
@@ -89,7 +97,7 @@
                 android:defaultValue="50"
                 android:dependency="@string/key_lensblur_enable"
                 android:key="@string/key_lensblur_focal_plane"
-                android:summary="Focal plane is the plane in focus"
+                android:summary="Focal plane is the distance from camera to plane in focus"
                 android:title="Focal Plane (= %.0f)"
                 harism:valueMax="100"
                 harism:valueMin="0"

@@ -177,6 +177,25 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 		}
 		mResetFramebuffers = true;
 
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(mOwnerActivity);
+		String key = mOwnerActivity.getString(R.string.key_quality);
+		int quality = Integer.parseInt(prefs.getString(key, "1"));
+		switch (quality) {
+		// High quality, do nothing.
+		case 0:
+			break;
+		// Medium quality, use half sized textures.
+		case 1:
+			width /= 2;
+			height /= 2;
+			break;
+		// Low quality, use third sized textures.
+		case 2:
+			width /= 3;
+			height /= 3;
+			break;
+		}
 		mFbo.init(width, height, 3, true);
 		mFilter.init(width, height);
 	}
