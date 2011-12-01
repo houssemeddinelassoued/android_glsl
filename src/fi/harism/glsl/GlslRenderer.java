@@ -238,9 +238,19 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 			break;
 		}
 
-		mSceneShader.setProgram(
-				mOwnerActivity.getString(R.string.shader_scene_phong_vs),
-				mOwnerActivity.getString(R.string.shader_scene_phong_fs));
+		key = mOwnerActivity.getString(R.string.key_light_model);
+		int lightModel = Integer.parseInt(prefs.getString(key, "1"));
+		switch (lightModel) {
+		case 0:
+			mSceneShader.setProgram(mOwnerActivity
+					.getString(R.string.shader_scene_vs), mOwnerActivity
+					.getString(R.string.shader_scene_blinn_phong_fs));
+			break;
+		case 1:
+			mSceneShader.setProgram(
+					mOwnerActivity.getString(R.string.shader_scene_vs),
+					mOwnerActivity.getString(R.string.shader_scene_phong_fs));
+		}
 		mSceneShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
 				"aPosition", "aNormal", "aColor", "uLightCount", "uLights",
 				"uCocScale", "uCocBias");

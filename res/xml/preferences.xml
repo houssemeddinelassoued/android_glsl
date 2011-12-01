@@ -38,22 +38,35 @@
             android:entryValues="@array/scene_values"
             android:key="@string/key_scene"
             android:summary="Select scene for rendering"
-            android:title="Select scene" />
+            android:title="Select Scene" />
 
-        <fi.harism.glsl.prefs.GlslSliderPreference
-            android:defaultValue="2.0"
-            android:key="@string/key_light_count"
-            android:summary="Number of light sources. The bigger the value, the slower rendering will be"
-            android:title="Lights (= %.0f)"
-            harism:valueMax="4.0"
-            harism:valueMin="1.0"
-            harism:valuePrecision="1.0" />
+        <PreferenceScreen
+            android:summary="Lightning related settings"
+            android:title="Lightning" >
+
+            <ListPreference
+                android:defaultValue="1"
+                android:entries="@array/light_model_entries"
+                android:entryValues="@array/light_model_values"
+                android:key="@string/key_light_model"
+                android:summary="Select lightning model for rendering"
+                android:title="Lightning Model" />
+
+            <fi.harism.glsl.prefs.GlslSliderPreference
+                android:defaultValue="2.0"
+                android:key="@string/key_light_count"
+                android:summary="Number of light sources. The bigger the value, the slower rendering will be"
+                android:title="Lights (= %.0f)"
+                harism:valueMax="4.0"
+                harism:valueMin="1.0"
+                harism:valuePrecision="1.0" />
+        </PreferenceScreen>
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Filters" >
 
         <PreferenceScreen
-            android:summary="bloom filter settings"
+            android:summary="Bloom filter settings"
             android:title="Bloom" >
 
             <CheckBoxPreference
@@ -75,7 +88,7 @@
 
         <PreferenceScreen
             android:summary="Lens blur filter settings"
-            android:title="Lens blur" >
+            android:title="Lens Blur" >
 
             <CheckBoxPreference
                 android:defaultValue="true"
@@ -121,7 +134,7 @@
             android:key="@string/key_reset"
             android:persistent="false"
             android:summary="Resets preferences back to default values"
-            android:title="Reset preferences" />
+            android:title="Reset Preferences" />
     </PreferenceCategory>
 
 </PreferenceScreen>

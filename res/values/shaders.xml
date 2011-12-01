@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Vertex shader for rendering Phong shaded scene -->
-    <string name="shader_scene_phong_vs">
+    <!-- Common vertex shader for scene rendering -->
+    <string name="shader_scene_vs">
         uniform mat4 uMVMatrix;
         uniform mat4 uMVPMatrix;
         uniform mat4 uNormalMatrix;
@@ -19,7 +19,7 @@
             gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
             vNormal = vec3(uNormalMatrix * vec4(aNormal, 0.0));
             vPos = vec3(uMVMatrix * vec4(aPosition, 1.0));
-            vColor = aColor;
+            vColor = aColor;            
         }
     </string>
     <!-- Fragment shader for rendering Phong shaded scene -->
@@ -43,6 +43,55 @@
                 lightVal[0] = lambert * r;
                 vec3 R = reflect(-L, N);
                 lightVal[1] = pow(max(dot(R, E), 0.0), 8.0) * r;
+            }
+            return lightVal;
+        }
+        
+        void main() {
+            vec2 lightVal = vec2(0.0);
+            vec3 N = normalize(vNormal);
+            vec3 E = normalize(-vPos);
+            if (uLightCount > 0)
+                lightVal += calcLight(N, uLights[0] - vPos, E);
+            if (uLightCount > 1)
+                lightVal += calcLight(N, uLights[1] - vPos, E);
+            if (uLightCount > 2)
+                lightVal += calcLight(N, uLights[2] - vPos, E);
+            if (uLightCount > 3)
+                lightVal += calcLight(N, uLights[3] - vPos, E);
+            
+            const float ambient = 0.3;
+            float ambientPlusDiffuse = min(ambient + lightVal[0], 1.0);
+            float specular = min(lightVal[1], 1.0);
+            
+            const vec3 white = vec3(1.0);
+            gl_FragColor.rgb = vColor * ambientPlusDiffuse;
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, white, specular);
+            gl_FragColor.a = clamp(abs(gl_FragCoord.z * uCocScale + uCocBias), 0.0, 1.0);
+            /* gl_FragColor.rgb = vec3(gl_FragColor.a); */
+        }
+    </string>
+    <!-- Fragment shader for rendering Blinn-Phong shaded scene -->
+    <string name="shader_scene_blinn_phong_fs">
+        precision mediump float;
+        uniform vec3 uLights[4];
+        uniform int uLightCount;
+        uniform float uCocScale;
+        uniform float uCocBias;
+        varying vec3 vPos;
+        varying vec3 vNormal;
+        varying vec3 vColor;
+        
+        vec2 calcLight(vec3 N, vec3 lightDir, vec3 E) {
+            vec2 lightVal = vec2(0.0);
+            vec3 L = normalize(lightDir);
+            
+            float lambert = dot(N, L);
+            if (lambert > 0.0) {
+                float r = inversesqrt(length(lightDir));
+                lightVal[0] = lambert * r;
+                vec3 HV = normalize(E + lightDir);
+                lightVal[1] = pow(max(dot(HV, N), 0.0), 8.0) * r;
             }
             return lightVal;
         }

@@ -25,6 +25,7 @@ harism@gmail.com
     <string name="key_scene">scene</string>
     <string name="key_quality">quality</string>
     <string name="key_light_count">light_count</string>
+    <string name="key_light_model">light_model</string>
     <string name="key_bloom_enable">bloom_enable</string>
     <string name="key_bloom_threshold">bloom_threshold</string>
     <string name="key_lensblur_enable">lensblur_enable</string>
