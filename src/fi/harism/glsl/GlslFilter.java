@@ -171,17 +171,33 @@ public class GlslFilter {
 	 * 
 	 * @param texSrc
 	 *            Source texture id.
-	 * @param width
-	 *            View width
-	 * @param height
-	 *            View height
+	 * @param srcWidth
+	 *            Source texture width
+	 * @param srcHeight
+	 *            Source texture height
+	 * @param outWidth
+	 *            Output FBO width
+	 * @param outHeight
+	 *            Output FBO height
 	 */
-	public void fxaa(int texSrc, float width, float height) {
+	public void fxaa(int texSrc, int srcWidth, int srcHeight, int outWidth,
+			int outHeight) {
+		final float N = 0.5f;
+		final float rcpOptW = N / outWidth;
+		final float rcpOptH = N / outHeight;
+
+		final float rcpOpt2W = 2.0f / outWidth;
+		final float rcpOpt2H = 2.0f / outHeight;
+
 		mFxaa.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
-		GLES20.glUniform2f(mFxaa.getHandle("uRcpFrame"), 1f / width,
-				1f / height);
+		GLES20.glUniform4f(mFxaa.getHandle("uFxaaConsoleRcpFrameOpt"),
+				-rcpOptW, -rcpOptH, rcpOptW, rcpOptH);
+		GLES20.glUniform4f(mFxaa.getHandle("uFxaaConsoleRcpFrameOpt2"),
+				-rcpOpt2W, -rcpOpt2H, rcpOpt2W, rcpOpt2H);
+		GLES20.glUniform4f(mFxaa.getHandle("uFrameSize"), srcWidth, srcHeight,
+				1f / srcWidth, 1f / srcHeight);
 		drawRect(mFxaa.getHandle("aPosition"));
 	}
 
@@ -202,7 +218,8 @@ public class GlslFilter {
 
 		mFxaa.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_fxaa_fs));
-		mFxaa.addHandles("aPosition", "sTexture0", "uRcpFrame");
+		mFxaa.addHandles("aPosition", "sTexture0", "uFxaaConsoleRcpFrameOpt",
+				"uFxaaConsoleRcpFrameOpt2", "uFrameSize");
 
 		mBloomPass1.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass1_fs));

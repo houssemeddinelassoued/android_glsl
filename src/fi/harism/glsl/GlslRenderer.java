@@ -143,7 +143,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 			mFbo.bind();
 			mFbo.bindTexture(texIdxOut);
 			mFilter.fxaa(mFbo.getTexture(texIdxIn), mFbo.getWidth(),
-					mFbo.getHeight());
+					mFbo.getHeight(), mFbo.getWidth(), mFbo.getHeight());
 			texIdxIn = texIdxOut;
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
