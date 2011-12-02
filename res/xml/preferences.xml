@@ -69,7 +69,7 @@
             android:defaultValue="true"
             android:key="@string/key_fxaa_enable"
             android:summary="Enable / disable FXAA anti-aliasing"
-            android:title="FXAA anti-alias" />
+            android:title="Anti-Aliasing" />
 
         <PreferenceScreen
             android:summary="Bloom filter settings"
@@ -127,7 +127,7 @@
                 android:dependency="@string/key_lensblur_enable"
                 android:key="@string/key_lensblur_steps"
                 android:summary="Step count during blur to emulate point&apos;s circle of confusion"
-                android:title="Blur steps (= %.0f)"
+                android:title="Blur Steps (= %.0f)"
                 harism:valueMax="10"
                 harism:valueMin="1"
                 harism:valuePrecision="1" />
