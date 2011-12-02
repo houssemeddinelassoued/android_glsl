@@ -60,6 +60,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 	private boolean mDivideScreen;
 	private boolean mBloomEnabled;
 	private boolean mLensBlurEnabled;
+	private boolean mFxaaEnabled;
 
 	private GlslShader mSceneShader = new GlslShader();
 	private GlslShader mLightShader = new GlslShader();
@@ -138,6 +139,15 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
 		}
+		if (mFxaaEnabled) {
+			mFbo.bind();
+			mFbo.bindTexture(texIdxOut);
+			mFilter.fxaa(mFbo.getTexture(texIdxIn), mFbo.getWidth(),
+					mFbo.getHeight());
+			texIdxIn = texIdxOut;
+			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
+					: TEX_IDX_OUT_1;
+		}
 
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 		GLES20.glViewport(0, 0, mCamera.mViewWidth, mCamera.mViewHeight);
@@ -145,7 +155,6 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 			mFilter.setClipCoords(-1f, 1f, 0f, -1f);
 			mFilter.copy(mFbo.getTexture(TEX_IDX_SCENE));
 			mFilter.setClipCoords(0f, 1f, 1f, -1f);
-
 			if (mCamera.mTouchDX == 0 && mCamera.mTouchDY == 0) {
 				mFilter.copy(mFbo.getTexture(texIdxIn));
 			} else {
@@ -159,7 +168,6 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 				mFilter.displace(mFbo.getTexture(texIdxIn), mCamera);
 			}
 		}
-
 	}
 
 	@Override
@@ -224,6 +232,9 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 		mBloomEnabled = prefs.getBoolean(key, true);
 		key = mOwnerActivity.getString(R.string.key_bloom_threshold);
 		mCamera.mBloomThreshold = prefs.getFloat(key, 50f) / 100f;
+
+		key = mOwnerActivity.getString(R.string.key_fxaa_enable);
+		mFxaaEnabled = prefs.getBoolean(key, true);
 
 		key = mOwnerActivity.getString(R.string.key_light_count);
 		int lightCount = (int) prefs.getFloat(key, 1);

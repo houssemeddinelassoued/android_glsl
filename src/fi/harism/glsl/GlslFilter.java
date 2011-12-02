@@ -37,6 +37,7 @@ public class GlslFilter {
 	// Shader instances.
 	private GlslShader mCopy = new GlslShader();
 	private GlslShader mDisplace = new GlslShader();
+	private GlslShader mFxaa = new GlslShader();
 	private GlslShader mBloomPass1 = new GlslShader();
 	private GlslShader mBloomPass2 = new GlslShader();
 	private GlslShader mBloomPass3 = new GlslShader();
@@ -165,6 +166,26 @@ public class GlslFilter {
 	}
 
 	/**
+	 * FXAA anti-alias filter. Uses given texture id as source and renders the
+	 * resulting image into currently active FBO.
+	 * 
+	 * @param texSrc
+	 *            Source texture id.
+	 * @param width
+	 *            View width
+	 * @param height
+	 *            View height
+	 */
+	public void fxaa(int texSrc, float width, float height) {
+		mFxaa.useProgram();
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
+		GLES20.glUniform2f(mFxaa.getHandle("uRcpFrame"), 1f / width,
+				1f / height);
+		drawRect(mFxaa.getHandle("aPosition"));
+	}
+
+	/**
 	 * Initializes shaders which are read from given Context.
 	 * 
 	 * @param ctx
@@ -178,6 +199,10 @@ public class GlslFilter {
 		mDisplace.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_displace_fs));
 		mDisplace.addHandles("aPosition", "sTexture0", "uPosition", "uDiff");
+
+		mFxaa.setProgram(ctx.getString(R.string.shader_filter_vs),
+				ctx.getString(R.string.shader_fxaa_fs));
+		mFxaa.addHandles("aPosition", "sTexture0", "uRcpFrame");
 
 		mBloomPass1.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass1_fs));

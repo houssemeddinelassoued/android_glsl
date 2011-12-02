@@ -65,6 +65,12 @@
 
     <PreferenceCategory android:title="Filters" >
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/key_fxaa_enable"
+            android:summary="Enable / disable FXAA anti-aliasing"
+            android:title="FXAA anti-alias" />
+
         <PreferenceScreen
             android:summary="Bloom filter settings"
             android:title="Bloom" >
