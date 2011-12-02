@@ -16,6 +16,10 @@
 
 package fi.harism.glsl;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -35,8 +39,8 @@ import fi.harism.glsl.scene.GlslShaderIds;
  */
 public final class GlslRenderer implements GLSurfaceView.Renderer {
 
-	public static final int SCENE_BOXES1 = 0;
-	public static final int SCENE_BOXES2 = 1;
+	private static final int SCENE_BOXES1 = 0;
+	private static final int SCENE_BOXES2 = 1;
 
 	private static final int TEX_IDX_SCENE = 0;
 	private static final int TEX_IDX_OUT_1 = 1;
@@ -65,8 +69,15 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 	private GlslShader mSceneShader = new GlslShader();
 	private GlslShader mLightShader = new GlslShader();
 
+	private static final int MAX_LIGHTS = 4;
+	private static final int LIGHT_BYTES = 3 * 4;
+	FloatBuffer mLightPositionBuffer;
+
 	public GlslRenderer() {
 		mRenderTime = SystemClock.uptimeMillis();
+		ByteBuffer buf = ByteBuffer.allocateDirect(LIGHT_BYTES * MAX_LIGHTS);
+		mLightPositionBuffer = buf.order(ByteOrder.nativeOrder())
+				.asFloatBuffer();
 	}
 
 	public float getFps() {
@@ -91,19 +102,22 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 		GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
+		mLightPositionBuffer.position(0);
 		int lightCount = mScene.getLightCount();
-		float lightPositions[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		float lightPosition[] = { 0, 0, 0 };
 		for (int i = 0; i < lightCount; ++i) {
 			GlslLight light = mScene.getLight(i);
-			light.getPosition(lightPositions, i * 3);
+			light.getPosition(lightPosition, 0);
+			mLightPositionBuffer.put(lightPosition);
 		}
-		int shaderIds[] = mSceneShader.getHandles("uLightCount", "uLights",
-				"uCocScale", "uCocBias");
 		mSceneShader.useProgram();
-		GLES20.glUniform1i(shaderIds[0], lightCount);
-		GLES20.glUniform3fv(shaderIds[1], 4, lightPositions, 0);
-		GLES20.glUniform1f(shaderIds[2], mCamera.mCocScale);
-		GLES20.glUniform1f(shaderIds[3], mCamera.mCocBias);
+		mLightPositionBuffer.position(0);
+		GLES20.glUniform1i(mSceneShader.getHandle("uLightCount"), lightCount);
+		GLES20.glUniform3fv(mSceneShader.getHandle("uLights"), lightCount,
+				mLightPositionBuffer);
+		GLES20.glUniform1f(mSceneShader.getHandle("uCocScale"),
+				mCamera.mCocScale);
+		GLES20.glUniform1f(mSceneShader.getHandle("uCocBias"), mCamera.mCocBias);
 
 		mFbo.bind();
 		mFbo.bindTexture(TEX_IDX_SCENE);
@@ -111,17 +125,19 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		mScene.draw(mShaderIds);
 
+		mLightShader.useProgram();
+		mLightPositionBuffer.position(0);
 		GLES20.glEnable(GLES20.GL_BLEND);
 		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
-		mLightShader.useProgram();
-		GLES20.glUniformMatrix4fv(mShaderIds.uLightPMatrix, 1, false,
+		GLES20.glUniformMatrix4fv(mLightShader.getHandle("uPMatrix"), 1, false,
 				mCamera.mProjM, 0);
-		for (int i = 0; i < lightCount; ++i) {
-			float pos[] = { 0, 0, 0 };
-			GlslLight light = mScene.getLight(i);
-			light.getPosition(pos, 0);
-			light.render(mShaderIds, pos[0], pos[1], pos[2], 0.1f);
-		}
+		GLES20.glVertexAttribPointer(mLightShader.getHandle("aPosition"), 3,
+				GLES20.GL_FLOAT, false, 0, mLightPositionBuffer);
+		GLES20.glEnableVertexAttribArray(mLightShader.getHandle("aPosition"));
+		GLES20.glUniform1f(mLightShader.getHandle("uPointRadius"), 0.1f);
+		GLES20.glUniform1f(mLightShader.getHandle("uViewWidth"),
+				mFbo.getWidth());
+		GLES20.glDrawArrays(GLES20.GL_POINTS, 0, lightCount);
 		GLES20.glDisable(GLES20.GL_BLEND);
 
 		int texIdxIn = TEX_IDX_SCENE;
@@ -279,13 +295,8 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 		mLightShader.setProgram(
 				mOwnerActivity.getString(R.string.shader_light_vs),
 				mOwnerActivity.getString(R.string.shader_light_fs));
-		mLightShader.addHandles("uPMatrix", "aPosition", "aTexPosition");
-
-		shaderIds = mLightShader.getHandles("uPMatrix", "aPosition",
-				"aTexPosition");
-		mShaderIds.uLightPMatrix = shaderIds[0];
-		mShaderIds.aLightPosition = shaderIds[1];
-		mShaderIds.aLightTexPosition = shaderIds[2];
+		mLightShader.addHandles("uPMatrix", "uPointRadius", "uViewWidth",
+				"aPosition");
 	}
 
 	/**

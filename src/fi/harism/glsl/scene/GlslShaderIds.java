@@ -27,8 +27,4 @@ public final class GlslShaderIds {
 	public int aPosition = -1;
 	public int aNormal = -1;
 	public int aColor = -1;
-	// Light shader ids
-	public int uLightPMatrix = -1;
-	public int aLightPosition = -1;
-	public int aLightTexPosition = -1;
 }

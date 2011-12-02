@@ -123,22 +123,22 @@
     <!-- Vertex shader for rendering lights -->
     <string name="shader_light_vs">
         uniform mat4 uPMatrix;
+        uniform float uPointRadius;
+        uniform float uViewWidth;
         attribute vec3 aPosition;
-        attribute vec2 aTexPosition;
-        varying vec2 vTexPosition;
         
         void main() {
             gl_Position = uPMatrix * vec4(aPosition, 1.0);
-            vTexPosition = aTexPosition;
+            vec4 pt = uPMatrix * vec4(uPointRadius, aPosition.yz, 1.0);
+            gl_PointSize = max(2.0, uViewWidth * (pt.x / pt.w));
         }
     </string>
     <!-- Fragment shader for rendering lights -->
     <string name="shader_light_fs">
         precision mediump float;
-        varying vec2 vTexPosition;
-        
         void main() {
-            float dist = length(vTexPosition);
+            vec2 pos = (gl_PointCoord * 2.0) - 1.0;
+            float dist = length(pos);
             gl_FragColor = vec4(1.0 - dist);
         }
     </string>

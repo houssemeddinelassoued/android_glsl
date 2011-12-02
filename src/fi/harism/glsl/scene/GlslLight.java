@@ -16,69 +16,16 @@
 
 package fi.harism.glsl.scene;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-
-import android.opengl.GLES20;
 import android.opengl.Matrix;
 
 public class GlslLight implements GlslAnimator.PathInterface {
 	private float[] mPosition = new float[4];
 	private float[] mViewPos = new float[4];
 
-	private FloatBuffer mVertexBuffer;
-
-	public GlslLight() {
-		ByteBuffer buffer = ByteBuffer.allocateDirect(3 * 2 * 4 * 4);
-		mVertexBuffer = buffer.order(ByteOrder.nativeOrder()).asFloatBuffer();
-		mVertexBuffer.position(0);
-	}
-
 	public void getPosition(float[] viewPos, int startIdx) {
 		viewPos[startIdx] = mViewPos[0];
 		viewPos[startIdx + 1] = mViewPos[1];
 		viewPos[startIdx + 2] = mViewPos[2];
-	}
-
-	public void render(GlslShaderIds ids, float x, float y, float z, float size) {
-		mVertexBuffer.position(0);
-
-		mVertexBuffer.put(x - size);
-		mVertexBuffer.put(y + size);
-		mVertexBuffer.put(z);
-		mVertexBuffer.put(-1);
-		mVertexBuffer.put(1);
-
-		mVertexBuffer.put(x - size);
-		mVertexBuffer.put(y - size);
-		mVertexBuffer.put(z);
-		mVertexBuffer.put(-1);
-		mVertexBuffer.put(-1);
-
-		mVertexBuffer.put(x + size);
-		mVertexBuffer.put(y + size);
-		mVertexBuffer.put(z);
-		mVertexBuffer.put(1);
-		mVertexBuffer.put(1);
-
-		mVertexBuffer.put(x + size);
-		mVertexBuffer.put(y - size);
-		mVertexBuffer.put(z);
-		mVertexBuffer.put(1);
-		mVertexBuffer.put(-1);
-
-		mVertexBuffer.position(0);
-		GLES20.glVertexAttribPointer(ids.aLightPosition, 3, GLES20.GL_FLOAT,
-				false, 5 * 4, mVertexBuffer);
-		GLES20.glEnableVertexAttribArray(ids.aLightPosition);
-
-		mVertexBuffer.position(3);
-		GLES20.glVertexAttribPointer(ids.aLightTexPosition, 2, GLES20.GL_FLOAT,
-				false, 5 * 4, mVertexBuffer);
-		GLES20.glEnableVertexAttribArray(ids.aLightTexPosition);
-
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 	}
 
 	public void setMVP(float[] viewM) {
