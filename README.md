@@ -36,8 +36,11 @@ www.khronos.org/opengles/sdk/docs/man/
 www.khronos.org/registry/gles/specs/2.0/GLSL_ES_Specification_1.0.17.pdf
 - Lots of OpenGL examples<br>
 http://evanw.github.com/glfx.js/
-- Depth of Field implementation is based on this paper<br>
+- Depth of Field implementation is loosely based on this paper<br>
 http://publications.dice.se/attachments/BF3_NFS_WhiteBarreBrisebois_Siggraph2011.pdf<br>
 http://http.developer.nvidia.com/GPUGems/gpugems_ch23.html
 - OpenGL ES Glsl tutorials etc<br>
 http://ofps.oreilly.com/titles/9780596804824/
+- FXAA anti-aliasing<br>
+http://developer.nvidia.com/sites/default/files/akamai/gamedev/files/sdk/11/FXAA_WhitePaper.pdf
+http://timothylottes.blogspot.com/2011/07/fxaa-311-released.html
