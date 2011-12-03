@@ -44,3 +44,6 @@ http://ofps.oreilly.com/titles/9780596804824/
 - FXAA anti-aliasing<br>
 http://developer.nvidia.com/sites/default/files/akamai/gamedev/files/sdk/11/FXAA_WhitePaper.pdf
 http://timothylottes.blogspot.com/2011/07/fxaa-311-released.html
+- Incremental Gaussian blur<br>
+http://developer.nvidia.com/node/197<br>
+http://callumhay.blogspot.com/2010/09/gaussian-blur-shader-glsl.html
