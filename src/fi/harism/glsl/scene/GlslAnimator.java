@@ -19,9 +19,14 @@ package fi.harism.glsl.scene;
 import java.util.HashMap;
 import java.util.Vector;
 
+/**
+ * Animator class for creating various animations on scene.
+ */
 public final class GlslAnimator {
 
+	// Map for holding rotation objects and related rotation information.
 	private HashMap<RotationInterface, RotationData> mRotationMap = new HashMap<RotationInterface, RotationData>();
+	// Map for holding path objects and related path information.
 	private HashMap<PathInterface, Path> mPathMap = new HashMap<PathInterface, Path>();
 
 	/**

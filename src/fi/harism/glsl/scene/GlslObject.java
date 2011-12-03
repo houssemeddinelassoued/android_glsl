@@ -21,6 +21,9 @@ import java.util.Vector;
 import android.opengl.Matrix;
 import fi.harism.glsl.GlslMatrix;
 
+/**
+ * Base class for handling object hierarchies etc.
+ */
 public class GlslObject implements GlslAnimator.RotationInterface,
 		GlslAnimator.PathInterface {
 

@@ -18,16 +18,35 @@ package fi.harism.glsl.scene;
 
 import android.opengl.Matrix;
 
+/**
+ * Light data holder.
+ */
 public class GlslLight implements GlslAnimator.PathInterface {
+	// Model position.
 	private float[] mPosition = new float[4];
+	// Model-View position.
 	private float[] mViewPos = new float[4];
 
+	/**
+	 * Getter for View matrix multiplied position.
+	 * 
+	 * @param viewPos
+	 *            float[3], or bigger, to store position
+	 * @param startIdx
+	 *            start index of viewPos
+	 */
 	public void getPosition(float[] viewPos, int startIdx) {
 		viewPos[startIdx] = mViewPos[0];
 		viewPos[startIdx + 1] = mViewPos[1];
 		viewPos[startIdx + 2] = mViewPos[2];
 	}
 
+	/**
+	 * Calculates view position for light.
+	 * 
+	 * @param viewM
+	 *            View matrix.
+	 */
 	public void setMVP(float[] viewM) {
 		Matrix.multiplyMV(mViewPos, 0, viewM, 0, mPosition, 0);
 		for (int i = 0; i < 3; ++i) {
