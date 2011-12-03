@@ -26,7 +26,9 @@ import android.util.Log;
  */
 public final class GlslShader {
 
+	// Shader program handle.
 	private int mProgram = -1;
+	// HashMap for storing uniform/attribute handles.
 	private final HashMap<String, Integer> mShaderHandleMap = new HashMap<String, Integer>();
 
 	/**
