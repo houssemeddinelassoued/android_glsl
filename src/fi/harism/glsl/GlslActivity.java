@@ -42,19 +42,26 @@ import android.widget.TextView;
  */
 public final class GlslActivity extends Activity {
 
+	// Music player instance.
 	private MusicPlayer mMusicPlayer;
+	// GlslRenderer Instance.
 	private GlslRenderer mRenderer;
+	// Default GLSurfaceView instance.
 	private GLSurfaceView mSurfaceView;
 
+	// Timer for updating FPS value.
 	private Timer mFpsTimer;
+	// Runnable for updating FPS text withing UI thread.
 	private Runnable mFpsRunnable;
 
+	// Application name to which FPS value is appended.
 	private String mAppName;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		// Try to save some classes from previous instance.
 		if (getLastNonConfigurationInstance() != null) {
 			GlslActivity self = (GlslActivity) getLastNonConfigurationInstance();
 			mRenderer = self.mRenderer;
@@ -63,27 +70,38 @@ public final class GlslActivity extends Activity {
 			mRenderer = new GlslRenderer();
 			mMusicPlayer = new MusicPlayer(500, 50);
 		}
+		// Mandatory call, GlslRenderer uses Context.getString(..) to read
+		// shaders etc.
 		mRenderer.setOwnerActivity(this);
 
+		// Initiate GLSurfaceView for rendering.
 		mSurfaceView = new GLSurfaceView(this);
 		mSurfaceView.setEGLContextClientVersion(2);
 		mSurfaceView.setRenderer(mRenderer);
 		mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 		mSurfaceView.setOnTouchListener(mRenderer);
 
+		// Read application name.
 		mAppName = getString(R.string.app_name);
+		// Initiate FPS runnable.
 		mFpsRunnable = new FpsRunnable();
 
+		// Setup default preference values, setting readAgain to true adds new
+		// preferences given their default values into saved preferences.
 		PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
 
+		// We have our own title, must be called before content view is being
+		// set.
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.main);
+		// Add GLSurfaceView into content view.
 		ViewGroup container = (ViewGroup) findViewById(R.id.layout_container);
 		container.addView(mSurfaceView);
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
+		// Generate options menu.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
@@ -91,12 +109,15 @@ public final class GlslActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
+		// Show about dialog.
+		// TODO: maybe it was better to use 'proper' dialog showing methods.
 		case R.id.menu_about:
 			Dialog dlg = new Dialog(this);
 			dlg.requestWindowFeature(Window.FEATURE_NO_TITLE);
 			dlg.setContentView(R.layout.about);
 			dlg.show();
 			return true;
+			// Start preferences Activity.
 		case R.id.menu_settings:
 			startActivity(new Intent(this,
 					fi.harism.glsl.prefs.GlslPreferenceActivity.class));
@@ -108,32 +129,44 @@ public final class GlslActivity extends Activity {
 	@Override
 	public void onPause() {
 		super.onPause();
+		// GLSurfaceView.onPause must be called.
 		mSurfaceView.onPause();
+		// Stop FPS timer.
 		mFpsTimer.cancel();
 		mFpsTimer = null;
-
+		// Stop playing music and release underlying MediaPlayer instance
+		// eventually. I'm not exactly sure is it safe to leave a thread running
+		// even after this Activity has been killed. Haven't faced problems yet
+		// though.
 		mMusicPlayer.stop();
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
+		// Must be called on onResume.
 		mSurfaceView.onResume();
-		mFpsTimer = new Timer();
 
+		// Fetch shared preferences.
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(this);
 
+		// Initiate FPS timer.
+		mFpsTimer = new Timer();
 		String key = getString(R.string.key_show_title);
 		if (prefs.getBoolean(key, true)) {
+			// If title is visible, assure it really is and start FPS timer.
 			findViewById(R.id.layout_header).setVisibility(View.VISIBLE);
 			mFpsTimer.scheduleAtFixedRate(new FpsTimerTask(), 0, 500);
 		} else {
+			// Otherwise hide title.
 			findViewById(R.id.layout_header).setVisibility(View.GONE);
 		}
 
 		key = getString(R.string.key_play_music);
 		if (prefs.getBoolean(key, true)) {
+			// If music should be played try to start streaming, in error cases
+			// simply release underlying MediaPlayer.
 			try {
 				mMusicPlayer.start(getResources().openRawResourceFd(
 						R.raw.mosaik_01_leandi).getFileDescriptor());
@@ -151,17 +184,23 @@ public final class GlslActivity extends Activity {
 	/**
 	 * Helper class for handling FPS related Activity.runOnUiThread() calls.
 	 */
-	private class FpsRunnable implements Runnable {
+	private final class FpsRunnable implements Runnable {
 		@Override
 		public void run() {
+			// Get FPS value from renderer.
 			String fps = Float.toString(mRenderer.getFps());
+			// Try to locate ".", if its being used as fraction separator.
 			int separator = fps.indexOf('.');
+			// In case it was not found, try "," instead.
 			if (separator == -1) {
 				separator = fps.indexOf(',');
 			}
+			// If separator was found, strip
 			if (separator != -1) {
-				fps = fps.substring(0, separator + 2);
+				fps = fps.substring(0,
+						Math.min(fps.length() - 1, separator + 2));
 			}
+			// Locate title TextView and update its content.
 			TextView tv = (TextView) findViewById(R.id.layout_title);
 			tv.setText(mAppName + " (" + fps + "fps)");
 		}
@@ -170,9 +209,10 @@ public final class GlslActivity extends Activity {
 	/**
 	 * Timer task which triggers FPS updating periodically.
 	 */
-	private class FpsTimerTask extends TimerTask {
+	private final class FpsTimerTask extends TimerTask {
 		@Override
 		public void run() {
+			// Simply forward callback to UI thread.
 			runOnUiThread(mFpsRunnable);
 		}
 	}
@@ -182,15 +222,21 @@ public final class GlslActivity extends Activity {
 	 */
 	private final class MusicPlayer implements MediaPlayer.OnPreparedListener {
 
+		// MediaPlayer instance.
 		private MediaPlayer mMediaPlayer;
+		// Current playing position.
 		private int mMediaPlayerPosition;
 
+		// Fade in/out time.
 		private int mFadeTime;
+		// Fade in/out update interval.
 		private int mFadeInterval;
 
 		/**
 		 * Constructor takes fade in/out time, and fade interval, as a
-		 * parameter.
+		 * parameter. These values are used for starting and stopping playback
+		 * as music fades in on start and fades out, before releasing
+		 * MediaPlayer, on stop.
 		 * 
 		 * @param fadeTime
 		 *            Fade in and fade out time
@@ -204,11 +250,14 @@ public final class GlslActivity extends Activity {
 
 		@Override
 		public void onPrepared(MediaPlayer mp) {
+			// Just in case playback was stopped before being prepared.
 			if (mMediaPlayer != null) {
+				// Set playback values before starting it.
 				mMediaPlayer.setVolume(0f, 0f);
 				mMediaPlayer.setLooping(true);
 				mMediaPlayer.seekTo(mMediaPlayerPosition);
 				mMediaPlayer.start();
+				// Timer for ramping up volume.
 				new FadeInTimer(mMediaPlayer, mFadeTime, mFadeInterval).start();
 			}
 		}
@@ -223,10 +272,13 @@ public final class GlslActivity extends Activity {
 		 * @throws IOException
 		 */
 		public void start(FileDescriptor fileDescriptor) throws IOException {
+			// If there's existing MediaPlayer, remove it first.
 			if (mMediaPlayer != null) {
+				// Instead of releasing MediaPlayer, ramp down volume first.
 				new FadeOutTimer(mMediaPlayer, mFadeTime, mFadeInterval)
 						.start();
 			}
+			// Instantiate new MediaPlayer object.
 			mMediaPlayer = new MediaPlayer();
 			mMediaPlayer.setOnPreparedListener(this);
 			mMediaPlayer.setDataSource(fileDescriptor);
@@ -239,9 +291,13 @@ public final class GlslActivity extends Activity {
 		 * not require previous call to start().
 		 */
 		public void stop() {
+			// In case stop is called twice or so on.
 			if (mMediaPlayer != null) {
+				// Store current position for restarting purposes.
 				mMediaPlayerPosition = mMediaPlayer.getCurrentPosition()
 						+ mFadeTime;
+				// Trigger a fade out timer which will take ownership of
+				// MediaPlayer and release it eventually.
 				new FadeOutTimer(mMediaPlayer, mFadeTime, mFadeInterval)
 						.start();
 				mMediaPlayer = null;
@@ -251,9 +307,11 @@ public final class GlslActivity extends Activity {
 		/**
 		 * Helper class for handling music fade in.
 		 */
-		private class FadeInTimer extends CountDownTimer {
+		private final class FadeInTimer extends CountDownTimer {
 
+			// MediaPlayer object for applying volume adjustment into.
 			private MediaPlayer mMediaPlayerIn;
+			// How long fade in should last.
 			private long mFadeInTime;
 
 			public FadeInTimer(MediaPlayer mediaPlayerIn, long fadeInTime,
@@ -265,11 +323,14 @@ public final class GlslActivity extends Activity {
 
 			@Override
 			public void onFinish() {
+				// On finish set volume to max.
 				mMediaPlayerIn.setVolume(1f, 1f);
+				mMediaPlayerIn = null;
 			}
 
 			@Override
 			public void onTick(long millisUntilFinish) {
+				// On ticks increase volume.
 				float v = (float) millisUntilFinish / mFadeInTime;
 				mMediaPlayerIn.setVolume(1f - v, 1f - v);
 			}
@@ -304,12 +365,14 @@ public final class GlslActivity extends Activity {
 
 			@Override
 			public void onFinish() {
+				// Once finished, release MediaPlayer and set it to null.
 				mMediaPlayerOut.release();
 				mMediaPlayerOut = null;
 			}
 
 			@Override
 			public void onTick(long millisUntilFinish) {
+				// On tick decrease volume.
 				float v = (float) millisUntilFinish / mFadeOutTime;
 				mMediaPlayerOut.setVolume(v, v);
 			}
