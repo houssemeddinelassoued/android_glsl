@@ -45,9 +45,9 @@ public final class GlslScene {
 	 * @param mData
 	 *            Shader id values to use
 	 */
-	public void draw(GlslShaderIds mData) {
+	public void render(GlslShaderIds mData) {
 		for (GlslObject object : mObjects) {
-			object.draw(mData);
+			object.render(mData);
 		}
 	}
 

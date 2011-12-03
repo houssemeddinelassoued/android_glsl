@@ -38,9 +38,9 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 		mChildObjects.add(obj);
 	}
 
-	public void draw(GlslShaderIds mData) {
+	public void render(GlslShaderIds mData) {
 		for (GlslObject obj : mChildObjects) {
-			obj.draw(mData);
+			obj.render(mData);
 		}
 	}
 

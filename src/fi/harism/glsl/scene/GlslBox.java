@@ -51,9 +51,9 @@ public final class GlslBox extends GlslObject {
 	}
 
 	@Override
-	public void draw(GlslShaderIds ids) {
+	public void render(GlslShaderIds ids) {
 
-		super.draw(ids);
+		super.render(ids);
 
 		mVertexBuffer.position(DATA_POS_OFFSET);
 		GLES20.glVertexAttribPointer(ids.aPosition, 3, GLES20.GL_FLOAT, false,
