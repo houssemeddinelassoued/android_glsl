@@ -192,7 +192,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 		mCamera.mViewHeight = height;
 		float ratio = (float) width / height;
 
-		mCamera.setProjectionM(ratio, 45f, .1f, 20f);
+		mCamera.setProjectionM(ratio, 45f, .1f, 23f);
 		mCamera.setViewM(0f, 3f, -10f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
 		if (mResetFramebuffers) {
