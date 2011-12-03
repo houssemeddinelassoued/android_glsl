@@ -256,7 +256,7 @@ public class GlslFilter {
 		mLensBlurPass5.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass5_fs));
 		mLensBlurPass5.addHandles("aPosition", "sTextureSrc", "sTextureBokeh",
-				"sTextureBokehHdr", "sTexture1");
+				"sTexture1");
 	}
 
 	/**
