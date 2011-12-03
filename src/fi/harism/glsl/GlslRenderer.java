@@ -42,42 +42,68 @@ import fi.harism.glsl.scene.GlslShaderIds;
 public final class GlslRenderer implements GLSurfaceView.Renderer,
 		View.OnTouchListener {
 
+	// Internal scene ids (from preferences)
 	private static final int SCENE_BOXES1 = 0;
 	private static final int SCENE_BOXES2 = 1;
 
+	// Texture indexes for mFbo.
 	private static final int TEX_IDX_SCENE = 0;
 	private static final int TEX_IDX_OUT_1 = 1;
 	private static final int TEX_IDX_OUT_2 = 2;
 
+	// Activity we belong to.
 	private Activity mOwnerActivity;
-	private long mRenderTime = 0;
-	private long mAnimationTime = 0;
-	private long mAnimationPauseTime = 0;
+	// FPS value.
 	private float mFps = 0f;
 
+	// Updated on every call to onDrawFrame(..).
+	private long mRenderTime = 0;
+	// Animation time.
+	private long mAnimationTime = 0;
+	// Pause time is used for stopping animation on touch events.
+	private long mAnimationPauseTime = 0;
+
+	// Scene instance.
 	private GlslScene mScene = new GlslScene();
+	// Filters instance.
 	private GlslFilter mFilter = new GlslFilter();
+	// Camera instance.
 	private GlslCamera mCamera = new GlslCamera();
+	// Shader ids instance.
 	private GlslShaderIds mShaderIds = new GlslShaderIds();
 
-	private boolean mResetFramebuffers;
+	// FBO for rendering.
 	private GlslFbo mFbo = new GlslFbo();
 
+	// Flag for indicating animation is paused.
 	private boolean mAnimationPaused;
+	// Touch ACTION_DOWN coordinates.
 	private float mTouchX, mTouchY;
 
+	// Flag for whether screen should be divided.
 	private boolean mDivideScreen;
+	// Flag for whether bloom is enabled.
 	private boolean mBloomEnabled;
+	// Flag for whether lens blur is enabled.
 	private boolean mLensBlurEnabled;
+	// Flag for whether FXAA anti-aliasing is enabled.
 	private boolean mFxaaEnabled;
 
+	// Shader for rendering actual scene.
 	private GlslShader mSceneShader = new GlslShader();
+	// Shader for rendering lights into scene.
 	private GlslShader mLightShader = new GlslShader();
 
+	// Maximum number of lights.
 	private static final int MAX_LIGHTS = 4;
+	// Light size in bytes (3 floats * 4 bytes).
 	private static final int LIGHT_BYTES = 3 * 4;
+	// Buffer for storing light coordinates into.
 	FloatBuffer mLightPositionBuffer;
 
+	/**
+	 * Constructor.
+	 */
 	public GlslRenderer() {
 		mRenderTime = SystemClock.uptimeMillis();
 		ByteBuffer buf = ByteBuffer.allocateDirect(LIGHT_BYTES * MAX_LIGHTS);
@@ -85,6 +111,11 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 				.asFloatBuffer();
 	}
 
+	/**
+	 * Getter for FPS value.
+	 * 
+	 * @return FPS value.
+	 */
 	public float getFps() {
 		return mFps;
 	}
@@ -92,21 +123,28 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	@Override
 	public void onDrawFrame(GL10 glUnused) {
 
+		// Update render time and calculate FPS.
 		long lastRenderTime = mRenderTime;
 		mRenderTime = SystemClock.uptimeMillis();
 		mFps = 1000f / (mRenderTime - lastRenderTime);
 
+		// If animation is not paused, increment it with new/last render time
+		// difference.
 		if (!mAnimationPaused) {
 			mAnimationTime += mRenderTime - lastRenderTime;
 		}
+		// Call scene for applying animation.
 		mScene.animate(mAnimationTime);
+		// Sets/calculates matrices for child objects etc.
 		mScene.setMVP(mCamera.mViewM, mCamera.mProjM);
 
+		// Setup GLES20 rendering options.
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glFrontFace(GLES20.GL_CCW);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 		GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
+		// Fetch light positions into light position buffer.
 		mLightPositionBuffer.position(0);
 		int lightCount = mScene.getLightCount();
 		float lightPosition[] = { 0, 0, 0 };
@@ -115,6 +153,8 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			light.getPosition(lightPosition, 0);
 			mLightPositionBuffer.put(lightPosition);
 		}
+
+		// Initiate scene shader with values that do not change.
 		mSceneShader.useProgram();
 		mLightPositionBuffer.position(0);
 		GLES20.glUniform1i(mSceneShader.getHandle("uLightCount"), lightCount);
@@ -127,12 +167,14 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		GLES20.glUniform1f(mSceneShader.getHandle("uPlaneInFocus"),
 				mCamera.mPlaneInFocus);
 
+		// Bind scene texture, clear it and render the scene.
 		mFbo.bind();
 		mFbo.bindTexture(TEX_IDX_SCENE);
 		GLES20.glClearColor(0.2f / 3f, 0.3f / 3f, 0.5f / 3f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		mScene.draw(mShaderIds);
+		mScene.render(mShaderIds);
 
+		// Draw lights into scene.
 		mLightShader.useProgram();
 		mLightPositionBuffer.position(0);
 		GLES20.glUniformMatrix4fv(mLightShader.getHandle("uPMatrix"), 1, false,
@@ -151,61 +193,72 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 				mCamera.mPlaneInFocus);
 		GLES20.glDrawArrays(GLES20.GL_POINTS, 0, lightCount);
 
+		// Variables for flipping input/output textures. Input texture should
+		// always point to texture index used as source and output texture is
+		// the one for rendering into.
 		int texIdxIn = TEX_IDX_SCENE;
 		int texIdxOut = TEX_IDX_OUT_1;
+		// If lens blur is enabled.
 		if (mLensBlurEnabled) {
 			mFilter.lensBlur(mFbo.getTexture(texIdxIn), mFbo, texIdxOut,
 					mCamera);
+			// Swap texture in and out.
 			texIdxIn = texIdxOut;
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
 		}
+		// If bloom is enabled.
 		if (mBloomEnabled) {
 			mFilter.bloom(mFbo.getTexture(texIdxIn), mFbo, texIdxOut);
+			// Swap texture in and out.
 			texIdxIn = texIdxOut;
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
 		}
+		// If FXAA anti-aliasing is enabled.
 		if (mFxaaEnabled) {
 			mFbo.bind();
 			mFbo.bindTexture(texIdxOut);
 			mFilter.fxaa(mFbo.getTexture(texIdxIn), mFbo.getWidth(),
 					mFbo.getHeight(), mFbo.getWidth(), mFbo.getHeight());
+			// Swap texture in and out.
 			texIdxIn = texIdxOut;
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
 		}
 
+		// Bind "screen FBO" into use.
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 		GLES20.glViewport(0, 0, mCamera.mViewWidth, mCamera.mViewHeight);
+		// If screen is divided copy original scene on left side.
 		if (mDivideScreen) {
 			mFilter.setClipCoords(-1f, 1f, 0f, -1f);
 			mFilter.copy(mFbo.getTexture(TEX_IDX_SCENE));
 			mFilter.setClipCoords(0f, 1f, 1f, -1f);
 		}
+		// Based on touch difference copy filtered scene to screen using plain
+		// copy or displacement filter.
 		if (mCamera.mTouchDX == 0 && mCamera.mTouchDY == 0) {
 			mFilter.copy(mFbo.getTexture(texIdxIn));
 		} else {
 			mFilter.displace(mFbo.getTexture(texIdxIn), mCamera);
 		}
+		// Return filter clip bounds back to original values.
 		mFilter.setClipCoords(-1f, 1f, 1f, -1f);
 	}
 
 	@Override
 	public void onSurfaceChanged(GL10 glUnused, int width, int height) {
+		// Store view size.
 		mCamera.mViewWidth = width;
 		mCamera.mViewHeight = height;
-		float ratio = (float) width / height;
 
+		// Setup default projection and view matrices.
+		float ratio = (float) width / height;
 		mCamera.setProjectionM(ratio, 45f, .1f, 23f);
 		mCamera.setViewM(0f, 3f, -10f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
-		if (mResetFramebuffers) {
-			mFbo.reset();
-			mFilter.reset();
-		}
-		mResetFramebuffers = true;
-
+		// Get shared preferences.
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(mOwnerActivity);
 		String key = mOwnerActivity.getString(R.string.key_quality);
@@ -225,15 +278,17 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			height /= 3;
 			break;
 		}
+		// Initialize mFbo and mFilter for rendering.
 		mFbo.init(width, height, 3, true);
 		mFilter.init(width, height);
 	}
 
 	@Override
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
-		mResetFramebuffers = false;
+		// Initializes filter shaders.
 		mFilter.init(mOwnerActivity);
 
+		// Read preferences.
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(mOwnerActivity);
 		String key = mOwnerActivity.getString(R.string.key_divide_screen);
@@ -267,6 +322,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			break;
 		}
 
+		// Initiate scene shader.
 		key = mOwnerActivity.getString(R.string.key_light_model);
 		int lightModel = Integer.parseInt(prefs.getString(key, "1"));
 		switch (lightModel) {
@@ -280,10 +336,12 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 					mOwnerActivity.getString(R.string.shader_scene_vs),
 					mOwnerActivity.getString(R.string.shader_scene_phong_fs));
 		}
+
+		// Find/add required uniforms/attributes into mSceneShader.
 		mSceneShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
 				"aPosition", "aNormal", "aColor", "uLightCount", "uLights",
 				"uAperture", "uFocalLength", "uPlaneInFocus");
-
+		// Get ids for uniforms/attributes needed for rendering.
 		int shaderIds[] = mSceneShader.getHandles("uMVMatrix", "uMVPMatrix",
 				"uNormalMatrix", "aPosition", "aNormal", "aColor",
 				"uLightCount", "uLights");
@@ -294,6 +352,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		mShaderIds.aNormal = shaderIds[4];
 		mShaderIds.aColor = shaderIds[5];
 
+		// Instantiate light rendering shader.
 		mLightShader.setProgram(
 				mOwnerActivity.getString(R.string.shader_light_vs),
 				mOwnerActivity.getString(R.string.shader_light_fs));
@@ -305,12 +364,14 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	public boolean onTouch(View view, MotionEvent me) {
 		switch (me.getAction()) {
 		case MotionEvent.ACTION_DOWN:
-			mAnimationPaused = true;
-			mAnimationPauseTime = mAnimationTime;
+			// On touch start stop animation and store touch position.
 			mTouchX = me.getX();
 			mTouchY = me.getY();
+			mAnimationPaused = true;
+			mAnimationPauseTime = mAnimationTime;
 			return true;
 		case MotionEvent.ACTION_MOVE:
+			// (x1, y1) = start position, (x2, y2) = current position.
 			float x1 = mTouchX;
 			float y1 = mTouchY;
 			float x2 = me.getX();
@@ -332,6 +393,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			mCamera.mTouchDY = y1 - y2;
 			return true;
 		case MotionEvent.ACTION_UP:
+			// On touch end release animation and start release drag animation.
 			mAnimationPaused = false;
 			new ReleaseDragTimer(mCamera, 300, 30).start();
 			return true;
