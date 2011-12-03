@@ -27,7 +27,6 @@ harism@gmail.com
     <string name="key_light_count">light_count</string>
     <string name="key_light_model">light_model</string>
     <string name="key_bloom_enable">bloom_enable</string>
-    <string name="key_bloom_threshold">bloom_threshold</string>
     <string name="key_lensblur_enable">lensblur_enable</string>
     <string name="key_lensblur_fstop">lensblur_fstop</string>
     <string name="key_lensblur_focal_plane">lensblur_focal_plane</string>

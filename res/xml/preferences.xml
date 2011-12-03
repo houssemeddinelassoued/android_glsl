@@ -71,26 +71,11 @@
             android:summary="Enable / disable FXAA anti-aliasing"
             android:title="Anti-Aliasing" />
 
-        <PreferenceScreen
-            android:summary="Bloom filter settings"
-            android:title="Bloom" >
-
-            <CheckBoxPreference
-                android:defaultValue="true"
-                android:key="@string/key_bloom_enable"
-                android:summary="Enable / disable bloom"
-                android:title="Enable" />
-
-            <fi.harism.glsl.prefs.GlslSliderPreference
-                android:defaultValue="30"
-                android:dependency="@string/key_bloom_enable"
-                android:key="@string/key_bloom_threshold"
-                android:summary="Bloom threshold, the higher the value, the higher brightness limit will be for colors to be included in bloom"
-                android:title="Threshold (%.0f%%)"
-                harism:valueMax="100"
-                harism:valueMin="0"
-                harism:valuePrecision="1" />
-        </PreferenceScreen>
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/key_bloom_enable"
+            android:summary="Enable / disable bloom filter"
+            android:title="Bloom" />
 
         <PreferenceScreen
             android:summary="Lens blur filter settings"

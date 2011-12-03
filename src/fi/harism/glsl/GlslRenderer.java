@@ -115,42 +115,48 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 		GLES20.glUniform1i(mSceneShader.getHandle("uLightCount"), lightCount);
 		GLES20.glUniform3fv(mSceneShader.getHandle("uLights"), lightCount,
 				mLightPositionBuffer);
-		GLES20.glUniform1f(mSceneShader.getHandle("uCocScale"),
-				mCamera.mCocScale);
-		GLES20.glUniform1f(mSceneShader.getHandle("uCocBias"), mCamera.mCocBias);
+		GLES20.glUniform1f(mSceneShader.getHandle("uAperture"),
+				mCamera.mAperture);
+		GLES20.glUniform1f(mSceneShader.getHandle("uFocalLength"),
+				mCamera.mFocalLength);
+		GLES20.glUniform1f(mSceneShader.getHandle("uPlaneInFocus"),
+				mCamera.mPlaneInFocus);
 
 		mFbo.bind();
 		mFbo.bindTexture(TEX_IDX_SCENE);
-		GLES20.glClearColor(0.2f, 0.3f, 0.5f, 1.0f);
+		GLES20.glClearColor(0.2f / 3f, 0.3f / 3f, 0.5f / 3f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		mScene.draw(mShaderIds);
 
 		mLightShader.useProgram();
 		mLightPositionBuffer.position(0);
-		GLES20.glEnable(GLES20.GL_BLEND);
-		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
 		GLES20.glUniformMatrix4fv(mLightShader.getHandle("uPMatrix"), 1, false,
 				mCamera.mProjM, 0);
 		GLES20.glVertexAttribPointer(mLightShader.getHandle("aPosition"), 3,
 				GLES20.GL_FLOAT, false, 0, mLightPositionBuffer);
 		GLES20.glEnableVertexAttribArray(mLightShader.getHandle("aPosition"));
-		GLES20.glUniform1f(mLightShader.getHandle("uPointRadius"), 0.1f);
+		GLES20.glUniform1f(mLightShader.getHandle("uPointRadius"), 0.05f);
 		GLES20.glUniform1f(mLightShader.getHandle("uViewWidth"),
 				mFbo.getWidth());
+		GLES20.glUniform1f(mLightShader.getHandle("uAperture"),
+				mCamera.mAperture);
+		GLES20.glUniform1f(mLightShader.getHandle("uFocalLength"),
+				mCamera.mFocalLength);
+		GLES20.glUniform1f(mLightShader.getHandle("uPlaneInFocus"),
+				mCamera.mPlaneInFocus);
 		GLES20.glDrawArrays(GLES20.GL_POINTS, 0, lightCount);
-		GLES20.glDisable(GLES20.GL_BLEND);
 
 		int texIdxIn = TEX_IDX_SCENE;
 		int texIdxOut = TEX_IDX_OUT_1;
-		if (mBloomEnabled) {
-			mFilter.bloom(mFbo.getTexture(texIdxIn), mFbo, texIdxOut, mCamera);
+		if (mLensBlurEnabled) {
+			mFilter.lensBlur(mFbo.getTexture(texIdxIn), mFbo, texIdxOut,
+					mCamera);
 			texIdxIn = texIdxOut;
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
 		}
-		if (mLensBlurEnabled) {
-			mFilter.lensBlur(mFbo.getTexture(texIdxIn), mFbo, texIdxOut,
-					mCamera);
+		if (mBloomEnabled) {
+			mFilter.bloom(mFbo.getTexture(texIdxIn), mFbo, texIdxOut);
 			texIdxIn = texIdxOut;
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
@@ -171,19 +177,13 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 			mFilter.setClipCoords(-1f, 1f, 0f, -1f);
 			mFilter.copy(mFbo.getTexture(TEX_IDX_SCENE));
 			mFilter.setClipCoords(0f, 1f, 1f, -1f);
-			if (mCamera.mTouchDX == 0 && mCamera.mTouchDY == 0) {
-				mFilter.copy(mFbo.getTexture(texIdxIn));
-			} else {
-				mFilter.displace(mFbo.getTexture(texIdxIn), mCamera);
-			}
-			mFilter.setClipCoords(-1f, 1f, 1f, -1f);
-		} else {
-			if (mCamera.mTouchDX == 0 && mCamera.mTouchDY == 0) {
-				mFilter.copy(mFbo.getTexture(texIdxIn));
-			} else {
-				mFilter.displace(mFbo.getTexture(texIdxIn), mCamera);
-			}
 		}
+		if (mCamera.mTouchDX == 0 && mCamera.mTouchDY == 0) {
+			mFilter.copy(mFbo.getTexture(texIdxIn));
+		} else {
+			mFilter.displace(mFbo.getTexture(texIdxIn), mCamera);
+		}
+		mFilter.setClipCoords(-1f, 1f, 1f, -1f);
 	}
 
 	@Override
@@ -246,9 +246,6 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 
 		key = mOwnerActivity.getString(R.string.key_bloom_enable);
 		mBloomEnabled = prefs.getBoolean(key, true);
-		key = mOwnerActivity.getString(R.string.key_bloom_threshold);
-		mCamera.mBloomThreshold = prefs.getFloat(key, 50f) / 100f;
-
 		key = mOwnerActivity.getString(R.string.key_fxaa_enable);
 		mFxaaEnabled = prefs.getBoolean(key, true);
 
@@ -280,7 +277,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 		}
 		mSceneShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
 				"aPosition", "aNormal", "aColor", "uLightCount", "uLights",
-				"uCocScale", "uCocBias");
+				"uAperture", "uFocalLength", "uPlaneInFocus");
 
 		int shaderIds[] = mSceneShader.getHandles("uMVMatrix", "uMVPMatrix",
 				"uNormalMatrix", "aPosition", "aNormal", "aColor",
@@ -296,7 +293,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 				mOwnerActivity.getString(R.string.shader_light_vs),
 				mOwnerActivity.getString(R.string.shader_light_fs));
 		mLightShader.addHandles("uPMatrix", "uPointRadius", "uViewWidth",
-				"aPosition");
+				"aPosition", "uAperture", "uFocalLength", "uPlaneInFocus");
 	}
 
 	/**

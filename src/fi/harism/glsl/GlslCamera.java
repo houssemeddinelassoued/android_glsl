@@ -41,16 +41,14 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 	private float mLookX, mLookY, mLookZ;
 	private float mUpX, mUpY, mUpZ;
 
-	// Bloom values.
-	public float mBloomThreshold;
-
 	// Lens blur values.
 	private float mFStop;
 	private float mFocalPlane;
 	public int mBlurSteps;
-	public float mCocRadius;
-	public float mCocScale;
-	public float mCocBias;
+
+	public float mAperture;
+	public float mPlaneInFocus;
+	public float mFocalLength;
 
 	// Touch filter values.
 	public float mTouchX, mTouchY;
@@ -68,16 +66,12 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 		mFStop = fStop;
 		mFocalPlane = focalPlane;
 
-		float fLen = 0.04f / (float) (2 * Math.tan((mFovY * Math.PI) / 360.0));
-		float fPlane = mZNear + focalPlane * mZFar;
-		float A = 400f / fStop;
-
-		mCocScale = (A * fLen * fPlane * (mZFar - mZNear))
-				/ ((fPlane - fLen) * mZNear * mZFar);
-		mCocBias = (A * fLen * (mZNear - fPlane)) / ((fPlane + fLen) * mZNear);
-
-		mCocRadius = Math.max(Math.abs(mCocScale + mCocBias),
-				Math.abs(mCocBias));
+		mAperture = 1f / mFStop;
+		mPlaneInFocus = mZNear + (mFocalPlane * (mZFar - mZNear));
+		float imageDist = (float) (mPlaneInFocus / (2.0 * Math.tan(mFovY
+				* Math.PI / 360.0)));
+		mFocalLength = (imageDist * mPlaneInFocus)
+				/ (imageDist + mPlaneInFocus);
 	}
 
 	@Override

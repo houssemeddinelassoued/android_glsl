@@ -76,18 +76,21 @@ public class GlslFilter {
 	 * @param camera
 	 *            Camera instance.
 	 */
-	public void bloom(int texSrc, GlslFbo fboOut, int idxOut, GlslCamera camera) {
+	public void bloom(int texSrc, GlslFbo fboOut, int idxOut) {
 
-		float ratioX = 1f;
-		float ratioY = (float) mFboHalf.getWidth() / mFboHalf.getHeight();
-		if (ratioY > ratioX) {
-			ratioX = (float) mFboHalf.getHeight() / mFboHalf.getWidth();
-			ratioY = 1f;
-		}
+		float blurSizeH = 1f / mFboQuarter.getWidth();
+		float blurSizeV = 1f / mFboQuarter.getHeight();
 
-		float steps = 5;
-		float dx = ratioX / (50f * steps);
-		float dy = ratioY / (50f * steps);
+		int numBlurPixelsPerSide = (int) (0.05f * Math.min(
+				mFboQuarter.getWidth(), mFboQuarter.getHeight()));
+		if (numBlurPixelsPerSide < 1)
+			numBlurPixelsPerSide = 1;
+		double sigma = 1.0 + numBlurPixelsPerSide * 0.5;
+
+		double incrementalGaussian1 = 1.0 / (Math.sqrt(2.0 * Math.PI) * sigma);
+		double incrementalGaussian2 = Math.exp(-0.5 / (sigma * sigma));
+		double incrementalGaussian3 = incrementalGaussian2
+				* incrementalGaussian2;
 
 		// First pass reads color values exceeding given threshold into
 		// TEX_IDX_1 texture.
@@ -96,8 +99,6 @@ public class GlslFilter {
 		mBloomPass1.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
-		GLES20.glUniform1f(mBloomPass1.getHandle("uThreshold"),
-				camera.mBloomThreshold);
 		drawRect(mBloomPass1.getHandle("aPosition"));
 
 		// Second pass blurs TEX_IDX_1 horizontally.
@@ -106,8 +107,12 @@ public class GlslFilter {
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 				mFboQuarter.getTexture(TEX_IDX_1));
-		GLES20.glUniform2f(mBloomPass2.getHandle("uOffset"), dx, 0f);
-		GLES20.glUniform1f(mBloomPass2.getHandle("uSteps"), steps);
+		GLES20.glUniform3f(mBloomPass2.getHandle("uIncrementalGaussian"),
+				(float) incrementalGaussian1, (float) incrementalGaussian2,
+				(float) incrementalGaussian3);
+		GLES20.glUniform1f(mBloomPass2.getHandle("uNumBlurPixelsPerSide"),
+				numBlurPixelsPerSide);
+		GLES20.glUniform2f(mBloomPass2.getHandle("uBlurOffset"), blurSizeH, 0f);
 		drawRect(mBloomPass2.getHandle("aPosition"));
 
 		// Third pass blurs TEX_IDX_2 vertically.
@@ -115,7 +120,7 @@ public class GlslFilter {
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 				mFboQuarter.getTexture(TEX_IDX_2));
-		GLES20.glUniform2f(mBloomPass2.getHandle("uOffset"), 0f, dy);
+		GLES20.glUniform2f(mBloomPass2.getHandle("uBlurOffset"), 0f, blurSizeV);
 		drawRect(mBloomPass2.getHandle("aPosition"));
 
 		// Fourth pass combines source texture and calculated bloom texture into
@@ -223,10 +228,12 @@ public class GlslFilter {
 
 		mBloomPass1.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass1_fs));
-		mBloomPass1.addHandles("aPosition", "sTexture0", "uThreshold");
+		mBloomPass1.addHandles("aPosition", "sTexture0");
 		mBloomPass2.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass2_fs));
-		mBloomPass2.addHandles("aPosition", "sTexture0", "uOffset", "uSteps");
+		mBloomPass2.addHandles("aPosition", "sTexture0",
+				"uIncrementalGaussian", "uBlurOffset", "uNumBlurPixelsPerSide");
+
 		mBloomPass3.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass3_fs));
 		mBloomPass3.addHandles("aPosition", "sTexture0", "sTexture1");
@@ -288,13 +295,13 @@ public class GlslFilter {
 		}
 
 		float angle = (float) (Math.PI * (SystemClock.uptimeMillis() % 10000) / 5000);
-		float stepRadius = Math.min(camera.mCocRadius, 50f) / camera.mBlurSteps;
+		float stepRadius = 0.05f / camera.mBlurSteps;
 
 		float[][] dir = new float[3][2];
 		for (int i = 0; i < 3; i++) {
 			double a = angle + i * Math.PI * 2 / 3;
-			dir[i][0] = (float) (stepRadius * Math.sin(a) * ratioX / 1000f);
-			dir[i][1] = (float) (stepRadius * Math.cos(a) * ratioY / 1000f);
+			dir[i][0] = (float) (stepRadius * Math.sin(a) * ratioX);
+			dir[i][1] = (float) (stepRadius * Math.cos(a) * ratioY);
 		}
 
 		mFboHalf.bind();
