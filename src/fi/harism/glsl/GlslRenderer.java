@@ -30,6 +30,8 @@ import android.opengl.GLSurfaceView;
 import android.os.CountDownTimer;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.view.MotionEvent;
+import android.view.View;
 import fi.harism.glsl.scene.GlslLight;
 import fi.harism.glsl.scene.GlslScene;
 import fi.harism.glsl.scene.GlslShaderIds;
@@ -37,7 +39,8 @@ import fi.harism.glsl.scene.GlslShaderIds;
 /**
  * Renderer class for handling GLSurfaceView.Renderer methods.
  */
-public final class GlslRenderer implements GLSurfaceView.Renderer {
+public final class GlslRenderer implements GLSurfaceView.Renderer,
+		View.OnTouchListener {
 
 	private static final int SCENE_BOXES1 = 0;
 	private static final int SCENE_BOXES2 = 1;
@@ -61,6 +64,8 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 	private GlslFbo mFbo = new GlslFbo();
 
 	private boolean mAnimationPaused;
+	private float mTouchX, mTouchY;
+
 	private boolean mDivideScreen;
 	private boolean mBloomEnabled;
 	private boolean mLensBlurEnabled;
@@ -296,47 +301,43 @@ public final class GlslRenderer implements GLSurfaceView.Renderer {
 				"aPosition", "uAperture", "uFocalLength", "uPlaneInFocus");
 	}
 
-	/**
-	 * Updates renderer drag position.
-	 * 
-	 * @param x1
-	 *            First touch point x
-	 * @param y1
-	 *            First touch point y
-	 * @param x2
-	 *            Current touch point x
-	 * @param y2
-	 *            Current touch point y
-	 */
-	public void onTouch(float x1, float y1, float x2, float y2) {
-		// On first call initiate paused state.
-		if (!mAnimationPaused) {
+	@Override
+	public boolean onTouch(View view, MotionEvent me) {
+		switch (me.getAction()) {
+		case MotionEvent.ACTION_DOWN:
 			mAnimationPaused = true;
 			mAnimationPauseTime = mAnimationTime;
+			mTouchX = me.getX();
+			mTouchY = me.getY();
+			return true;
+		case MotionEvent.ACTION_MOVE:
+			float x1 = mTouchX;
+			float y1 = mTouchY;
+			float x2 = me.getX();
+			float y2 = me.getY();
+
+			// Readjust animation time based on drag position.
+			float ratio = (float) mCamera.mViewWidth / mCamera.mViewHeight;
+			mAnimationTime = (long) (mAnimationPauseTime + 5000 * ratio
+					* ((x2 - x1) / mCamera.mViewWidth));
+
+			// Map touch coordinates into texture coordinates.
+			x1 /= mCamera.mViewWidth;
+			x2 /= mCamera.mViewWidth;
+			y1 = 1f - y1 / mCamera.mViewHeight;
+			y2 = 1f - y2 / mCamera.mViewHeight;
+			mCamera.mTouchX = x1;
+			mCamera.mTouchY = y1;
+			mCamera.mTouchDX = x1 - x2;
+			mCamera.mTouchDY = y1 - y2;
+			return true;
+		case MotionEvent.ACTION_UP:
+			mAnimationPaused = false;
+			new ReleaseDragTimer(mCamera, 300, 30).start();
+			return true;
+		default:
+			return false;
 		}
-
-		// Readjust animation time based on drag position.
-		float ratio = (float) mCamera.mViewWidth / mCamera.mViewHeight;
-		mAnimationTime = (long) (mAnimationPauseTime + 5000 * ratio
-				* ((x2 - x1) / mCamera.mViewWidth));
-
-		// Map touch coordinates into texture coordinates.
-		x1 /= mCamera.mViewWidth;
-		x2 /= mCamera.mViewWidth;
-		y1 = 1f - y1 / mCamera.mViewHeight;
-		y2 = 1f - y2 / mCamera.mViewHeight;
-		mCamera.mTouchX = x1;
-		mCamera.mTouchY = y1;
-		mCamera.mTouchDX = x1 - x2;
-		mCamera.mTouchDY = y1 - y2;
-	}
-
-	/**
-	 * Method for releasing renderer from touch mode.
-	 */
-	public void onTouchRelease() {
-		mAnimationPaused = false;
-		new ReleaseDragTimer(mCamera, 300, 30).start();
 	}
 
 	/**

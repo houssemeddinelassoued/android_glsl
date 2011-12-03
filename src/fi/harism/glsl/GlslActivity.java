@@ -32,7 +32,6 @@ import android.os.CountDownTimer;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -41,14 +40,11 @@ import android.widget.TextView;
 /**
  * Main Activity class.
  */
-public final class GlslActivity extends Activity implements
-		View.OnTouchListener {
+public final class GlslActivity extends Activity {
 
 	private MusicPlayer mMusicPlayer;
 	private GlslRenderer mRenderer;
 	private GLSurfaceView mSurfaceView;
-
-	private float mTouchX, mTouchY;
 
 	private Timer mFpsTimer;
 	private Runnable mFpsRunnable;
@@ -73,7 +69,7 @@ public final class GlslActivity extends Activity implements
 		mSurfaceView.setEGLContextClientVersion(2);
 		mSurfaceView.setRenderer(mRenderer);
 		mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-		mSurfaceView.setOnTouchListener(this);
+		mSurfaceView.setOnTouchListener(mRenderer);
 
 		mAppName = getString(R.string.app_name);
 		mFpsRunnable = new FpsRunnable();
@@ -150,28 +146,6 @@ public final class GlslActivity extends Activity implements
 	@Override
 	public Object onRetainNonConfigurationInstance() {
 		return this;
-	}
-
-	@Override
-	public boolean onTouch(View v, MotionEvent me) {
-		if (v != mSurfaceView)
-			return false;
-
-		switch (me.getAction()) {
-		case MotionEvent.ACTION_DOWN:
-			mTouchX = me.getX();
-			mTouchY = me.getY();
-			mRenderer.onTouch(mTouchX, mTouchY, mTouchX, mTouchY);
-			return true;
-		case MotionEvent.ACTION_MOVE:
-			mRenderer.onTouch(mTouchX, mTouchY, me.getX(), me.getY());
-			return true;
-		case MotionEvent.ACTION_UP:
-			mRenderer.onTouchRelease();
-			return true;
-		default:
-			return false;
-		}
 	}
 
 	/**
