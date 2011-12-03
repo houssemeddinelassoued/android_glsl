@@ -40,18 +40,6 @@ public final class GlslScene {
 	}
 
 	/**
-	 * Renders objects into the scene
-	 * 
-	 * @param mData
-	 *            Shader id values to use
-	 */
-	public void render(GlslShaderIds mData) {
-		for (GlslObject object : mObjects) {
-			object.render(mData);
-		}
-	}
-
-	/**
 	 * Returns light with given index. Index is a value between [0,
 	 * getLightCount() - 1].
 	 * 
@@ -209,6 +197,18 @@ public final class GlslScene {
 		}
 		path.addPosition(x, y, z, 40000);
 		mAnimator.setPath(camera, path);
+	}
+
+	/**
+	 * Renders objects into the scene
+	 * 
+	 * @param mData
+	 *            Shader id values to use
+	 */
+	public void render(GlslShaderIds mData) {
+		for (GlslObject object : mObjects) {
+			object.render(mData);
+		}
 	}
 
 	/**

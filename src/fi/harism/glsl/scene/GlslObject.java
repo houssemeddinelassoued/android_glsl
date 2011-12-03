@@ -38,18 +38,18 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 		mChildObjects.add(obj);
 	}
 
-	public void render(GlslShaderIds mData) {
-		for (GlslObject obj : mChildObjects) {
-			obj.render(mData);
-		}
-	}
-
 	public final void getPosition(float[] position) {
 		copy(mPosition, position, 3);
 	}
 
 	public final void getRotation(float[] rotation) {
 		copy(mRotation, rotation, 3);
+	}
+
+	public void render(GlslShaderIds mData) {
+		for (GlslObject obj : mChildObjects) {
+			obj.render(mData);
+		}
 	}
 
 	public final void setMVP(float[] mvM, float[] projM) {
