@@ -22,14 +22,19 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import fi.harism.glsl.R;
 
+/**
+ * Preferences Activity.
+ */
 public final class GlslPreferenceActivity extends PreferenceActivity implements
 		Preference.OnPreferenceClickListener {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		// Populate preferences from preferences xml -file.
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
 
+		// Add listener to reset preference.
 		String key = getString(R.string.key_reset);
 		Preference p = getPreferenceScreen().findPreference(key);
 		if (p != null) {
@@ -39,11 +44,15 @@ public final class GlslPreferenceActivity extends PreferenceActivity implements
 
 	@Override
 	public boolean onPreferenceClick(Preference preference) {
+		// On click make sure it's from reset preference.
 		String key = getString(R.string.key_reset);
 		if (preference.getKey().equals(key)) {
+			// Clear preferences.
 			preference.getEditor().clear().commit();
+			// Populate preferences with default values.
 			PreferenceManager.setDefaultValues(GlslPreferenceActivity.this,
 					R.xml.preferences, true);
+			// Finish preferences activity and return back to main activity.
 			finish();
 			return true;
 		}

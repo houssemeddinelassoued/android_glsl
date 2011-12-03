@@ -24,23 +24,45 @@ import android.view.View;
 import android.widget.SeekBar;
 import fi.harism.glsl.R;
 
+/**
+ * GlslSliderPreference, float preference with adjustable slider.
+ */
 public class GlslSliderPreference extends DialogPreference {
 
-	private float mValue;
-	private float mValueMin;
-	private float mValueMax;
-	private float mValuePrecision;
-
+	// Preference title.
 	private String mTitle;
 
+	// Current value.
+	private float mValue;
+	// Minimum value.
+	private float mValueMin;
+	// Maximum value.
+	private float mValueMax;
+	// Value precision.
+	private float mValuePrecision;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param context
+	 * @param attrs
+	 */
 	public GlslSliderPreference(Context context, AttributeSet attrs) {
 		this(context, attrs, 0);
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param context
+	 * @param attrs
+	 * @param defStyle
+	 */
 	public GlslSliderPreference(Context context, AttributeSet attrs,
 			int defStyle) {
 		super(context, attrs, defStyle);
 
+		// Get values from preferences xml.
 		TypedArray ta = context.obtainStyledAttributes(attrs,
 				R.styleable.SliderPreference);
 		mValueMin = ta.getFloat(R.styleable.SliderPreference_valueMin, 0);
@@ -48,10 +70,14 @@ public class GlslSliderPreference extends DialogPreference {
 		mValuePrecision = ta.getFloat(
 				R.styleable.SliderPreference_valuePrecision, 1);
 
+		// Store original title for later use.
 		mTitle = getTitle().toString();
 		setDialogLayoutResource(R.layout.slider);
 	}
 
+	/**
+	 * Updates title with value in mValue.
+	 */
 	private void updateTitle() {
 		String title = String.format(mTitle, mValue);
 		setTitle(title);
@@ -64,6 +90,7 @@ public class GlslSliderPreference extends DialogPreference {
 	@Override
 	protected void onBindDialogView(View v) {
 		super.onBindDialogView(v);
+		// Set seek bar values.
 		SeekBar seekBar = (SeekBar) v.findViewById(R.id.slider);
 		seekBar.setMax((int) ((mValueMax - mValueMin) / mValuePrecision));
 		seekBar.setProgress((int) ((mValue - mValueMin) / mValuePrecision));
