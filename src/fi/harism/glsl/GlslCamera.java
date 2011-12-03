@@ -24,33 +24,36 @@ import fi.harism.glsl.scene.GlslAnimator;
  * filters. Unlike pre OpenGL ES 2.0, all matrix calculations are made by
  * ourselves.
  */
-public class GlslCamera implements GlslAnimator.PathInterface {
-	// Camera values.
+public final class GlslCamera implements GlslAnimator.PathInterface {
+	// Camera values:
+	// Underlying surface width and height.
 	public int mViewWidth, mViewHeight;
+	// View matrix.
 	public float[] mViewM = new float[16];
+	// Projection matrix.
 	public float[] mProjM = new float[16];
 
-	// Projection matrix
+	// Projection matrix values:
 	private float mRatio;
 	private float mFovY;
 	private float mZNear;
 	private float mZFar;
 
-	// View matrix
-	// private float mViewX, mViewY, mViewZ;
+	// View matrix values:
+	private float mViewX, mViewY, mViewZ;
 	private float mLookX, mLookY, mLookZ;
 	private float mUpX, mUpY, mUpZ;
 
-	// Lens blur values.
+	// Lens blur preferences values:
 	private float mFStop;
 	private float mFocalPlane;
 	public int mBlurSteps;
-
+	// Lens blur calculated values:
 	public float mAperture;
 	public float mPlaneInFocus;
 	public float mFocalLength;
 
-	// Touch filter values.
+	// Touch values for displacement filter:
 	public float mTouchX, mTouchY;
 	public float mTouchDX, mTouchDY;
 
@@ -63,13 +66,18 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 	 *            Value between [0, 1]
 	 */
 	public void setLensBlur(float fStop, float focalPlane) {
+		// Store fStop and focalPlane values.
 		mFStop = fStop;
 		mFocalPlane = focalPlane;
 
+		// Aperture size is 1/fStop.
 		mAperture = 1f / mFStop;
+		// Plane in focus is a value between [zNear, zFar].
 		mPlaneInFocus = mZNear + (mFocalPlane * (mZFar - mZNear));
+		// Image plane distance from lense.
 		float imageDist = (float) (mPlaneInFocus / (2.0 * Math.tan(mFovY
 				* Math.PI / 360.0)));
+		// 1/focalLength = 1/imageDist + 1/focalPlane
 		mFocalLength = (imageDist * mPlaneInFocus)
 				/ (imageDist + mPlaneInFocus);
 	}
@@ -91,7 +99,12 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 	 *            camera z position
 	 */
 	public void setPosition(float x, float y, float z) {
-		setViewM(x, y, z, mLookX, mLookY, mLookZ, mUpX, mUpY, mUpZ);
+		// Regenerate view matrix with these new values.
+		mViewX = x;
+		mViewY = y;
+		mViewZ = z;
+		setViewM(mViewX, mViewY, mViewZ, mLookX, mLookY, mLookZ, mUpX, mUpY,
+				mUpZ);
 	}
 
 	/**
@@ -107,6 +120,7 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 	 *            far clipping plane
 	 */
 	public void setProjectionM(float ratio, float fovY, float zNear, float zFar) {
+		// Store projection matrix values.
 		mRatio = ratio;
 		mFovY = fovY;
 		mZNear = zNear;
@@ -115,12 +129,12 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 		// Matrix.frustumM(mData.mProjM, 0, -ratio, ratio, -1, 1,
 		// mData.mZNear, 20);
 		GlslMatrix.setPerspectiveM(mProjM, mFovY, mRatio, mZNear, mZFar);
-
+		// Update lens blur values as projection matrix affects them.
 		setLensBlur(mFStop, mFocalPlane);
 	}
 
 	/**
-	 * Generate view matrix.
+	 * Generates view matrix.
 	 * 
 	 * @param x
 	 *            camera x position
@@ -143,6 +157,9 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 	 */
 	public void setViewM(float x, float y, float z, float lookX, float lookY,
 			float lookZ, float upX, float upY, float upZ) {
+		mViewX = x;
+		mViewY = y;
+		mViewZ = z;
 		mLookX = lookX;
 		mLookY = lookY;
 		mLookZ = lookZ;
@@ -150,7 +167,7 @@ public class GlslCamera implements GlslAnimator.PathInterface {
 		mUpY = upY;
 		mUpZ = upZ;
 
-		Matrix.setLookAtM(mViewM, 0, x, y, z, lookX, lookY, lookZ, upX, upY,
-				upZ);
+		Matrix.setLookAtM(mViewM, 0, mViewX, mViewY, mViewZ, mLookX, mLookY,
+				mLookZ, mUpX, mUpY, mUpZ);
 	}
 }
