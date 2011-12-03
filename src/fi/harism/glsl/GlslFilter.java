@@ -37,6 +37,7 @@ public class GlslFilter {
 	// Shader instances.
 	private GlslShader mCopy = new GlslShader();
 	private GlslShader mDisplace = new GlslShader();
+	private GlslShader mTonemap = new GlslShader();
 	private GlslShader mFxaa = new GlslShader();
 	private GlslShader mBloomPass1 = new GlslShader();
 	private GlslShader mBloomPass2 = new GlslShader();
@@ -221,6 +222,10 @@ public class GlslFilter {
 				ctx.getString(R.string.shader_displace_fs));
 		mDisplace.addHandles("aPosition", "sTexture0", "uPosition", "uDiff");
 
+		mTonemap.setProgram(ctx.getString(R.string.shader_filter_vs),
+				ctx.getString(R.string.shader_tonemap_fs));
+		mTonemap.addHandles("aPosition", "sTexture0");
+
 		mFxaa.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_fxaa_fs));
 		mFxaa.addHandles("aPosition", "sTexture0", "uFxaaConsoleRcpFrameOpt",
@@ -390,6 +395,20 @@ public class GlslFilter {
 		mTriangleVertices.put(5, y1);
 		mTriangleVertices.put(6, x2);
 		mTriangleVertices.put(7, y2);
+	}
+
+	/**
+	 * Tonemap filter copies given texture id as a source into currently binded
+	 * FBO and applies tonemapping for color values.
+	 * 
+	 * @param src
+	 *            Source texture id.
+	 */
+	public void tonemap(int src) {
+		mTonemap.useProgram();
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, src);
+		drawRect(mTonemap.getHandle("aPosition"));
 	}
 
 	/**

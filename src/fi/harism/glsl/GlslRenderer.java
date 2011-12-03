@@ -167,7 +167,11 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		GLES20.glUniform1f(mSceneShader.getHandle("uPlaneInFocus"),
 				mCamera.mPlaneInFocus);
 
-		// Bind scene texture, clear it and render the scene.
+		// Bind scene texture, clear it and render the scene. Renderer emulates
+		// HDR rendering by reserving certain amount of color space for HDR
+		// values. Currently this means that { R, G, B } --> { R/3, G/3, B/3 }
+		// and 'regular' colors are within [0, 1/3] range and values [1, 3] map
+		// to higher [1/3, 3/3] range.
 		mFbo.bind();
 		mFbo.bindTexture(TEX_IDX_SCENE);
 		GLES20.glClearColor(0.2f / 3f, 0.3f / 3f, 0.5f / 3f, 1.0f);
@@ -207,6 +211,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
 		}
+
 		// If bloom is enabled.
 		if (mBloomEnabled) {
 			mFilter.bloom(mFbo.getTexture(texIdxIn), mFbo, texIdxOut);
@@ -215,6 +220,16 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
 		}
+		// Apply tonemapping before anti-aliasing.
+		// TODO: It may be better if tonemapping was done as part of bloom or
+		// within else -clause if bloom is disabled.
+		mFbo.bind();
+		mFbo.bindTexture(texIdxOut);
+		mFilter.tonemap(mFbo.getTexture(texIdxIn));
+		// Swap texture in and out.
+		texIdxIn = texIdxOut;
+		texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2 : TEX_IDX_OUT_1;
+
 		// If FXAA anti-aliasing is enabled.
 		if (mFxaaEnabled) {
 			mFbo.bind();
@@ -233,7 +248,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		// If screen is divided copy original scene on left side.
 		if (mDivideScreen) {
 			mFilter.setClipCoords(-1f, 1f, 0f, -1f);
-			mFilter.copy(mFbo.getTexture(TEX_IDX_SCENE));
+			mFilter.tonemap(mFbo.getTexture(TEX_IDX_SCENE));
 			mFilter.setClipCoords(0f, 1f, 1f, -1f);
 		}
 		// Based on touch difference copy filtered scene to screen using plain
