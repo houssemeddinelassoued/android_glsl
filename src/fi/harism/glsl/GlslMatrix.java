@@ -18,15 +18,36 @@ package fi.harism.glsl;
 
 import android.opengl.Matrix;
 
+/**
+ * Static methods for matrix initialization.
+ */
 public class GlslMatrix {
 
+	/**
+	 * Initializes given matrix as perspective projection matrix.
+	 * 
+	 * @param m
+	 *            Matrix for writing, should be float[16], or bigger.
+	 * @param fovy
+	 *            Field of view in degrees.
+	 * @param aspect
+	 *            Aspect ratio.
+	 * @param zNear
+	 *            Near clipping plane.
+	 * @param zFar
+	 *            Far clipping plane.
+	 */
 	public static final void setPerspectiveM(float[] m, float fovy,
 			float aspect, float zNear, float zFar) {
 
+		// First initialize matrix as identity matrix.
 		Matrix.setIdentityM(m, 0);
 
+		// Half the height.
 		float h = zNear * (float) Math.tan(fovy * Math.PI / 360);
+		// Half the width.
 		float w = h * aspect;
+		// Distance.
 		float d = zFar - zNear;
 
 		m[0] = zNear / w;
@@ -37,6 +58,16 @@ public class GlslMatrix {
 		m[15] = 0;
 	}
 
+	/**
+	 * Sets given matrix to x-y-z -rotation matrix.
+	 * 
+	 * @param m
+	 *            Matrix to contain rotation matrix. Should be float[16] or
+	 *            bigger.
+	 * @param r
+	 *            Rotation values, float[3] where { x, y, z } is rotation around
+	 *            corresponding axis.
+	 */
 	public static final void setRotateM(float[] m, float[] r) {
 
 		double toRadians = Math.PI * 2 / 360;

@@ -23,13 +23,17 @@ import android.opengl.GLES20;
  */
 public class GlslFbo {
 
+	// FBO textures and depth buffer size.
 	private int mWidth, mHeight;
-	private int mFramebufferHandle = 0;
+	// FBO handle.
+	private int mFramebufferHandle = -1;
+	// Optional depth buffer handle.
 	private int mRenderbufferHandle = -1;
+	// Generated texture handles.
 	private int[] mTextureHandles = {};
 
 	/**
-	 * Binds this FBO into use.
+	 * Binds this FBO into use and adjusts viewport to FBO size.
 	 */
 	public void bind() {
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFramebufferHandle);
@@ -38,7 +42,7 @@ public class GlslFbo {
 
 	/**
 	 * Bind certain texture into target texture. This method should be called
-	 * only after a call to bind().
+	 * only after call to bind().
 	 * 
 	 * @param index
 	 *            Index of texture to bind.
@@ -109,14 +113,17 @@ public class GlslFbo {
 	 */
 	public void init(int width, int height, int textureCount,
 			boolean genRenderbuffer) {
+		// Store FBO size.
 		mWidth = width;
 		mHeight = height;
 
+		// Genereta FBO.
 		int handle[] = { 0 };
 		GLES20.glGenFramebuffers(1, handle, 0);
 		mFramebufferHandle = handle[0];
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFramebufferHandle);
 
+		// Generate textures.
 		mTextureHandles = new int[textureCount];
 		GLES20.glGenTextures(textureCount, mTextureHandles, 0);
 		for (int texture : mTextureHandles) {
@@ -134,6 +141,7 @@ public class GlslFbo {
 					GLES20.GL_UNSIGNED_BYTE, null);
 		}
 
+		// Generate depth buffer.
 		if (genRenderbuffer) {
 			GLES20.glGenRenderbuffers(1, handle, 0);
 			mRenderbufferHandle = handle[0];
@@ -148,8 +156,8 @@ public class GlslFbo {
 	}
 
 	/**
-	 * Resets this FBO to its initial state, releasing all resources that were
-	 * allocated.
+	 * Resets this FBO into its initial state, releasing all resources that were
+	 * allocated during a call to init.
 	 */
 	public void reset() {
 		int[] handle = { mFramebufferHandle };
