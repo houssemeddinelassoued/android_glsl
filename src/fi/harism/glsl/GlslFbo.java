@@ -113,6 +113,10 @@ public class GlslFbo {
 	 */
 	public void init(int width, int height, int textureCount,
 			boolean genRenderbuffer) {
+
+		// Just in case.
+		reset();
+
 		// Store FBO size.
 		mWidth = width;
 		mHeight = height;
