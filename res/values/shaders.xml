@@ -307,19 +307,17 @@
         varying vec2 vTextureCoord;
         
         void main() {
-            float sum = 0.0;
-            float coc = texture2D(sTexturePass1, vTextureCoord).a;
+            float sum = 1.0;
             vec2 textureCoord0 = vTextureCoord;
-            gl_FragColor = vec4(0.0);
-            for (float t = 0.0; t &lt;= uSteps; ++t) {
+            gl_FragColor = texture2D(sTexturePass1, vTextureCoord);
+            float coc = gl_FragColor.a;
+            for (float t = 1.0; coc * uSteps >= t; ++t) {
+                textureCoord0 += uDelta0;
                 vec4 sample = texture2D(sTexturePass1, textureCoord0);
                 if (sample.a * uSteps >= t) {
-                    if (coc * uSteps >= t) {
-                        gl_FragColor += sample;
-                        sum += 1.0;
-                    }
+                    gl_FragColor += sample;
+                    sum += 1.0;
                 }
-                textureCoord0 += uDelta0;
             }
             gl_FragColor /= sum;
         }
@@ -335,19 +333,17 @@
         varying vec2 vTextureCoord;
         
         void main() {
-            float sum = 0.0;
-            float coc = texture2D(sTexturePass1, vTextureCoord).a;
+            float sum = 1.0;
             vec2 textureCoord1 = vTextureCoord - uDelta0 * 0.5;
-            gl_FragColor = vec4(0.0);
-            for (float t = 0.0; t &lt;= uSteps; ++t) {
+            gl_FragColor = texture2D(sTexturePass1, vTextureCoord);
+            float coc = gl_FragColor.a;
+            for (float t = 0.0; coc * uSteps >= t; ++t) {
+                textureCoord1 += uDelta1;
                 vec4 sample = texture2D(sTexturePass1, textureCoord1);
                 if (sample.a * uSteps >= t) {
-                    if (coc * uSteps >= t) {
-                        gl_FragColor += sample;
-                        sum += 1.0;
-                   }
-                 }
-                textureCoord1 += uDelta1;
+                    gl_FragColor += sample;
+                    sum += 1.0;
+                }
             }
             gl_FragColor /= sum;
             gl_FragColor += texture2D(sTexturePass2, vTextureCoord - uDelta1 * 0.5);
@@ -365,30 +361,35 @@
         varying vec2 vTextureCoord;
         
         void main() {
-            float sum = 0.0;
-            vec2 textureCoord1 = vTextureCoord - uDelta2 * 0.5;
-            vec2 textureCoord2 = vTextureCoord;
-            float coc1 = texture2D(sTexturePass2, textureCoord1).a;
-            float coc2 = texture2D(sTexturePass3, textureCoord2).a;
+            float sum = 3.0;
+            vec4 color;
             gl_FragColor = vec4(0.0);
-            for (float t = 0.0; t &lt;= uSteps; t++) {
-                vec4 sample1 = texture2D(sTexturePass2, textureCoord1);
-                vec4 sample2 = texture2D(sTexturePass3, textureCoord2);
-                if (sample1.a * uSteps >= t) {
-                    if (coc1 * uSteps >= t) {
-                        gl_FragColor += sample1;
-                        sum += 1.0;
-                    }
-                }
-                if (sample2.a * uSteps >= t) {
-                    if (coc2 * uSteps >= t) {
-                        gl_FragColor += 2.0 * sample2;
-                        sum += 2.0;
-                    }
-                }
+            
+            vec2 textureCoord1 = vTextureCoord - uDelta2 * 0.5;
+            color = texture2D(sTexturePass2, textureCoord1);
+            gl_FragColor += color;
+            float coc1 = color.a;
+            for (float t = 1.0; coc1 * uSteps >= t; t++) {
                 textureCoord1 += uDelta1;
-                textureCoord2 += uDelta2;
+                vec4 sample = texture2D(sTexturePass2, textureCoord1);
+                if (sample.a * uSteps >= t) {
+                    gl_FragColor += sample;
+                    sum += 1.0;
+                }
             }
+            vec2 textureCoord2 = vTextureCoord;
+            color = texture2D(sTexturePass3, textureCoord2);
+            gl_FragColor += 2.0 * color;
+            float coc2 = color.a;
+            for (float t = 1.0; coc2 * uSteps >= t; t++) {
+                textureCoord2 += uDelta2;
+                vec4 sample = texture2D(sTexturePass3, textureCoord2);
+                if (sample.a * uSteps >= t) {
+                    gl_FragColor += 2.0 * sample;
+                    sum += 2.0;
+                }
+            }
+            
             gl_FragColor /= sum;
             gl_FragColor.rgb /= gl_FragColor.a;
         }
