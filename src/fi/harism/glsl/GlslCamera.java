@@ -70,13 +70,13 @@ public final class GlslCamera implements GlslAnimator.PathInterface {
 		mFStop = fStop;
 		mFocalPlane = focalPlane;
 
-		// Aperture size is 1/fStop.
-		mAperture = 1f / mFStop;
+		// Aperture size.
+		mAperture = 8f / mFStop;
 		// Plane in focus is a value between [zNear, zFar].
 		mPlaneInFocus = mZNear + (mFocalPlane * (mZFar - mZNear));
 		// Image plane distance from lense.
-		float imageDist = (float) (mPlaneInFocus / (2.0 * Math.tan(mFovY
-				* Math.PI / 360.0)));
+		float imageDist = (float) (mAperture / (2.0 * Math.tan(mFovY * Math.PI
+				/ 360.0)));
 		// 1/focalLength = 1/imageDist + 1/focalPlane
 		mFocalLength = (imageDist * mPlaneInFocus)
 				/ (imageDist + mPlaneInFocus);

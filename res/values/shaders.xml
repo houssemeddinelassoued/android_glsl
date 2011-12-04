@@ -22,7 +22,7 @@
             vNormal = vec3(uNormalMatrix * vec4(aNormal, 0.0));
             /* Position in View space */
             vPosition = vec3(uMVMatrix * vec4(aPosition, 1.0));
-            vColor = aColor;            
+            vColor = aColor;
         }
     </string>
     <!-- Fragment shader for rendering Phong shaded scene -->
@@ -73,8 +73,8 @@
             gl_FragColor.rgb /= 3.0;
             /* This is the last place where we have z-value available. Calculate
                circle of confusion and store it to alpha for later use. */
-            gl_FragColor.a = abs(uAperture * (uFocalLength * (vPosition.z - uPlaneInFocus)) /
-                                 (vPosition.z * (uPlaneInFocus - uFocalLength)));
+            gl_FragColor.a = abs(uAperture * (uFocalLength * (-vPosition.z - uPlaneInFocus)) /
+                                 (-vPosition.z * (uPlaneInFocus - uFocalLength)));
         }
     </string>
     <!-- Fragment shader for rendering Blinn-Phong shaded scene -->
@@ -125,8 +125,8 @@
             gl_FragColor.rgb /= 3.0;
             /* This is the last place where we have z-value available. Calculate
                circle of confusion and store it to alpha for later use. */
-            gl_FragColor.a = abs(uAperture * (uFocalLength * (vPosition.z - uPlaneInFocus)) /
-                                 (vPosition.z * (uPlaneInFocus - uFocalLength)));
+            gl_FragColor.a = abs(uAperture * (uFocalLength * (-vPosition.z - uPlaneInFocus)) /
+                                 (-vPosition.z * (uPlaneInFocus - uFocalLength)));
         }
     </string>
     <!-- Vertex shader for rendering lights -->
