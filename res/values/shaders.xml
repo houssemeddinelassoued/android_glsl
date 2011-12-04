@@ -157,7 +157,8 @@
             float dist = length(gl_PointCoord - 0.5);
             if (dist > 0.5)
                 discard;
-            gl_FragColor.rgb = vec3(1.0 - 2.0 * dist);
+            const float c = 4.0 / 3.0;
+            gl_FragColor.rgb = vec3(1.0 - c * dist);
             /* Calculate circle of confusion and store it to alpha. */
             gl_FragColor.a = abs(uAperture * (uFocalLength * (vPositionZ - uPlaneInFocus)) /
                                  (vPositionZ * (uPlaneInFocus - uFocalLength)));
