@@ -98,7 +98,7 @@
                 harism:valuePrecision="0.1" />
 
             <fi.harism.glsl.prefs.GlslSliderPreference
-                android:defaultValue="50"
+                android:defaultValue="30"
                 android:dependency="@string/key_lensblur_enable"
                 android:key="@string/key_lensblur_focal_plane"
                 android:summary="Focal plane is the distance from camera to plane in focus"
