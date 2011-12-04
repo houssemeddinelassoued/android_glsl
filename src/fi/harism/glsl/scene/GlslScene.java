@@ -69,11 +69,14 @@ public final class GlslScene {
 	 *            Number of lights to add to the scene
 	 */
 	public void initSceneBoxes1(GlslCamera camera, int lightCount) {
+		// Just in case.
 		reset();
 
 		GlslObject rootObject = new GlslObject();
 		mObjects.add(rootObject);
 
+		// Using negative size creates inverted box one can put camera inside.
+		// Here we create bounding box for scene.
 		GlslBox box = new GlslBox();
 		box.setSize(-6, -6, -20);
 		for (int i = 0; i < 6; ++i) {
@@ -81,6 +84,7 @@ public final class GlslScene {
 		}
 		mObjects.add(box);
 
+		// Put one box in the middle of scene.
 		box = new GlslBox();
 		box.setPosition(0f, 0f, 0f);
 		box.setColor(rand(.2f, 1f), rand(.2f, 1f), rand(.2f, 1f));
@@ -88,6 +92,7 @@ public final class GlslScene {
 		mAnimator.setRotation(box, mAnimator.new RotationData(10000, -15000,
 				17000));
 
+		// Generate lights and assign random path to them.
 		for (int i = 0; i < lightCount; ++i) {
 			GlslLight light = new GlslLight();
 			GlslAnimator.Path path = mAnimator.new Path();
@@ -104,6 +109,7 @@ public final class GlslScene {
 			mLights.add(light);
 		}
 
+		// Generate random path for camera.
 		GlslAnimator.Path path = mAnimator.new Path();
 		float x = rand(-2.5f, 2.5f);
 		float y = rand(-2.5f, 2.5f);
@@ -128,20 +134,22 @@ public final class GlslScene {
 	public void initSceneBoxes2(GlslCamera camera, int lightCount) {
 		reset();
 
-		final int CUBE_SCROLLER_COUNT = 40;
 		final int CUBE_ARCH_COUNT = 20;
+		final int CUBE_SCROLLER_COUNT = 40;
 		final float CUBE_SCROLLER_NEAR = 20f;
 		final float CUBE_SCROLLER_FAR = -20f;
 
 		GlslObject rootObject = new GlslObject();
 		mObjects.add(rootObject);
 
+		// One big flat box as ground object.
 		GlslBox floor = new GlslBox();
 		floor.setSize(100f, 2f, 100f);
 		floor.setPosition(0, -1f, 0f);
 		floor.setColor(.5f, .5f, .5f);
 		rootObject.addChild(floor);
 
+		// Generate 'scroller'.
 		for (int idx = 0; idx < CUBE_SCROLLER_COUNT; ++idx) {
 			GlslBox cube = new GlslBox();
 			cube.setScaling(rand(.5f, 1.0f));
@@ -153,6 +161,7 @@ public final class GlslScene {
 			rootObject.addChild(cube);
 		}
 
+		// Generate 'arch' or rotating circle of boxes.
 		GlslObject archContainer = new GlslObject();
 		rootObject.addChild(archContainer);
 		mAnimator.setRotation(archContainer, mAnimator.new RotationData(0, 0,
@@ -168,6 +177,7 @@ public final class GlslScene {
 			archContainer.addChild(cube);
 		}
 
+		// Generate lights and assign random path to them.
 		for (int i = 0; i < lightCount; ++i) {
 			GlslLight light = new GlslLight();
 			GlslAnimator.Path path = mAnimator.new Path();
@@ -184,6 +194,7 @@ public final class GlslScene {
 			mLights.add(light);
 		}
 
+		// Assign random path to camera.
 		GlslAnimator.Path path = mAnimator.new Path();
 		float x = rand(-10f, 10f);
 		float y = rand(1f, 10f);
