@@ -128,10 +128,10 @@ public final class GlslScene {
 	public void initSceneBoxes2(GlslCamera camera, int lightCount) {
 		reset();
 
-		final int CUBE_SCROLLER_COUNT = 20;
+		final int CUBE_SCROLLER_COUNT = 40;
 		final int CUBE_ARCH_COUNT = 20;
-		final float CUBE_SCROLLER_NEAR = 10f;
-		final float CUBE_SCROLLER_FAR = -10f;
+		final float CUBE_SCROLLER_NEAR = 20f;
+		final float CUBE_SCROLLER_FAR = -20f;
 
 		GlslObject rootObject = new GlslObject();
 		mObjects.add(rootObject);
@@ -144,24 +144,22 @@ public final class GlslScene {
 
 		for (int idx = 0; idx < CUBE_SCROLLER_COUNT; ++idx) {
 			GlslBox cube = new GlslBox();
-
-			cube.setScaling(rand(.8f, 1.2f));
+			cube.setScaling(rand(.5f, 1.0f));
 			cube.setRotation(rand(0f, 360f), rand(0f, 360f), rand(0f, 360f));
-			cube.setPosition(rand(-1f, 1f), rand(-1f, 1f),
-					rand(CUBE_SCROLLER_NEAR, CUBE_SCROLLER_FAR));
+			cube.setPosition(rand(-1f, 1f), rand(0f, 1f), CUBE_SCROLLER_NEAR
+					+ ((float)idx / CUBE_SCROLLER_COUNT)
+					* (CUBE_SCROLLER_FAR - CUBE_SCROLLER_NEAR));
 			cube.setColor(rand(.2f, 1f), rand(.2f, 1f), rand(.2f, 1f));
 			rootObject.addChild(cube);
 		}
 
 		GlslObject archContainer = new GlslObject();
 		rootObject.addChild(archContainer);
-		mAnimator.setRotation(archContainer, mAnimator.new RotationData(15000,
-				0, 10000));
+		mAnimator.setRotation(archContainer, mAnimator.new RotationData(0, 0,
+				15000));
 		for (int idx = 0; idx < CUBE_ARCH_COUNT; ++idx) {
-			GlslBox cube = new GlslBox();
-
 			double t = 2 * Math.PI * idx / CUBE_ARCH_COUNT;
-
+			GlslBox cube = new GlslBox();
 			cube.setScaling(rand(0.5f, 1f));
 			cube.setRotation(rand(0f, 360f), rand(0f, 360f), rand(0f, 360f));
 			cube.setPosition((float) (3f * Math.cos(t)),
