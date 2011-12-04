@@ -141,7 +141,7 @@
             gl_Position = uPMatrix * vec4(aPosition, 1.0);
             /* Map radius into screen pixels. */
             vec4 sz = uPMatrix * vec4(uPointRadius, aPosition.yz, 1.0);
-            gl_PointSize = max(4.0, uViewWidth * (sz.x / sz.w));
+            gl_PointSize = max(3.0, uViewWidth * (sz.x / sz.w));
             vPositionZ = aPosition.z;
         }
     </string>
@@ -157,7 +157,7 @@
             float dist = length(gl_PointCoord - 0.5);
             if (dist > 0.5)
                 discard;
-            gl_FragColor.rgb = vec3(1.0 - dist);
+            gl_FragColor.rgb = vec3(1.0 - 2.0 * dist);
             /* Calculate circle of confusion and store it to alpha. */
             gl_FragColor.a = abs(uAperture * (uFocalLength * (vPositionZ - uPlaneInFocus)) /
                                  (vPositionZ * (uPlaneInFocus - uFocalLength)));
