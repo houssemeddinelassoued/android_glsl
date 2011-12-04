@@ -25,6 +25,26 @@
             vColor = aColor;
         }
     </string>
+    <!-- Fragment shader for rendering ambient shaded scene -->
+    <string name="shader_scene_ambient_fs">
+        precision mediump float;
+        uniform float uAperture;
+        uniform float uFocalLength;
+        uniform float uPlaneInFocus;
+        varying vec3 vPosition;
+        varying vec3 vNormal;
+        varying vec3 vColor;
+        
+        void main() {
+            const float ambient = 0.3;
+            gl_FragColor.rgb = vColor * ambient;
+            gl_FragColor.rgb /= 3.0;
+            /* This is the last place where we have z-value available. Calculate
+               circle of confusion and store it to alpha for later use. */
+            gl_FragColor.a = abs(uAperture * (uFocalLength * (-vPosition.z - uPlaneInFocus)) /
+                                 (-vPosition.z * (uPlaneInFocus - uFocalLength)));
+        }
+    </string>
     <!-- Fragment shader for rendering Phong shaded scene -->
     <string name="shader_scene_phong_fs">
         precision mediump float;
@@ -65,16 +85,9 @@
             if (uLightCount > 3)
                 lightVal += calcLight(N, uLights[3] - vPosition, E);
             
-            const float ambient = 0.3;
-            float ambientPlusDiffuse = min(ambient + lightVal[0], 1.0);
-            float specular = min(lightVal[1], 2.0);
-            
-            gl_FragColor.rgb = vColor * (ambientPlusDiffuse + specular);
+            gl_FragColor.rgb = vColor * (lightVal[0] + lightVal[1]);
             gl_FragColor.rgb /= 3.0;
-            /* This is the last place where we have z-value available. Calculate
-               circle of confusion and store it to alpha for later use. */
-            gl_FragColor.a = abs(uAperture * (uFocalLength * (-vPosition.z - uPlaneInFocus)) /
-                                 (-vPosition.z * (uPlaneInFocus - uFocalLength)));
+            gl_FragColor.a = 0.0;
         }
     </string>
     <!-- Fragment shader for rendering Blinn-Phong shaded scene -->
@@ -162,6 +175,33 @@
             /* Calculate circle of confusion and store it to alpha. */
             gl_FragColor.a = abs(uAperture * (uFocalLength * (vPositionZ - uPlaneInFocus)) /
                                  (vPositionZ * (uPlaneInFocus - uFocalLength)));
+        }
+    </string>
+    <!-- Vertex shader for shadow volume rendering -->
+    <string name="shader_shadow_volume_vs">
+        uniform mat4 uPMatrix;
+        uniform mat4 uMVMatrix;
+        uniform mat4 uMVPMatrix;
+        uniform mat4 uNormalMatrix;
+        uniform vec3 uLightPosition;        
+        attribute vec3 aPosition;
+        attribute vec3 aNormal;
+        
+        void main() {
+            vec3 position = vec3(uMVMatrix * vec4(aPosition, 1.0));
+            vec3 lightDir = uLightPosition - position;
+            vec3 normal = vec3(uNormalMatrix * vec4(aNormal, 0.0));
+            if (dot(normal, lightDir) > 0.0)
+                gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
+            else
+                gl_Position = uPMatrix * vec4(-lightDir, 0.0);
+        }
+    </string>
+    <!-- Shadow volume fragment shader -->
+    <string name="shader_shadow_volume_fs">
+        precision mediump float;
+        void main() {
+            gl_FragColor = vec4(0.1);
         }
     </string>
     <!-- General purpose vertex shader for 2D texture filters -->
