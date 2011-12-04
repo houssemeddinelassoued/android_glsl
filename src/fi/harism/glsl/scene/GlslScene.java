@@ -147,7 +147,7 @@ public final class GlslScene {
 			cube.setScaling(rand(.5f, 1.0f));
 			cube.setRotation(rand(0f, 360f), rand(0f, 360f), rand(0f, 360f));
 			cube.setPosition(rand(-1f, 1f), rand(0f, 1f), CUBE_SCROLLER_NEAR
-					+ ((float)idx / CUBE_SCROLLER_COUNT)
+					+ ((float) idx / CUBE_SCROLLER_COUNT)
 					* (CUBE_SCROLLER_FAR - CUBE_SCROLLER_NEAR));
 			cube.setColor(rand(.2f, 1f), rand(.2f, 1f), rand(.2f, 1f));
 			rootObject.addChild(cube);
