@@ -221,6 +221,29 @@ public final class GlslScene {
 	}
 
 	/**
+	 * Renders shadow silhouette into the scene.
+	 * 
+	 * @param uMVMatrix
+	 *            Model View matrix uniform handle
+	 * @param uMVPMatrix
+	 *            Model View Projection matrix uniform handle
+	 * @param uNormalMatrix
+	 *            Normal matrix uniform handle
+	 * @param aPosition
+	 *            Position attribute handle
+	 * @param aNormal
+	 *            Normal attribute handle
+	 */
+
+	public void renderShadow(int uMVMatrix, int uMVPMatrix, int uNormalMatrix,
+			int aPosition, int aNormal) {
+		for (GlslObject object : mObjects) {
+			object.renderShadow(uMVMatrix, uMVPMatrix, uNormalMatrix,
+					aPosition, aNormal);
+		}
+	}
+
+	/**
 	 * Clears all objects from this scene.
 	 */
 	public void reset() {
