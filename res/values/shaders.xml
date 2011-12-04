@@ -11,14 +11,17 @@
         attribute vec3 aNormal;
         attribute vec3 aColor;
         
-        varying vec3 vPos;
+        varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec3 vColor;
         
         void main() {
+            /* Projected position */
             gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
+            /* Normal */
             vNormal = vec3(uNormalMatrix * vec4(aNormal, 0.0));
-            vPos = vec3(uMVMatrix * vec4(aPosition, 1.0));
+            /* Position in View space */
+            vPosition = vec3(uMVMatrix * vec4(aPosition, 1.0));
             vColor = aColor;            
         }
     </string>
@@ -30,7 +33,7 @@
         uniform float uAperture;
         uniform float uFocalLength;
         uniform float uPlaneInFocus;
-        varying vec3 vPos;
+        varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec3 vColor;
         
@@ -49,17 +52,18 @@
         }
         
         void main() {
+            /* Calculate lightning, lightVal = { diffuse, specular } */
             vec2 lightVal = vec2(0.0);
             vec3 N = normalize(vNormal);
-            vec3 E = normalize(-vPos);
+            vec3 E = normalize(-vPosition);
             if (uLightCount > 0)
-                lightVal += calcLight(N, uLights[0] - vPos, E);
+                lightVal += calcLight(N, uLights[0] - vPosition, E);
             if (uLightCount > 1)
-                lightVal += calcLight(N, uLights[1] - vPos, E);
+                lightVal += calcLight(N, uLights[1] - vPosition, E);
             if (uLightCount > 2)
-                lightVal += calcLight(N, uLights[2] - vPos, E);
+                lightVal += calcLight(N, uLights[2] - vPosition, E);
             if (uLightCount > 3)
-                lightVal += calcLight(N, uLights[3] - vPos, E);
+                lightVal += calcLight(N, uLights[3] - vPosition, E);
             
             const float ambient = 0.3;
             float ambientPlusDiffuse = min(ambient + lightVal[0], 1.0);
@@ -67,9 +71,10 @@
             
             gl_FragColor.rgb = vColor * (ambientPlusDiffuse + specular);
             gl_FragColor.rgb /= 3.0;
-            gl_FragColor.a = abs(uAperture * (uFocalLength * (vPos.z - uPlaneInFocus)) /
-                                 (vPos.z * (uPlaneInFocus - uFocalLength)));
-            /* gl_FragColor.rgb = vec3(gl_FragColor.a / 3.0); */
+            /* This is the last place where we have z-value available. Calculate
+               circle of confusion and store it to alpha for later use. */
+            gl_FragColor.a = abs(uAperture * (uFocalLength * (vPosition.z - uPlaneInFocus)) /
+                                 (vPosition.z * (uPlaneInFocus - uFocalLength)));
         }
     </string>
     <!-- Fragment shader for rendering Blinn-Phong shaded scene -->
@@ -80,7 +85,7 @@
         uniform float uAperture;
         uniform float uFocalLength;
         uniform float uPlaneInFocus;
-        varying vec3 vPos;
+        varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec3 vColor;
         
@@ -99,17 +104,18 @@
         }
         
         void main() {
+            /* Calculate lightning, lightVal = { diffuse, specular } */
             vec2 lightVal = vec2(0.0);
             vec3 N = normalize(vNormal);
-            vec3 E = normalize(-vPos);
+            vec3 E = normalize(-vPosition);
             if (uLightCount > 0)
-                lightVal += calcLight(N, uLights[0] - vPos, E);
+                lightVal += calcLight(N, uLights[0] - vPosition, E);
             if (uLightCount > 1)
-                lightVal += calcLight(N, uLights[1] - vPos, E);
+                lightVal += calcLight(N, uLights[1] - vPosition, E);
             if (uLightCount > 2)
-                lightVal += calcLight(N, uLights[2] - vPos, E);
+                lightVal += calcLight(N, uLights[2] - vPosition, E);
             if (uLightCount > 3)
-                lightVal += calcLight(N, uLights[3] - vPos, E);
+                lightVal += calcLight(N, uLights[3] - vPosition, E);
             
             const float ambient = 0.3;
             float ambientPlusDiffuse = min(ambient + lightVal[0], 1.0);
@@ -117,9 +123,10 @@
             
             gl_FragColor.rgb = vColor * (ambientPlusDiffuse + specular);
             gl_FragColor.rgb /= 3.0;
-            gl_FragColor.a = abs(uAperture * (uFocalLength * (vPos.z - uPlaneInFocus)) /
-                                 (vPos.z * (uPlaneInFocus - uFocalLength)));
-            /* gl_FragColor.rgb = vec3(gl_FragColor.a / 3.0); */
+            /* This is the last place where we have z-value available. Calculate
+               circle of confusion and store it to alpha for later use. */
+            gl_FragColor.a = abs(uAperture * (uFocalLength * (vPosition.z - uPlaneInFocus)) /
+                                 (vPosition.z * (uPlaneInFocus - uFocalLength)));
         }
     </string>
     <!-- Vertex shader for rendering lights -->
@@ -128,13 +135,14 @@
         uniform float uPointRadius;
         uniform float uViewWidth;
         attribute vec3 aPosition;
-        varying float vZ;
+        varying float vPositionZ;
         
         void main() {
             gl_Position = uPMatrix * vec4(aPosition, 1.0);
-            vec4 pt = uPMatrix * vec4(uPointRadius, aPosition.yz, 1.0);
-            gl_PointSize = max(4.0, uViewWidth * (pt.x / pt.w));
-            vZ = aPosition.z;
+            /* Map radius into screen pixels. */
+            vec4 sz = uPMatrix * vec4(uPointRadius, aPosition.yz, 1.0);
+            gl_PointSize = max(4.0, uViewWidth * (sz.x / sz.w));
+            vPositionZ = aPosition.z;
         }
     </string>
     <!-- Fragment shader for rendering lights -->
@@ -143,14 +151,16 @@
         uniform float uAperture;
         uniform float uFocalLength;
         uniform float uPlaneInFocus;
-        varying float vZ;
+        varying float vPositionZ;
+        
         void main() {
             float dist = length(gl_PointCoord - 0.5);
             if (dist > 0.5)
                 discard;
             gl_FragColor.rgb = vec3(1.0 - dist);
-            gl_FragColor.a = abs(uAperture * (uFocalLength * (vZ - uPlaneInFocus)) /
-                                 (vZ * (uPlaneInFocus - uFocalLength)));
+            /* Calculate circle of confusion and store it to alpha. */
+            gl_FragColor.a = abs(uAperture * (uFocalLength * (vPositionZ - uPlaneInFocus)) /
+                                 (vPositionZ * (uPlaneInFocus - uFocalLength)));
         }
     </string>
     <!-- General purpose vertex shader for 2D texture filters -->
@@ -166,36 +176,48 @@
     <!-- Copy fragment shader -->
     <string name="shader_copy_fs">
         precision mediump float;
-        uniform sampler2D sTexture0;
+        uniform sampler2D sTexture;
         varying vec2 vTextureCoord;
         
         void main() {
-            gl_FragColor = texture2D(sTexture0, vTextureCoord);
-            gl_FragColor *= 3.0;
+            gl_FragColor = texture2D(sTexture, vTextureCoord);
         }
     </string>
     <!-- Displace fragment shader -->
     <string name="shader_displace_fs">
         precision mediump float;
-        uniform sampler2D sTexture0;
+        uniform sampler2D sTexture;
         uniform vec2 uPosition;
         uniform vec2 uDiff;
         varying vec2 vTextureCoord;
         
         void main() {
         	float c = 1.0 - sqrt(length(vTextureCoord - (uPosition - uDiff)));
-            gl_FragColor = texture2D(sTexture0, vTextureCoord + c * uDiff);
+            gl_FragColor = texture2D(sTexture, vTextureCoord + c * uDiff);
+        }
+    </string>
+    <!-- Tonemap fragment shader -->
+    <string name="shader_tonemap_fs">
+        precision mediump float;
+        uniform sampler2D sTexture;
+        varying vec2 vTextureCoord;
+        
+        void main() {
+            gl_FragColor = texture2D(sTexture, vTextureCoord);
+            /* Better tonemapping should be implemented. */
             gl_FragColor *= 3.0;
         }
     </string>
     <!-- Input pass for bloom filter -->
     <string name="shader_bloom_pass1_fs">
         precision mediump float;
-        uniform sampler2D sTexture0;
+        uniform sampler2D sTextureSource;
         varying vec2 vTextureCoord;
         
         void main() {
-            gl_FragColor = texture2D(sTexture0, vTextureCoord);
+            gl_FragColor = texture2D(sTextureSource, vTextureCoord);
+            /* Drop unsignificant lowest third and map remaining
+               color value to [0, 1] range. */
             gl_FragColor *= 1.5;
             gl_FragColor -= 0.5;
         }
@@ -203,7 +225,7 @@
     <!-- Blur shader for bloom -->
     <string name="shader_bloom_pass2_fs">
         precision mediump float;
-        uniform sampler2D sTexture0;
+        uniform sampler2D sTextureBloom;
         uniform vec3 uIncrementalGaussian;
         uniform vec2 uBlurOffset;
         uniform float uNumBlurPixelsPerSide;
@@ -214,15 +236,15 @@
             gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
             float coefficientSum = 0.0;
             
-            gl_FragColor += texture2D(sTexture0, vTextureCoord) * incrementalGaussian.x;
+            gl_FragColor += texture2D(sTextureBloom, vTextureCoord) * incrementalGaussian.x;
             coefficientSum += incrementalGaussian.x;
             incrementalGaussian.xy *= incrementalGaussian.yz;
             
             vec2 blurOffset = uBlurOffset;
             
             for (float i = 1.0; i &lt;= uNumBlurPixelsPerSide; i++) {
-                gl_FragColor += texture2D(sTexture0, vTextureCoord - blurOffset) * incrementalGaussian.x;
-                gl_FragColor += texture2D(sTexture0, vTextureCoord + blurOffset) * incrementalGaussian.x;
+                gl_FragColor += texture2D(sTextureBloom, vTextureCoord - blurOffset) * incrementalGaussian.x;
+                gl_FragColor += texture2D(sTextureBloom, vTextureCoord + blurOffset) * incrementalGaussian.x;
                 coefficientSum += 2.0 * incrementalGaussian.x;
                 incrementalGaussian.xy *= incrementalGaussian.yz;
                 blurOffset += uBlurOffset;
@@ -234,25 +256,28 @@
     <!-- Output shader for bloom filter -->
     <string name="shader_bloom_pass3_fs">
         precision mediump float;
-        uniform sampler2D sTexture0;
-        uniform sampler2D sTexture1;
+        uniform sampler2D sTextureSource;
+        uniform sampler2D sTextureBloom;
         varying vec2 vTextureCoord;
         
         void main() {
-            vec4 color0 = texture2D(sTexture0, vTextureCoord);
-            vec4 color1 = texture2D(sTexture1, vTextureCoord);
-            gl_FragColor = color0  + color1;
+            vec4 colorSource = texture2D(sTextureSource, vTextureCoord);
+            vec4 colorBloom = texture2D(sTextureBloom, vTextureCoord);
+            /* This is not correct way to apply bloom. */
+            gl_FragColor = colorSource  + colorBloom;
         }
     </string>
     <!-- Input shader for lens blur filter -->
     <string name="shader_lensblur_pass1_fs">
         precision mediump float;
-        uniform sampler2D sTexture0;
+        uniform sampler2D sTextureSource;
         varying vec2 vTextureCoord;
         
         void main() {
+            /* Make sure alpha is not zero and premultiply
+               color by alpha. */
             const float minDivider = 1.0 / 255.0;
-            gl_FragColor = texture2D(sTexture0, vTextureCoord);
+            gl_FragColor = texture2D(sTextureSource, vTextureCoord);
             gl_FragColor.a = mix(minDivider, 1.0, gl_FragColor.a);
             gl_FragColor.rgb *= gl_FragColor.a;
         }
@@ -260,34 +285,37 @@
     <!-- Output shader for lens blur filter -->
     <string name="shader_lensblur_pass5_fs">
         precision mediump float;
-        uniform sampler2D sTextureSrc;
-        uniform sampler2D sTextureBokeh;
+        uniform sampler2D sTextureSource;
+        uniform sampler2D sTexturePass4;
         varying vec2 vTextureCoord;
         
         void main() {
-            vec4 colSrc = texture2D(sTextureSrc, vTextureCoord);
-            vec4 colBokeh = texture2D(sTextureBokeh, vTextureCoord);
-            gl_FragColor = mix(colSrc, colBokeh, colBokeh.a);
+            /* We lose so much color information once they are multiplied
+               by alpha, its better to mix original texture in places
+               where alpha gets close to zero. */
+            vec4 colorSource = texture2D(sTextureSource, vTextureCoord);
+            vec4 colorPass4 = texture2D(sTexturePass4, vTextureCoord);
+            gl_FragColor = mix(colorSource, colorPass4, colorPass4.a);
         }
     </string>
     <!-- First blur pass for lens blur -->
     <string name="shader_lensblur_pass2_fs">
         precision mediump float;
         uniform float uSteps;
-        uniform sampler2D sTexture0;
+        uniform sampler2D sTexturePass1;
         uniform vec2 uDelta0;
         varying vec2 vTextureCoord;
         
         void main() {
             float sum = 0.0;
-            float coc = texture2D(sTexture0, vTextureCoord).a;
+            float coc = texture2D(sTexturePass1, vTextureCoord).a;
             vec2 textureCoord0 = vTextureCoord;
             gl_FragColor = vec4(0.0);
             for (float t = 0.0; t &lt;= uSteps; ++t) {
-                vec4 sample0 = texture2D(sTexture0, textureCoord0);
-                if (sample0.a * uSteps >= t) {
+                vec4 sample = texture2D(sTexturePass1, textureCoord0);
+                if (sample.a * uSteps >= t) {
                     if (coc * uSteps >= t) {
-                        gl_FragColor += sample0;
+                        gl_FragColor += sample;
                         sum += 1.0;
                     }
                 }
@@ -300,29 +328,29 @@
     <string name="shader_lensblur_pass3_fs">
         precision mediump float;
         uniform float uSteps;
-        uniform sampler2D sTexture0;
-        uniform sampler2D sTexture1;
+        uniform sampler2D sTexturePass1;
+        uniform sampler2D sTexturePass2;
         uniform vec2 uDelta0;
         uniform vec2 uDelta1;
         varying vec2 vTextureCoord;
         
         void main() {
             float sum = 0.0;
-            float coc = texture2D(sTexture0, vTextureCoord).a;
+            float coc = texture2D(sTexturePass1, vTextureCoord).a;
             vec2 textureCoord1 = vTextureCoord - uDelta0 * 0.5;
             gl_FragColor = vec4(0.0);
             for (float t = 0.0; t &lt;= uSteps; ++t) {
-                vec4 sample0 = texture2D(sTexture0, textureCoord1);
-                if (sample0.a * uSteps >= t) {
+                vec4 sample = texture2D(sTexturePass1, textureCoord1);
+                if (sample.a * uSteps >= t) {
                     if (coc * uSteps >= t) {
-                        gl_FragColor += sample0;
+                        gl_FragColor += sample;
                         sum += 1.0;
                    }
                  }
                 textureCoord1 += uDelta1;
             }
             gl_FragColor /= sum;
-            gl_FragColor += texture2D(sTexture1, vTextureCoord - uDelta1 * 0.5);
+            gl_FragColor += texture2D(sTexturePass2, vTextureCoord - uDelta1 * 0.5);
             gl_FragColor *= 0.5;
         }
     </string>
@@ -330,36 +358,36 @@
     <string name="shader_lensblur_pass4_fs">
         precision mediump float;
         uniform float uSteps;
-        uniform sampler2D sTexture0;
-        uniform sampler2D sTexture1;
-        uniform vec2 uDelta0;
+        uniform sampler2D sTexturePass2;
+        uniform sampler2D sTexturePass3;
         uniform vec2 uDelta1;
+        uniform vec2 uDelta2;
         varying vec2 vTextureCoord;
         
         void main() {
             float sum = 0.0;
-            vec2 textureCoord0 = vTextureCoord;
-            vec2 textureCoord1 = vTextureCoord - uDelta0 * 0.5;
-            float coc0 = texture2D(sTexture0, textureCoord0).a;
-            float coc1 = texture2D(sTexture1, textureCoord1).a;
+            vec2 textureCoord1 = vTextureCoord - uDelta2 * 0.5;
+            vec2 textureCoord2 = vTextureCoord;
+            float coc1 = texture2D(sTexturePass2, textureCoord1).a;
+            float coc2 = texture2D(sTexturePass3, textureCoord2).a;
             gl_FragColor = vec4(0.0);
             for (float t = 0.0; t &lt;= uSteps; t++) {
-                vec4 sample0 = texture2D(sTexture0, textureCoord0);
-                vec4 sample1 = texture2D(sTexture1, textureCoord1);
-                if (sample0.a * uSteps >= t) {
-                    if (coc0 * uSteps >= t) {
-                        gl_FragColor += 2.0 * sample0;
-                        sum += 2.0;
-                    }
-                }
+                vec4 sample1 = texture2D(sTexturePass2, textureCoord1);
+                vec4 sample2 = texture2D(sTexturePass3, textureCoord2);
                 if (sample1.a * uSteps >= t) {
                     if (coc1 * uSteps >= t) {
                         gl_FragColor += sample1;
                         sum += 1.0;
                     }
                 }
-                textureCoord0 += uDelta0;
+                if (sample2.a * uSteps >= t) {
+                    if (coc2 * uSteps >= t) {
+                        gl_FragColor += 2.0 * sample2;
+                        sum += 2.0;
+                    }
+                }
                 textureCoord1 += uDelta1;
+                textureCoord2 += uDelta2;
             }
             gl_FragColor /= sum;
             gl_FragColor.rgb /= gl_FragColor.a;
@@ -368,7 +396,7 @@
     <!-- FXAA anti-alias filter fragment shader -->
     <string name="shader_fxaa_fs">
         precision mediump float;
-        uniform sampler2D sTexture0;
+        uniform sampler2D sTexture;
         uniform vec4 uFxaaConsoleRcpFrameOpt;
         uniform vec4 uFxaaConsoleRcpFrameOpt2;
         uniform vec4 uFrameSize;
@@ -376,7 +404,7 @@
         
         vec4 FxaaTexTop(vec2 pos) {
             vec4 color;
-            color.rgb = texture2D(sTexture0, pos).rgb;
+            color.rgb = texture2D(sTexture, pos).rgb;
             color.a = sqrt(dot(color.rgb, vec3(0.299, 0.587, 0.114)));
             return color;
         }

@@ -79,15 +79,18 @@ public class GlslFilter {
 	 */
 	public void bloom(int texSrc, GlslFbo fboOut, int idxOut) {
 
+		// Pixel sizes.
 		float blurSizeH = 1f / mFboQuarter.getWidth();
 		float blurSizeV = 1f / mFboQuarter.getHeight();
 
+		// Calculate number of pixels from relative size.
 		int numBlurPixelsPerSide = (int) (0.05f * Math.min(
 				mFboQuarter.getWidth(), mFboQuarter.getHeight()));
 		if (numBlurPixelsPerSide < 1)
 			numBlurPixelsPerSide = 1;
 		double sigma = 1.0 + numBlurPixelsPerSide * 0.5;
 
+		// Values needed for incremental gaussian blur.
 		double incrementalGaussian1 = 1.0 / (Math.sqrt(2.0 * Math.PI) * sigma);
 		double incrementalGaussian2 = Math.exp(-0.5 / (sigma * sigma));
 		double incrementalGaussian3 = incrementalGaussian2
@@ -130,11 +133,11 @@ public class GlslFilter {
 		fboOut.bindTexture(idxOut);
 		mBloomPass3.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
 				mFboQuarter.getTexture(TEX_IDX_1));
-		GLES20.glUniform1i(mBloomPass3.getHandle("sTexture1"), 1);
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
+		GLES20.glUniform1i(mBloomPass3.getHandle("sTextureSource"), 1);
 		drawRect(mBloomPass3.getHandle("aPosition"));
 	}
 
@@ -214,54 +217,59 @@ public class GlslFilter {
 	 *            Context to read shader sources from.
 	 */
 	public void init(Context ctx) {
+		// Initialize copy shader.
 		mCopy.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_copy_fs));
-		mCopy.addHandles("aPosition", "sTexture0");
+		mCopy.addHandles("aPosition", "sTexture");
 
+		// Initialize displace shader.
 		mDisplace.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_displace_fs));
-		mDisplace.addHandles("aPosition", "sTexture0", "uPosition", "uDiff");
+		mDisplace.addHandles("aPosition", "sTexture", "uPosition", "uDiff");
 
+		// Initialize tonemapping shader.
 		mTonemap.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_tonemap_fs));
-		mTonemap.addHandles("aPosition", "sTexture0");
+		mTonemap.addHandles("aPosition", "sTexture");
 
+		// Initialize FXAA shader.
 		mFxaa.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_fxaa_fs));
-		mFxaa.addHandles("aPosition", "sTexture0", "uFxaaConsoleRcpFrameOpt",
+		mFxaa.addHandles("aPosition", "sTexture", "uFxaaConsoleRcpFrameOpt",
 				"uFxaaConsoleRcpFrameOpt2", "uFrameSize");
 
+		// Initialize bloom shaders.
 		mBloomPass1.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass1_fs));
-		mBloomPass1.addHandles("aPosition", "sTexture0");
+		mBloomPass1.addHandles("aPosition", "sTextureSource");
 		mBloomPass2.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass2_fs));
-		mBloomPass2.addHandles("aPosition", "sTexture0",
+		mBloomPass2.addHandles("aPosition", "sTextureBloom",
 				"uIncrementalGaussian", "uBlurOffset", "uNumBlurPixelsPerSide");
-
 		mBloomPass3.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass3_fs));
-		mBloomPass3.addHandles("aPosition", "sTexture0", "sTexture1");
+		mBloomPass3.addHandles("aPosition", "sTextureSource", "sTextureBloom");
 
+		// Initialize lens blur shaders.
 		mLensBlurPass1.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass1_fs));
-		mLensBlurPass1.addHandles("aPosition", "sTexture0");
+		mLensBlurPass1.addHandles("aPosition", "sTextureSource");
 		mLensBlurPass2.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass2_fs));
-		mLensBlurPass2
-				.addHandles("aPosition", "uSteps", "sTexture0", "uDelta0");
+		mLensBlurPass2.addHandles("aPosition", "uSteps", "sTexturePass1",
+				"uDelta0");
 		mLensBlurPass3.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass3_fs));
-		mLensBlurPass3.addHandles("aPosition", "uSteps", "sTexture0",
-				"sTexture1", "uDelta0", "uDelta1");
+		mLensBlurPass3.addHandles("aPosition", "uSteps", "sTexturePass1",
+				"sTexturePass2", "uDelta0", "uDelta1");
 		mLensBlurPass4.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass4_fs));
-		mLensBlurPass4.addHandles("aPosition", "uSteps", "sTexture0",
-				"sTexture1", "uDelta0", "uDelta1");
+		mLensBlurPass4.addHandles("aPosition", "uSteps", "sTexturePass2",
+				"sTexturePass3", "uDelta1", "uDelta2");
 		mLensBlurPass5.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass5_fs));
-		mLensBlurPass5.addHandles("aPosition", "sTextureSrc", "sTextureBokeh",
-				"sTexture1");
+		mLensBlurPass5.addHandles("aPosition", "sTextureSource",
+				"sTexturePass4");
 	}
 
 	/**
@@ -309,52 +317,56 @@ public class GlslFilter {
 			dir[i][1] = (float) (stepRadius * Math.cos(a) * ratioY);
 		}
 
+		// First pass, downscale image to mFboHalf and apply required presteps
+		// before actual lens blur takes place.
 		mFboHalf.bind();
-		mFboHalf.bindTexture(TEX_IDX_3);
+		mFboHalf.bindTexture(TEX_IDX_1);
 		mLensBlurPass1.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
+		GLES20.glUniform1i(mLensBlurPass1.getHandle("sTextureSource"), 0);
 		drawRect(mLensBlurPass1.getHandle("aPosition"));
 
-		mFboHalf.bindTexture(TEX_IDX_1);
+		// Second pass.
+		mFboHalf.bindTexture(TEX_IDX_2);
 		mLensBlurPass2.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-				mFboHalf.getTexture(TEX_IDX_3));
+				mFboHalf.getTexture(TEX_IDX_1));
+		GLES20.glUniform1i(mLensBlurPass2.getHandle("sTexturePass1"), 0);
 		GLES20.glUniform1f(mLensBlurPass2.getHandle("uSteps"),
 				camera.mBlurSteps);
 		GLES20.glUniform2fv(mLensBlurPass2.getHandle("uDelta0"), 1, dir[0], 0);
 		drawRect(mLensBlurPass2.getHandle("aPosition"));
 
-		mFboHalf.bindTexture(TEX_IDX_2);
+		// Third pass.
+		mFboHalf.bindTexture(TEX_IDX_3);
 		mLensBlurPass3.useProgram();
-		// GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		// GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-		// mFboHalf.getTexture(TEX_IDX_3));
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-				mFboHalf.getTexture(TEX_IDX_1));
-		GLES20.glUniform1i(mLensBlurPass3.getHandle("sTexture1"), 1);
+				mFboHalf.getTexture(TEX_IDX_2));
+		// TEX_IDX_1 is already bind after previous step.
+		GLES20.glUniform1i(mLensBlurPass3.getHandle("sTexturePass1"), 0);
+		GLES20.glUniform1i(mLensBlurPass3.getHandle("sTexturePass2"), 1);
 		GLES20.glUniform1f(mLensBlurPass3.getHandle("uSteps"),
 				camera.mBlurSteps);
 		GLES20.glUniform2fv(mLensBlurPass3.getHandle("uDelta0"), 1, dir[0], 0);
 		GLES20.glUniform2fv(mLensBlurPass3.getHandle("uDelta1"), 1, dir[1], 0);
 		drawRect(mLensBlurPass3.getHandle("aPosition"));
 
-		mFboHalf.bindTexture(TEX_IDX_3);
+		// Fourth pass.
+		mFboHalf.bindTexture(TEX_IDX_1);
 		mLensBlurPass4.useProgram();
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-				mFboHalf.getTexture(TEX_IDX_2));
-		// GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
-		// GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-		// mFboHalf.getTexture(TEX_IDX_1));
-		// GLES20.glUniform1i(mLensBlurPass3.getHandle("sTexture1"), 1);
-		GLES20.glUniform1i(mLensBlurPass4.getHandle("sTexture1"), 1);
+				mFboHalf.getTexture(TEX_IDX_3));
+		// TEX_IDX_2 is already bind.
+		GLES20.glUniform1i(mLensBlurPass4.getHandle("sTexturePass2"), 1);
+		GLES20.glUniform1i(mLensBlurPass4.getHandle("sTexturePass3"), 0);
 		GLES20.glUniform1f(mLensBlurPass4.getHandle("uSteps"),
 				camera.mBlurSteps);
-		GLES20.glUniform2fv(mLensBlurPass4.getHandle("uDelta0"), 1, dir[2], 0);
 		GLES20.glUniform2fv(mLensBlurPass4.getHandle("uDelta1"), 1, dir[1], 0);
+		GLES20.glUniform2fv(mLensBlurPass4.getHandle("uDelta2"), 1, dir[2], 0);
 		drawRect(mLensBlurPass4.getHandle("aPosition"));
 
 		fboOut.bind();
@@ -364,8 +376,9 @@ public class GlslFilter {
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texSrc);
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,
-				mFboHalf.getTexture(TEX_IDX_3));
-		GLES20.glUniform1i(mLensBlurPass5.getHandle("sTextureBokeh"), 1);
+				mFboHalf.getTexture(TEX_IDX_1));
+		GLES20.glUniform1i(mLensBlurPass5.getHandle("sTextureSource"), 0);
+		GLES20.glUniform1i(mLensBlurPass5.getHandle("sTexturePass4"), 1);
 		drawRect(mLensBlurPass5.getHandle("aPosition"));
 	}
 
