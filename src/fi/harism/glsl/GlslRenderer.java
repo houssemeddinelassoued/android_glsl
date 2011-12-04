@@ -181,12 +181,14 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		// Draw lights into scene.
 		mLightShader.useProgram();
 		mLightPositionBuffer.position(0);
+		GLES20.glEnable(GLES20.GL_BLEND);
+		GLES20.glBlendFunc(GLES20.GL_SRC_COLOR, GLES20.GL_ONE_MINUS_SRC_COLOR);
 		GLES20.glUniformMatrix4fv(mLightShader.getHandle("uPMatrix"), 1, false,
 				mCamera.mProjM, 0);
 		GLES20.glVertexAttribPointer(mLightShader.getHandle("aPosition"), 3,
 				GLES20.GL_FLOAT, false, 0, mLightPositionBuffer);
 		GLES20.glEnableVertexAttribArray(mLightShader.getHandle("aPosition"));
-		GLES20.glUniform1f(mLightShader.getHandle("uPointRadius"), 0.05f);
+		GLES20.glUniform1f(mLightShader.getHandle("uPointRadius"), 0.1f);
 		GLES20.glUniform1f(mLightShader.getHandle("uViewWidth"),
 				mFbo.getWidth());
 		GLES20.glUniform1f(mLightShader.getHandle("uAperture"),
@@ -196,6 +198,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		GLES20.glUniform1f(mLightShader.getHandle("uPlaneInFocus"),
 				mCamera.mPlaneInFocus);
 		GLES20.glDrawArrays(GLES20.GL_POINTS, 0, lightCount);
+		GLES20.glDisable(GLES20.GL_BLEND);
 
 		// Variables for flipping input/output textures. Input texture should
 		// always point to texture index used as source and output texture is
