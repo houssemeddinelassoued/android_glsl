@@ -69,8 +69,6 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	private GlslFilter mFilter = new GlslFilter();
 	// Camera instance.
 	private GlslCamera mCamera = new GlslCamera();
-	// Shader ids instance.
-	private GlslShaderIds mShaderIds = new GlslShaderIds();
 
 	// FBO for rendering.
 	private GlslFbo mFbo = new GlslFbo();
@@ -89,10 +87,16 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	// Flag for whether FXAA anti-aliasing is enabled.
 	private boolean mFxaaEnabled;
 
-	// Shader for rendering actual scene.
-	private GlslShader mSceneShader = new GlslShader();
+	// Shader for rendering ambient lighted scene.
+	private GlslShader mAmbientShader = new GlslShader();
+	private GlslShaderIds mAmbientShaderIds = new GlslShaderIds();
+	// Shader for rendering diffuse and specular lighted scene.
+	private GlslShader mDiffuseSpecularShader = new GlslShader();
+	private GlslShaderIds mDiffuseSpecularShaderIds = new GlslShaderIds();
 	// Shader for rendering lights into scene.
 	private GlslShader mLightShader = new GlslShader();
+	// Shader for rendering shadow volumes.
+	private GlslShader mShadowShader = new GlslShader();
 
 	// Maximum number of lights.
 	private static final int MAX_LIGHTS = 4;
@@ -144,6 +148,18 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 		GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
+		// Bind scene texture, clear it and render the scene. Renderer emulates
+		// HDR rendering by reserving certain amount of color space for HDR
+		// values. Currently this means that { R, G, B } --> { R/3, G/3, B/3 }
+		// where 'regular' colors are within [0, 1/3] range and values [1, 3]
+		// map
+		// to higher [1/3, 3/3] range.
+		mFbo.bind();
+		mFbo.bindTexture(TEX_IDX_SCENE);
+		GLES20.glClearColor(0.2f / 3f, 0.3f / 3f, 0.5f / 3f, 1.0f);
+		GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT
+				| GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+
 		// Fetch light positions into light position buffer.
 		mLightPositionBuffer.position(0);
 		int lightCount = mScene.getLightCount();
@@ -154,31 +170,66 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			mLightPositionBuffer.put(lightPosition);
 		}
 
-		// Initiate scene shader with values that do not change.
-		mSceneShader.useProgram();
+		// Initiate ambient shader with values that do not change. We calculate
+		// CoC values and store them into alpha during this pass as this is the
+		// only place where whole scene is drawn.
+		mAmbientShader.useProgram();
 		mLightPositionBuffer.position(0);
-		GLES20.glUniform1i(mSceneShader.getHandle("uLightCount"), lightCount);
-		GLES20.glUniform3fv(mSceneShader.getHandle("uLights"), lightCount,
-				mLightPositionBuffer);
-		GLES20.glUniform1f(mSceneShader.getHandle("uAperture"),
+		GLES20.glUniform1f(mAmbientShader.getHandle("uAperture"),
 				mCamera.mAperture);
-		GLES20.glUniform1f(mSceneShader.getHandle("uFocalLength"),
+		GLES20.glUniform1f(mAmbientShader.getHandle("uFocalLength"),
 				mCamera.mFocalLength);
-		GLES20.glUniform1f(mSceneShader.getHandle("uPlaneInFocus"),
+		GLES20.glUniform1f(mAmbientShader.getHandle("uPlaneInFocus"),
 				mCamera.mPlaneInFocus);
+		mScene.render(mAmbientShaderIds);
 
-		// Bind scene texture, clear it and render the scene. Renderer emulates
-		// HDR rendering by reserving certain amount of color space for HDR
-		// values. Currently this means that { R, G, B } --> { R/3, G/3, B/3 }
-		// and 'regular' colors are within [0, 1/3] range and values [1, 3] map
-		// to higher [1/3, 3/3] range.
-		mFbo.bind();
-		mFbo.bindTexture(TEX_IDX_SCENE);
-		GLES20.glClearColor(0.2f / 3f, 0.3f / 3f, 0.5f / 3f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		mScene.render(mShaderIds);
+		// Draw shadow volume into stencil buffer.
+		mShadowShader.useProgram();
+		GLES20.glDisable(GLES20.GL_CULL_FACE);
+		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
+		GLES20.glDepthMask(false);
+		GLES20.glColorMask(false, false, false, false);
+		GLES20.glStencilFunc(GLES20.GL_ALWAYS, 0x0, 0xFFFFFFFF);
+		GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
+				GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
+		GLES20.glStencilOpSeparate(GLES20.GL_FRONT, GLES20.GL_KEEP,
+				GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
+		GLES20.glUniformMatrix4fv(mShadowShader.getHandle("uPMatrix"), 1,
+				false, mCamera.mProjM, 0);
+		for (int i = 0; i < lightCount; ++i) {
+			mLightPositionBuffer.position(i * 3);
+			GLES20.glUniform3fv(mShadowShader.getHandle("uLightPosition"), 1,
+					mLightPositionBuffer);
+			mScene.renderShadow(mShadowShader.getHandle("uMVMatrix"),
+					mShadowShader.getHandle("uMVPMatrix"),
+					mShadowShader.getHandle("uNormalMatrix"),
+					mShadowShader.getHandle("aPosition"),
+					mShadowShader.getHandle("aNormal"));
+		}
+		GLES20.glEnable(GLES20.GL_CULL_FACE);
+		GLES20.glDepthMask(true);
+		GLES20.glColorMask(true, true, true, true);
 
-		// Draw lights into scene.
+		// Initiate diffuse/specular shader with values that do not change. We
+		// add these color values into scene using blending during this pass.
+		mDiffuseSpecularShader.useProgram();
+		mLightPositionBuffer.position(0);
+		GLES20.glEnable(GLES20.GL_BLEND);
+		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
+		GLES20.glColorMask(true, true, true, false);
+		GLES20.glStencilFunc(GLES20.GL_EQUAL, 0x00, 0xFFFFFFFF);
+		GLES20.glStencilOp(GLES20.GL_KEEP, GLES20.GL_KEEP, GLES20.GL_KEEP);
+		GLES20.glUniform1i(mDiffuseSpecularShader.getHandle("uLightCount"),
+				lightCount);
+		GLES20.glUniform3fv(mDiffuseSpecularShader.getHandle("uLights"),
+				lightCount, mLightPositionBuffer);
+		mScene.render(mDiffuseSpecularShaderIds);
+		GLES20.glDisable(GLES20.GL_BLEND);
+		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
+		GLES20.glColorMask(true, true, true, true);
+		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
+
+		// Render light objects into scene.
 		mLightShader.useProgram();
 		mLightPositionBuffer.position(0);
 		GLES20.glEnable(GLES20.GL_BLEND);
@@ -297,7 +348,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			break;
 		}
 		// Initialize mFbo and mFilter for rendering.
-		mFbo.init(width, height, 3, true);
+		mFbo.init(width, height, 3, true, true);
 		mFilter.init(width, height);
 	}
 
@@ -340,35 +391,53 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			break;
 		}
 
-		// Initiate scene shader.
+		// Initiate shaders for rendering scene.
+		mAmbientShader.setProgram(
+				mOwnerActivity.getString(R.string.shader_scene_vs),
+				mOwnerActivity.getString(R.string.shader_scene_ambient_fs));
+		// Find/add required uniforms/attributes into shader.
+		mAmbientShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
+				"aPosition", "aNormal", "aColor", "uLightCount", "uLights",
+				"uAperture", "uFocalLength", "uPlaneInFocus");
+		// Get ids for uniforms/attributes needed for rendering.
+		int shaderIds[] = mAmbientShader.getHandles("uMVMatrix", "uMVPMatrix",
+				"uNormalMatrix", "aPosition", "aNormal", "aColor",
+				"uLightCount", "uLights");
+		mAmbientShaderIds.uMVMatrix = shaderIds[0];
+		mAmbientShaderIds.uMVPMatrix = shaderIds[1];
+		mAmbientShaderIds.uNormalMatrix = shaderIds[2];
+		mAmbientShaderIds.aPosition = shaderIds[3];
+		mAmbientShaderIds.aNormal = shaderIds[4];
+		mAmbientShaderIds.aColor = shaderIds[5];
+
 		key = mOwnerActivity.getString(R.string.key_light_model);
 		int lightModel = Integer.parseInt(prefs.getString(key, "1"));
 		switch (lightModel) {
 		case 0:
-			mSceneShader.setProgram(mOwnerActivity
+			mDiffuseSpecularShader.setProgram(mOwnerActivity
 					.getString(R.string.shader_scene_vs), mOwnerActivity
 					.getString(R.string.shader_scene_blinn_phong_fs));
 			break;
 		case 1:
-			mSceneShader.setProgram(
+			mDiffuseSpecularShader.setProgram(
 					mOwnerActivity.getString(R.string.shader_scene_vs),
 					mOwnerActivity.getString(R.string.shader_scene_phong_fs));
 		}
 
-		// Find/add required uniforms/attributes into mSceneShader.
-		mSceneShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
-				"aPosition", "aNormal", "aColor", "uLightCount", "uLights",
-				"uAperture", "uFocalLength", "uPlaneInFocus");
-		// Get ids for uniforms/attributes needed for rendering.
-		int shaderIds[] = mSceneShader.getHandles("uMVMatrix", "uMVPMatrix",
+		// Find/add required uniforms/attributes into shader.
+		mDiffuseSpecularShader.addHandles("uMVMatrix", "uMVPMatrix",
 				"uNormalMatrix", "aPosition", "aNormal", "aColor",
 				"uLightCount", "uLights");
-		mShaderIds.uMVMatrix = shaderIds[0];
-		mShaderIds.uMVPMatrix = shaderIds[1];
-		mShaderIds.uNormalMatrix = shaderIds[2];
-		mShaderIds.aPosition = shaderIds[3];
-		mShaderIds.aNormal = shaderIds[4];
-		mShaderIds.aColor = shaderIds[5];
+		// Get ids for uniforms/attributes needed for rendering.
+		shaderIds = mDiffuseSpecularShader.getHandles("uMVMatrix",
+				"uMVPMatrix", "uNormalMatrix", "aPosition", "aNormal",
+				"aColor", "uLightCount", "uLights");
+		mDiffuseSpecularShaderIds.uMVMatrix = shaderIds[0];
+		mDiffuseSpecularShaderIds.uMVPMatrix = shaderIds[1];
+		mDiffuseSpecularShaderIds.uNormalMatrix = shaderIds[2];
+		mDiffuseSpecularShaderIds.aPosition = shaderIds[3];
+		mDiffuseSpecularShaderIds.aNormal = shaderIds[4];
+		mDiffuseSpecularShaderIds.aColor = shaderIds[5];
 
 		// Instantiate light rendering shader.
 		mLightShader.setProgram(
@@ -376,6 +445,12 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 				mOwnerActivity.getString(R.string.shader_light_fs));
 		mLightShader.addHandles("uPMatrix", "uPointRadius", "uViewWidth",
 				"aPosition", "uAperture", "uFocalLength", "uPlaneInFocus");
+
+		mShadowShader.setProgram(
+				mOwnerActivity.getString(R.string.shader_shadow_volume_vs),
+				mOwnerActivity.getString(R.string.shader_shadow_volume_fs));
+		mShadowShader.addHandles("uPMatrix", "uMVMatrix", "uMVPMatrix",
+				"uNormalMatrix", "uLightPosition", "aPosition", "aNormal");
 	}
 
 	@Override
