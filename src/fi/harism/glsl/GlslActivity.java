@@ -197,8 +197,7 @@ public final class GlslActivity extends Activity {
 			}
 			// If separator was found, strip
 			if (separator != -1) {
-				fps = fps.substring(0,
-						Math.min(fps.length() - 1, separator + 2));
+				fps = fps.substring(0, Math.min(fps.length(), separator + 2));
 			}
 			// Locate title TextView and update its content.
 			TextView tv = (TextView) findViewById(R.id.layout_title);
