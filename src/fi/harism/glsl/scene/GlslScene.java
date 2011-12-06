@@ -78,7 +78,7 @@ public final class GlslScene {
 		// Using negative size creates inverted box one can put camera inside.
 		// Here we create bounding box for scene.
 		GlslBox box = new GlslBox();
-		box.setSize(-6, -6, -20);
+		box.setSize(-8f, -8f, -20f);
 		for (int i = 0; i < 6; ++i) {
 			box.setColor(i, rand(.2f, 1f), rand(.2f, 1f), rand(.2f, 1f));
 		}
@@ -96,13 +96,13 @@ public final class GlslScene {
 		for (int i = 0; i < lightCount; ++i) {
 			GlslLight light = new GlslLight();
 			GlslAnimator.Path path = mAnimator.new Path();
-			float x = rand(-2.8f, 2.8f);
-			float y = rand(-2.8f, 2.8f);
-			float z = rand(-9f, 9f);
+			float x = rand(-3f, 3f);
+			float y = rand(-3f, 3f);
+			float z = rand(-8f, 8f);
 			path.addPosition(x, y, z, 0);
 			for (int j = 1; j < 10; ++j) {
-				path.addPosition(rand(-2.8f, 2.8f), rand(-2.8f, 2.8f),
-						rand(-9f, 9f), j * 4000);
+				path.addPosition(rand(-3f, 3f), rand(-3f, 3f), rand(-8f, 8f),
+						j * 4000);
 			}
 			path.addPosition(x, y, z, 40000);
 			mAnimator.setPath(light, path);
@@ -111,16 +111,16 @@ public final class GlslScene {
 
 		// Generate random path for camera.
 		GlslAnimator.Path path = mAnimator.new Path();
-		float x = rand(-2.5f, 2.5f);
-		float y = rand(-2.5f, 2.5f);
-		float z = rand(-9f, 9f);
+		float x = rand(-3f, 3f);
+		float y = rand(-3f, 3f);
+		float z = rand(-8f, 8f);
 		path.addPosition(x, y, z, 0);
 		for (int j = 1; j < 10; ++j) {
-			path.addPosition(rand(-2.5f, 2.5f), rand(-2.5f, 2.5f),
-					rand(-9f, 9f), j * 4000);
+			path.addPosition(rand(-3f, 3f), rand(-3f, 3f), rand(-8f, 8f),
+					j * 4000);
 		}
 		path.addPosition(x, y, z, 40000);
-		mAnimator.setPath(camera, path);
+		// mAnimator.setPath(camera, path);
 	}
 
 	/**
@@ -182,11 +182,11 @@ public final class GlslScene {
 			GlslLight light = new GlslLight();
 			GlslAnimator.Path path = mAnimator.new Path();
 			float x = rand(-5f, 5f);
-			float y = rand(1f, 10f);
+			float y = rand(2f, 5f);
 			float z = rand(-5f, 5f);
 			path.addPosition(x, y, z, 0);
 			for (int j = 1; j < 10; ++j) {
-				path.addPosition(rand(-5f, 5f), rand(1f, 10f), rand(-5f, 5f),
+				path.addPosition(rand(-5f, 5f), rand(2f, 5f), rand(-5f, 5f),
 						j * 4000);
 			}
 			path.addPosition(x, y, z, 40000);

@@ -56,9 +56,10 @@ public final class GlslBox extends GlslObject {
 			mIndexBuffer.put((byte) (i * 8 + 4));
 		}
 
-		mShadowIndexBuffer = ByteBuffer.allocateDirect(6 * 4 * 6);
+		mShadowIndexBuffer = ByteBuffer.allocateDirect(6 * 6 * 6);
 		mShadowIndexBuffer.position(0);
 		for (int i = 0; i < 6; ++i) {
+
 			mShadowIndexBuffer.put((byte) (i * 8 + 0));
 			mShadowIndexBuffer.put((byte) (i * 8 + 1));
 			mShadowIndexBuffer.put((byte) (i * 8 + 2));
@@ -86,14 +87,29 @@ public final class GlslBox extends GlslObject {
 			mShadowIndexBuffer.put((byte) (i * 8 + 5));
 			mShadowIndexBuffer.put((byte) (i * 8 + 1));
 			mShadowIndexBuffer.put((byte) (i * 8 + 0));
+			/*
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 0));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 2));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 4));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 2));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 6));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 4)); /*
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 7));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 5));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 3));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 5));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 1));
+			 * mShadowIndexBuffer.put((byte) (i * 8 + 3));
+			 */
+
 		}
 
-		setNormal(0, 0f, 1f, 0f);
-		setNormal(1, 0f, -1f, 0f);
-		setNormal(2, -1f, 0f, 0f);
-		setNormal(3, 1f, 0f, 0f);
-		setNormal(4, 0f, 0f, -1f);
-		setNormal(5, 0f, 0f, 1f);
+		setNormal(0, 0f, 0f, 1f);
+		setNormal(1, 0f, 0f, -1f);
+		setNormal(2, 0f, 1f, 0f);
+		setNormal(3, 0f, -1f, 0f);
+		setNormal(4, 1f, 0f, 0f);
+		setNormal(5, -1f, 0f, 0f);
 
 		setSize(1f, 1f, 1f);
 		setColor(.5f, .5f, .5f);
@@ -127,7 +143,6 @@ public final class GlslBox extends GlslObject {
 		mIndexBuffer.position(0);
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, 6 * 6,
 				GLES20.GL_UNSIGNED_BYTE, mIndexBuffer);
-		// GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6 * 6);
 	}
 
 	@Override
@@ -172,19 +187,16 @@ public final class GlslBox extends GlslObject {
 	}
 
 	public void setSize(float width, float height, float depth) {
-		float x1 = -width / 2f;
-		float x2 = width / 2f;
-		float y1 = height / 2f;
-		float y2 = -height / 2f;
-		float z1 = -depth / 2f;
-		float z2 = depth / 2f;
+		float w = width / 2f;
+		float h = height / 2f;
+		float d = depth / 2f;
 
-		setSideCoordinates(0, 0, 2, 1, x1, z1, x2, z2, y1);
-		setSideCoordinates(1, 0, 2, 1, x2, z1, x1, z2, y2);
-		setSideCoordinates(2, 1, 2, 0, y2, z1, y1, z2, x1);
-		setSideCoordinates(3, 1, 2, 0, y1, z1, y2, z2, x2);
-		setSideCoordinates(4, 0, 1, 2, x2, y1, x1, y2, z1);
-		setSideCoordinates(5, 0, 1, 2, x1, y1, x2, y2, z2);
+		setSideCoordinates(0, 0, 1, 2, -w, h, w, -h, d);
+		setSideCoordinates(1, 0, 1, 2, w, h, -w, -h, -d);
+		setSideCoordinates(2, 0, 2, 1, -w, -d, w, d, h);
+		setSideCoordinates(3, 0, 2, 1, w, -d, -w, d, -h);
+		setSideCoordinates(4, 2, 1, 0, d, h, -d, -h, w);
+		setSideCoordinates(5, 2, 1, 0, -d, h, d, -h, -w);
 	}
 
 	private void setNormal(int face, float x, float y, float z) {

@@ -144,8 +144,9 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 
 		// Setup GLES20 rendering options.
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
-		GLES20.glFrontFace(GLES20.GL_CCW);
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
+		GLES20.glFrontFace(GLES20.GL_CCW);
 		GLES20.glDepthFunc(GLES20.GL_LEQUAL);
 
 		// Bind scene texture, clear it and render the scene. Renderer emulates
@@ -157,8 +158,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		mFbo.bind();
 		mFbo.bindTexture(TEX_IDX_SCENE);
 		GLES20.glClearColor(0.2f / 3f, 0.3f / 3f, 0.5f / 3f, 1.0f);
-		GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT
-				| GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
 		// Fetch light positions into light position buffer.
 		mLightPositionBuffer.position(0);
@@ -183,20 +183,22 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 				mCamera.mPlaneInFocus);
 		mScene.render(mAmbientShaderIds);
 
-		// Draw shadow volume into stencil buffer.
-		mShadowShader.useProgram();
-		GLES20.glDisable(GLES20.GL_CULL_FACE);
 		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
-		GLES20.glDepthMask(false);
-		GLES20.glColorMask(false, false, false, false);
-		GLES20.glStencilFunc(GLES20.GL_ALWAYS, 0x0, 0xFFFFFFFF);
-		GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
-				GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
-		GLES20.glStencilOpSeparate(GLES20.GL_FRONT, GLES20.GL_KEEP,
-				GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
-		GLES20.glUniformMatrix4fv(mShadowShader.getHandle("uPMatrix"), 1,
-				false, mCamera.mProjM, 0);
 		for (int i = 0; i < lightCount; ++i) {
+			GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT);
+			GLES20.glFlush();
+			// Draw shadow volume into stencil buffer.
+			mShadowShader.useProgram();
+			GLES20.glDepthMask(false);
+			GLES20.glColorMask(false, false, false, false);
+			GLES20.glDisable(GLES20.GL_CULL_FACE);
+			GLES20.glStencilFunc(GLES20.GL_ALWAYS, 0x0, 0xFFFFFFFF);
+			GLES20.glStencilOpSeparate(GLES20.GL_FRONT, GLES20.GL_KEEP,
+					GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
+			GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
+					GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
+			GLES20.glUniformMatrix4fv(mShadowShader.getHandle("uPMatrix"), 1,
+					false, mCamera.mProjM, 0);
 			mLightPositionBuffer.position(i * 3);
 			GLES20.glUniform3fv(mShadowShader.getHandle("uLightPosition"), 1,
 					mLightPositionBuffer);
@@ -205,28 +207,29 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 					mShadowShader.getHandle("uNormalMatrix"),
 					mShadowShader.getHandle("aPosition"),
 					mShadowShader.getHandle("aNormal"));
-		}
-		GLES20.glEnable(GLES20.GL_CULL_FACE);
-		GLES20.glDepthMask(true);
-		GLES20.glColorMask(true, true, true, true);
+			GLES20.glDepthMask(true);
+			GLES20.glColorMask(true, true, true, true);
+			GLES20.glEnable(GLES20.GL_CULL_FACE);
 
-		// Initiate diffuse/specular shader with values that do not change. We
-		// add these color values into scene using blending during this pass.
-		mDiffuseSpecularShader.useProgram();
-		mLightPositionBuffer.position(0);
-		GLES20.glEnable(GLES20.GL_BLEND);
-		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
-		GLES20.glColorMask(true, true, true, false);
-		GLES20.glStencilFunc(GLES20.GL_EQUAL, 0x00, 0xFFFFFFFF);
-		GLES20.glStencilOp(GLES20.GL_KEEP, GLES20.GL_KEEP, GLES20.GL_KEEP);
-		GLES20.glUniform1i(mDiffuseSpecularShader.getHandle("uLightCount"),
-				lightCount);
-		GLES20.glUniform3fv(mDiffuseSpecularShader.getHandle("uLights"),
-				lightCount, mLightPositionBuffer);
-		mScene.render(mDiffuseSpecularShaderIds);
-		GLES20.glDisable(GLES20.GL_BLEND);
-		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
-		GLES20.glColorMask(true, true, true, true);
+			// Initiate diffuse/specular shader with values that do not change.
+			// We add these color values into scene using blending during this
+			// pass.
+			mDiffuseSpecularShader.useProgram();
+			mLightPositionBuffer.position(0);
+			GLES20.glEnable(GLES20.GL_BLEND);
+			GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
+			GLES20.glColorMask(true, true, true, false);
+			GLES20.glStencilFunc(GLES20.GL_EQUAL, 0x00, 0xFFFFFFFF);
+			GLES20.glStencilOp(GLES20.GL_KEEP, GLES20.GL_KEEP, GLES20.GL_KEEP);
+			mLightPositionBuffer.position(i * 3);
+			GLES20.glUniform3fv(
+					mDiffuseSpecularShader.getHandle("uLightPosition"), 1,
+					mLightPositionBuffer);
+			mScene.render(mDiffuseSpecularShaderIds);
+			GLES20.glDisable(GLES20.GL_BLEND);
+			GLES20.glColorMask(true, true, true, true);
+			GLES20.glFlush();
+		}
 		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
 
 		// Render light objects into scene.
@@ -397,12 +400,11 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 				mOwnerActivity.getString(R.string.shader_scene_ambient_fs));
 		// Find/add required uniforms/attributes into shader.
 		mAmbientShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
-				"aPosition", "aNormal", "aColor", "uLightCount", "uLights",
-				"uAperture", "uFocalLength", "uPlaneInFocus");
+				"aPosition", "aNormal", "aColor", "uAperture", "uFocalLength",
+				"uPlaneInFocus");
 		// Get ids for uniforms/attributes needed for rendering.
 		int shaderIds[] = mAmbientShader.getHandles("uMVMatrix", "uMVPMatrix",
-				"uNormalMatrix", "aPosition", "aNormal", "aColor",
-				"uLightCount", "uLights");
+				"uNormalMatrix", "aPosition", "aNormal", "aColor");
 		mAmbientShaderIds.uMVMatrix = shaderIds[0];
 		mAmbientShaderIds.uMVPMatrix = shaderIds[1];
 		mAmbientShaderIds.uNormalMatrix = shaderIds[2];
@@ -427,11 +429,11 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		// Find/add required uniforms/attributes into shader.
 		mDiffuseSpecularShader.addHandles("uMVMatrix", "uMVPMatrix",
 				"uNormalMatrix", "aPosition", "aNormal", "aColor",
-				"uLightCount", "uLights");
+				"uLightPosition");
 		// Get ids for uniforms/attributes needed for rendering.
-		shaderIds = mDiffuseSpecularShader.getHandles("uMVMatrix",
-				"uMVPMatrix", "uNormalMatrix", "aPosition", "aNormal",
-				"aColor", "uLightCount", "uLights");
+		shaderIds = mDiffuseSpecularShader
+				.getHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
+						"aPosition", "aNormal", "aColor");
 		mDiffuseSpecularShaderIds.uMVMatrix = shaderIds[0];
 		mDiffuseSpecularShaderIds.uMVPMatrix = shaderIds[1];
 		mDiffuseSpecularShaderIds.uNormalMatrix = shaderIds[2];
