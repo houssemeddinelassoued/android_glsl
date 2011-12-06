@@ -158,7 +158,8 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		mFbo.bind();
 		mFbo.bindTexture(TEX_IDX_SCENE);
 		GLES20.glClearColor(0.2f / 3f, 0.3f / 3f, 0.5f / 3f, 1.0f);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT
+				| GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
 		// Fetch light positions into light position buffer.
 		mLightPositionBuffer.position(0);
@@ -185,8 +186,9 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 
 		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
 		for (int i = 0; i < lightCount; ++i) {
-			GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT);
-			GLES20.glFlush();
+			if (i > 0) {
+				GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT);
+			}
 			// Draw shadow volume into stencil buffer.
 			mShadowShader.useProgram();
 			GLES20.glDepthMask(false);
@@ -228,7 +230,6 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			mScene.render(mDiffuseSpecularShaderIds);
 			GLES20.glDisable(GLES20.GL_BLEND);
 			GLES20.glColorMask(true, true, true, true);
-			GLES20.glFlush();
 		}
 		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
 
