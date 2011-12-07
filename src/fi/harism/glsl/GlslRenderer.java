@@ -408,13 +408,12 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	}
 
 	/**
-	 * Renders ambient lighted scene.
+	 * Renders ambient lighted scene. We calculate CoC values and store them
+	 * into alpha during this pass. Make sure alpha values are unaffected after
+	 * this pass until lens blur has been applied.
 	 */
 	private void renderAmbient() {
-		// Initiate ambient shader with values that do not change. We calculate
-		// CoC values and store them into alpha during this pass. Make sure
-		// alpha values are unaffected after this pass until lens blur has been
-		// applied.
+		// Initiate ambient shader with values that do not change.
 		mAmbientShader.useProgram();
 		GLES20.glUniform1f(mAmbientShader.getHandle("uAperture"),
 				mCamera.mAperture);
@@ -432,6 +431,8 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	private void renderDiffuseSpecular() {
 		GLES20.glDepthMask(false);
 		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
+		GLES20.glEnable(GLES20.GL_BLEND);
+		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
 		for (GlslLight light : mScene.getLights()) {
 			// Draw shadow volume into stencil buffer.
 			mShadowShader.useProgram();
@@ -457,8 +458,8 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			// We add these color values into scene using blending during this
 			// pass.
 			mDiffuseSpecularShader.useProgram();
-			GLES20.glEnable(GLES20.GL_BLEND);
-			GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
+			// Just in case disable writing to alpha channel in order to make
+			// sure it remains unaffected.
 			GLES20.glColorMask(true, true, true, false);
 			// This is a minor optimization. Clear stencil buffer during
 			// rendering the stencilled scene so we don't have to call
@@ -471,15 +472,17 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 					mDiffuseSpecularShader.getHandle("uLightPosition"), 1,
 					light.getPosition(), 0);
 			mScene.render(mDiffuseSpecularShaderIds);
-			GLES20.glDisable(GLES20.GL_BLEND);
 		}
+		GLES20.glDisable(GLES20.GL_BLEND);
 		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
 		GLES20.glDepthMask(true);
 		GLES20.glColorMask(true, true, true, true);
 	}
 
 	/**
-	 * Renders light objects into the scene.
+	 * Renders light objects into the scene. Lights are rendered on top of
+	 * already rendered scene and CoC values for light pixels are updated
+	 * accordingly.
 	 */
 	private void renderLightObjects() {
 		ByteBuffer b = ByteBuffer.allocateDirect(3 * 4);
@@ -502,12 +505,14 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		GLES20.glVertexAttribPointer(mLightShader.getHandle("aPosition"), 3,
 				GLES20.GL_FLOAT, false, 0, buffer);
 		GLES20.glEnableVertexAttribArray(mLightShader.getHandle("aPosition"));
+
 		for (GlslLight light : mScene.getLights()) {
 			buffer.position(0);
 			buffer.put(light.getPosition(), 0, 3);
 			buffer.position(0);
 			GLES20.glDrawArrays(GLES20.GL_POINTS, 0, 1);
 		}
+
 		GLES20.glDisable(GLES20.GL_BLEND);
 	}
 
