@@ -30,15 +30,10 @@ public class GlslLight implements GlslAnimator.PathInterface {
 	/**
 	 * Getter for View matrix multiplied position.
 	 * 
-	 * @param viewPos
-	 *            float[3], or bigger, to store position
-	 * @param startIdx
-	 *            start index of viewPos
+	 * @return float[] array containing { x, y, z, w }
 	 */
-	public void getPosition(float[] viewPos, int startIdx) {
-		viewPos[startIdx] = mViewPos[0];
-		viewPos[startIdx + 1] = mViewPos[1];
-		viewPos[startIdx + 2] = mViewPos[2];
+	public float[] getPosition() {
+		return mPosition;
 	}
 
 	/**
