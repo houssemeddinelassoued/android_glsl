@@ -35,8 +35,6 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 	private final float[] mModelViewProjM = new float[16];
 	// World normal matrix.
 	private final float[] mNormalM = new float[16];
-	// Temporary matrix needed for normal matrix calculation.
-	private static final float[] mTempM = new float[16];
 
 	// If true, mModelM will be recalculated on next call to updateMatrices().
 	private boolean mRecalculateModelM;
@@ -173,9 +171,9 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 		Matrix.multiplyMM(mModelViewM, 0, mvM, 0, mModelM, 0);
 		// Apply projection matrix to global model-view matrix.
 		Matrix.multiplyMM(mModelViewProjM, 0, projM, 0, mModelViewM, 0);
-		// Fast inverse-transpose calculation.
+		// Fast inverse-transpose matrix calculation.
 		GlslMatrix.invTransposeM(mNormalM, 0, mModelViewM, 0);
-		
+
 		for (GlslObject obj : mChildObjects) {
 			obj.updateMatrices(mModelViewM, projM);
 		}
