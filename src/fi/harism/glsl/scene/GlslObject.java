@@ -169,12 +169,13 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 			mRecalculateModelM = false;
 		}
 
+		// Add local model matrix to global model-view matrix.
 		Matrix.multiplyMM(mModelViewM, 0, mvM, 0, mModelM, 0);
+		// Apply projection matrix to global model-view matrix.
 		Matrix.multiplyMM(mModelViewProjM, 0, projM, 0, mModelViewM, 0);
-
-		Matrix.invertM(mTempM, 0, mModelViewM, 0);
-		Matrix.transposeM(mNormalM, 0, mTempM, 0);
-
+		// Fast inverse-transpose calculation.
+		GlslMatrix.invTransposeM(mNormalM, 0, mModelViewM, 0);
+		
 		for (GlslObject obj : mChildObjects) {
 			obj.updateMatrices(mModelViewM, projM);
 		}

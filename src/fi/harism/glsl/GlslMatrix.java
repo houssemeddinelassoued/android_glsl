@@ -21,7 +21,7 @@ import android.opengl.Matrix;
 /**
  * Static methods for matrix initialization.
  */
-public class GlslMatrix {
+public final class GlslMatrix {
 
 	/**
 	 * Initializes given matrix as perspective projection matrix.
@@ -37,8 +37,8 @@ public class GlslMatrix {
 	 * @param zFar
 	 *            Far clipping plane.
 	 */
-	public static final void setPerspectiveM(float[] m, float fovy,
-			float aspect, float zNear, float zFar) {
+	public static void setPerspectiveM(float[] m, float fovy, float aspect,
+			float zNear, float zFar) {
 
 		// First initialize matrix as identity matrix.
 		Matrix.setIdentityM(m, 0);
@@ -72,8 +72,8 @@ public class GlslMatrix {
 	 * @param z
 	 *            Rotation around z axis
 	 */
-	public static final void setRotateM(float[] m, int offset, float x,
-			float y, float z) {
+	public static void setRotateM(float[] m, int offset, float x, float y,
+			float z) {
 		double toRadians = Math.PI * 2 / 360;
 		double sin0 = Math.sin(x * toRadians);
 		double cos0 = Math.cos(x * toRadians);
@@ -100,4 +100,47 @@ public class GlslMatrix {
 		m[10 + offset] = (float) (cos0 * cos1);
 	}
 
+	/**
+	 * Fast inverse-transpose matrix calculation. See
+	 * http://content.gpwiki.org/index.php/MathGem:Fast_Matrix_Inversion for
+	 * more information. Only difference is that we do transpose at the same
+	 * time and therefore we don't transpose upper-left 3x3 matrix leaving it
+	 * intact. Also T is written into lowest row of destination matrix instead
+	 * of last column.
+	 * 
+	 * @param dst
+	 *            Destination matrix
+	 * @param dstOffset
+	 *            Destination matrix offset
+	 * @param src
+	 *            Source matrix
+	 * @param srcOffset
+	 *            Source matrix offset
+	 */
+	public static void invTransposeM(float[] dst, int dstOffset, float[] src,
+			int srcOffset) {
+		Matrix.setIdentityM(dst, dstOffset);
+		
+		// Copy top-left 3x3 matrix into dst matrix.
+		dst[dstOffset + 0] = src[srcOffset + 0];
+		dst[dstOffset + 1] = src[srcOffset + 1];
+		dst[dstOffset + 2] = src[srcOffset + 2];
+		dst[dstOffset + 4] = src[srcOffset + 4];
+		dst[dstOffset + 5] = src[srcOffset + 5];
+		dst[dstOffset + 6] = src[srcOffset + 6];
+		dst[dstOffset + 8] = src[srcOffset + 8];
+		dst[dstOffset + 9] = src[srcOffset + 9];
+		dst[dstOffset + 10] = src[srcOffset + 10];
+
+		// Calculate -(Ri dot T) into last row.
+		dst[dstOffset + 3] = -(src[srcOffset + 0] * src[srcOffset + 12]
+				+ src[srcOffset + 1] * src[srcOffset + 13] + src[srcOffset + 2]
+				* src[srcOffset + 14]);
+		dst[dstOffset + 7] = -(src[srcOffset + 4] * src[srcOffset + 12]
+				+ src[srcOffset + 5] * src[srcOffset + 13] + src[srcOffset + 6]
+				* src[srcOffset + 14]);
+		dst[dstOffset + 11] = -(src[srcOffset + 8] * src[srcOffset + 12]
+				+ src[srcOffset + 9] * src[srcOffset + 13] + src[srcOffset + 10]
+				* src[srcOffset + 14]);
+	}
 }
