@@ -28,6 +28,7 @@
     <!-- Fragment shader for rendering ambient shaded scene -->
     <string name="shader_scene_ambient_fs">
         precision mediump float;
+        uniform float uAmbientFactor;
         uniform float uAperture;
         uniform float uFocalLength;
         uniform float uPlaneInFocus;
@@ -36,9 +37,7 @@
         varying vec3 vColor;
         
         void main() {
-            const float ambient = 0.3;
-            gl_FragColor.rgb = vColor * ambient;
-            gl_FragColor.rgb /= 3.0;
+            gl_FragColor.rgb = vColor * (uAmbientFactor / 3.0);
             /* This is the last place where we have z-value available. Calculate
                circle of confusion and store it to alpha for later use. */
             gl_FragColor.a = abs(uAperture * (uFocalLength * (-vPosition.z - uPlaneInFocus)) /
@@ -49,6 +48,8 @@
     <string name="shader_scene_phong_fs">
         precision mediump float;
         uniform vec3 uLightPosition;
+        uniform float uDiffuseFactor;
+        uniform float uSpecularFactor;
         varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec3 vColor;
@@ -62,13 +63,12 @@
             float lambert = dot(N, L);
             if (lambert > 0.0) {
                 float r = inversesqrt(length(lightDir));
-                diffuse = lambert * r;
+                diffuse = lambert * uDiffuseFactor * r;
                 vec3 R = reflect(-L, N);
                 vec3 E = normalize(-vPosition);
-                specular = pow(max(dot(R, E), 0.0), 8.0) * r;
+                specular = pow(max(dot(R, E), 0.0), 8.0) * uSpecularFactor * r;
             }
-            gl_FragColor.rgb = vColor * (diffuse + specular);
-            gl_FragColor.rgb /= 3.0;
+            gl_FragColor.rgb = vColor * ((diffuse + specular) / 3.0);
             gl_FragColor.a = 0.0;
         }
     </string>
@@ -76,6 +76,8 @@
     <string name="shader_scene_blinn_phong_fs">
         precision mediump float;
         uniform vec3 uLightPosition;
+        uniform float uDiffuseFactor;
+        uniform float uSpecularFactor;
         varying vec3 vPosition;
         varying vec3 vNormal;
         varying vec3 vColor;
@@ -89,13 +91,12 @@
             float lambert = dot(N, L);
             if (lambert > 0.0) {
                 float r = inversesqrt(length(lightDir));
-                diffuse = lambert * r;
+                diffuse = lambert * uDiffuseFactor * r;
                 vec3 E = normalize(-vPosition);
                 vec3 HV = normalize(E + lightDir);
-                specular = pow(max(dot(HV, N), 0.0), 8.0) * r;
+                specular = pow(max(dot(HV, N), 0.0), 8.0) * uSpecularFactor * r;
             }
-            gl_FragColor.rgb = vColor * (diffuse + specular);
-            gl_FragColor.rgb /= 3.0;
+            gl_FragColor.rgb = vColor * ((diffuse + specular) / 3.0);
             gl_FragColor.a = 0.0;
         }
     </string>

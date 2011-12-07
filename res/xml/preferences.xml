@@ -60,6 +60,39 @@
                 harism:valueMax="4.0"
                 harism:valueMin="1.0"
                 harism:valuePrecision="1.0" />
+
+            <fi.harism.glsl.prefs.GlslSliderPreference
+                android:defaultValue="0.5"
+                android:key="@string/key_ambient_factor"
+                android:summary="Amount of ambient light applied to scene"
+                android:title="Ambient Factor (= %.2f)"
+                harism:valueMax="1.0"
+                harism:valueMin="0.0"
+                harism:valuePrecision="0.01" />
+
+            <fi.harism.glsl.prefs.GlslSliderPreference
+                android:defaultValue="0.8"
+                android:key="@string/key_diffuse_factor"
+                android:summary="Amount of diffuse light applied to scene"
+                android:title="Diffuse Factor (= %.2f)"
+                harism:valueMax="1.0"
+                harism:valueMin="0.0"
+                harism:valuePrecision="0.01" />
+
+            <fi.harism.glsl.prefs.GlslSliderPreference
+                android:defaultValue="1.0"
+                android:key="@string/key_specular_factor"
+                android:summary="Amount of specular light applied to scene"
+                android:title="Specular Factor (= %.2f)"
+                harism:valueMax="1.0"
+                harism:valueMin="0.0"
+                harism:valuePrecision="0.01" />
+
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="@string/key_shadows_enable"
+                android:summary="If checked, the so called &apos;zPass shadow volumes&apos; technique is applied to the scene"
+                android:title="Shadows" />
         </PreferenceScreen>
     </PreferenceCategory>
 

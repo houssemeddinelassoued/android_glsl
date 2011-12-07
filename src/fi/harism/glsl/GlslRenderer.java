@@ -86,6 +86,10 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	private boolean mLensBlurEnabled;
 	// Flag for whether FXAA anti-aliasing is enabled.
 	private boolean mFxaaEnabled;
+	// Flag for whether shadows should be rendered.
+	private boolean mShadowsEnabled;
+	// Ambient, diffuse and specular factors for lightning.
+	private float mAmbientFactor, mDiffuseFactor, mSpecularFactor;
 
 	// Shader for rendering ambient lighted scene.
 	private GlslShader mAmbientShader = new GlslShader();
@@ -303,6 +307,14 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			mScene.initSceneBoxes2(mCamera, lightCount);
 			break;
 		}
+		key = mOwnerActivity.getString(R.string.key_ambient_factor);
+		mAmbientFactor = prefs.getFloat(key, 1f);
+		key = mOwnerActivity.getString(R.string.key_diffuse_factor);
+		mDiffuseFactor = prefs.getFloat(key, 1f);
+		key = mOwnerActivity.getString(R.string.key_specular_factor);
+		mSpecularFactor = prefs.getFloat(key, 1f);
+		key = mOwnerActivity.getString(R.string.key_shadows_enable);
+		mShadowsEnabled = prefs.getBoolean(key, false);
 
 		// Initiate shaders for rendering scene.
 		mAmbientShader.setProgram(
@@ -424,6 +436,8 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	private void renderAmbient() {
 		// Initiate ambient shader with values that do not change.
 		mAmbientShader.useProgram();
+		GLES20.glUniform1f(mAmbientShader.getHandle("uAmbientFactor"),
+				mAmbientFactor);
 		GLES20.glUniform1f(mAmbientShader.getHandle("uAperture"),
 				mCamera.mAperture);
 		GLES20.glUniform1f(mAmbientShader.getHandle("uFocalLength"),
@@ -439,29 +453,31 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	 */
 	private void renderDiffuseSpecular() {
 		GLES20.glDepthMask(false);
-		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
 		GLES20.glEnable(GLES20.GL_BLEND);
 		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
+		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
+
 		for (GlslLight light : mScene.getLights()) {
 			// Draw shadow volume into stencil buffer.
-			mShadowShader.useProgram();
-			GLES20.glColorMask(false, false, false, false);
-			GLES20.glDisable(GLES20.GL_CULL_FACE);
-			GLES20.glStencilFunc(GLES20.GL_ALWAYS, 0x00, 0xFFFFFFFF);
-			GLES20.glStencilOpSeparate(GLES20.GL_FRONT, GLES20.GL_KEEP,
-					GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
-			GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
-					GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
-			GLES20.glUniformMatrix4fv(mShadowShader.getHandle("uProjM"), 1,
-					false, mCamera.mProjM, 0);
-			GLES20.glUniform3fv(mShadowShader.getHandle("uLightPosition"), 1,
-					light.getPosition(), 0);
-			mScene.renderShadow(mShadowShaderIds);
-			GLES20.glEnable(GLES20.GL_CULL_FACE);
-
-			// Initiate diffuse/specular shader with values that do not change.
-			// We add these color values into scene using blending during this
-			// pass.
+			if (mShadowsEnabled) {
+				mShadowShader.useProgram();
+				GLES20.glColorMask(false, false, false, false);
+				GLES20.glDisable(GLES20.GL_CULL_FACE);
+				GLES20.glStencilFunc(GLES20.GL_ALWAYS, 0x00, 0xFFFFFFFF);
+				GLES20.glStencilOpSeparate(GLES20.GL_FRONT, GLES20.GL_KEEP,
+						GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
+				GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
+						GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
+				GLES20.glUniformMatrix4fv(mShadowShader.getHandle("uProjM"), 1,
+						false, mCamera.mProjM, 0);
+				GLES20.glUniform3fv(mShadowShader.getHandle("uLightPosition"),
+						1, light.getPosition(), 0);
+				mScene.renderShadow(mShadowShaderIds);
+				GLES20.glEnable(GLES20.GL_CULL_FACE);
+			}
+			// Initiate diffuse/specular shader with values that do not change
+			// during actual rendering. We add these color values into scene
+			// using blending during this pass.
 			mDiffuseSpecularShader.useProgram();
 			// Just in case disable writing to alpha channel in order to make
 			// sure it remains unaffected.
@@ -473,11 +489,18 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			// render target texture.
 			GLES20.glStencilFunc(GLES20.GL_EQUAL, 0x00, 0xFFFFFFFF);
 			GLES20.glStencilOp(GLES20.GL_ZERO, GLES20.GL_ZERO, GLES20.GL_ZERO);
+			GLES20.glUniform1f(
+					mDiffuseSpecularShader.getHandle("uDiffuseFactor"),
+					mDiffuseFactor);
+			GLES20.glUniform1f(
+					mDiffuseSpecularShader.getHandle("uSpecularFactor"),
+					mSpecularFactor);
 			GLES20.glUniform3fv(
 					mDiffuseSpecularShader.getHandle("uLightPosition"), 1,
 					light.getPosition(), 0);
 			mScene.render(mDiffuseSpecularShaderIds);
 		}
+
 		GLES20.glDisable(GLES20.GL_BLEND);
 		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
 		GLES20.glDepthMask(true);
@@ -511,6 +534,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		GLES20.glVertexAttribPointer(mLightShader.getHandle("aPosition"), 3,
 				GLES20.GL_FLOAT, false, 0, buffer);
 		GLES20.glEnableVertexAttribArray(mLightShader.getHandle("aPosition"));
+
 		for (GlslLight light : mScene.getLights()) {
 			buffer.position(0);
 			buffer.put(light.getPosition(), 0, 3);

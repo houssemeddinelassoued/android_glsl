@@ -26,6 +26,10 @@ harism@gmail.com
     <string name="key_quality">quality</string>
     <string name="key_light_count">light_count</string>
     <string name="key_light_model">light_model</string>
+    <string name="key_ambient_factor">ambient_factor</string>
+    <string name="key_diffuse_factor">diffuse_factor</string>
+    <string name="key_specular_factor">specular_factor</string>
+    <string name="key_shadows_enable">shadows_enable</string>
     <string name="key_bloom_enable">bloom_enable</string>
     <string name="key_lensblur_enable">lensblur_enable</string>
     <string name="key_lensblur_fstop">lensblur_fstop</string>
