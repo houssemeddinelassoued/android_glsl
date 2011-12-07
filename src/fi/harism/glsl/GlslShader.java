@@ -32,28 +32,8 @@ public final class GlslShader {
 	private final HashMap<String, Integer> mShaderHandleMap = new HashMap<String, Integer>();
 
 	/**
-	 * Searches for given attribute/uniform names for loaded shader and stores
-	 * their ids for later use. getHandle() and getHandles() should be called
-	 * only after calling this method.
-	 * 
-	 * @param names
-	 *            List of attribute/uniform names to search for.
-	 */
-	public void addHandles(String... names) {
-		for (String name : names) {
-			int handle = GLES20.glGetAttribLocation(mProgram, name);
-			if (handle == -1) {
-				handle = GLES20.glGetUniformLocation(mProgram, name);
-			}
-			if (handle == -1) {
-				Log.d("GlslShader", "Could not get attrib location for " + name);
-			}
-			mShaderHandleMap.put(name, handle);
-		}
-	}
-
-	/**
-	 * Get id for given handle name.
+	 * Get id for given handle name. This method checks for both attribute and
+	 * uniform handles.
 	 * 
 	 * @param name
 	 *            Name of handle.
@@ -63,8 +43,15 @@ public final class GlslShader {
 		if (mShaderHandleMap.containsKey(name)) {
 			return mShaderHandleMap.get(name);
 		}
-		Log.d("GlslShader", "Attribute handle " + name + " not found.");
-		return -1;
+		int handle = GLES20.glGetAttribLocation(mProgram, name);
+		if (handle == -1) {
+			handle = GLES20.glGetUniformLocation(mProgram, name);
+		}
+		if (handle == -1) {
+			Log.d("GlslShader", "Could not get attrib location for " + name);
+		}
+		mShaderHandleMap.put(name, handle);
+		return handle;
 	}
 
 	/**
