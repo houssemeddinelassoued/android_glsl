@@ -98,21 +98,11 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	// Shader for rendering shadow volumes.
 	private GlslShader mShadowShader = new GlslShader();
 
-	// Maximum number of lights.
-	private static final int MAX_LIGHTS = 4;
-	// Light size in bytes (3 floats * 4 bytes).
-	private static final int LIGHT_BYTES = 3 * 4;
-	// Buffer for storing light coordinates into.
-	FloatBuffer mLightPositionBuffer;
-
 	/**
 	 * Constructor.
 	 */
 	public GlslRenderer() {
 		mRenderTime = SystemClock.uptimeMillis();
-		ByteBuffer buf = ByteBuffer.allocateDirect(LIGHT_BYTES * MAX_LIGHTS);
-		mLightPositionBuffer = buf.order(ByteOrder.nativeOrder())
-				.asFloatBuffer();
 	}
 
 	/**
@@ -126,6 +116,24 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 
 	@Override
 	public void onDrawFrame(GL10 glUnused) {
+		// Setup GLES20 rendering options.
+		GLES20.glEnable(GLES20.GL_CULL_FACE);
+		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
+		GLES20.glFrontFace(GLES20.GL_CCW);
+		GLES20.glDepthFunc(GLES20.GL_LEQUAL);
+
+		// Bind scene texture and trigger clear before recalculating scene
+		// matrices. Renderer emulates HDR rendering by reserving certain amount
+		// of color space for HDR values. Currently this means that {R,G,B} -->
+		// {R/3,G/3,B/3} where 'regular' colors are within [0, 1/3] range and
+		// values [1, 3] map to higher [1/3, 3/3] range - and therefore clear
+		// color is divided by 3.
+		mFbo.bind();
+		mFbo.bindTexture(TEX_IDX_SCENE);
+		GLES20.glClearColor(0.2f / 3f, 0.3f / 3f, 0.5f / 3f, 1.0f);
+		GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT
+				| GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
 		// Update render time and calculate FPS.
 		long lastRenderTime = mRenderTime;
@@ -142,124 +150,23 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		// Sets/calculates matrices for child objects etc.
 		mScene.setMVP(mCamera.mViewM, mCamera.mProjM);
 
-		// Setup GLES20 rendering options.
-		GLES20.glEnable(GLES20.GL_CULL_FACE);
-		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
-		GLES20.glFrontFace(GLES20.GL_CCW);
-		GLES20.glDepthFunc(GLES20.GL_LEQUAL);
-
-		// Bind scene texture, clear it and render the scene. Renderer emulates
-		// HDR rendering by reserving certain amount of color space for HDR
-		// values. Currently this means that { R, G, B } --> { R/3, G/3, B/3 }
-		// where 'regular' colors are within [0, 1/3] range and values [1, 3]
-		// map
-		// to higher [1/3, 3/3] range.
-		mFbo.bind();
-		mFbo.bindTexture(TEX_IDX_SCENE);
-		GLES20.glClearColor(0.2f / 3f, 0.3f / 3f, 0.5f / 3f, 1.0f);
-		GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT
-				| GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
-		// Fetch light positions into light position buffer.
-		mLightPositionBuffer.position(0);
-		int lightCount = mScene.getLightCount();
-		float lightPosition[] = { 0, 0, 0 };
-		for (int i = 0; i < lightCount; ++i) {
-			GlslLight light = mScene.getLight(i);
-			light.getPosition(lightPosition, 0);
-			mLightPositionBuffer.put(lightPosition);
-		}
-
-		// Initiate ambient shader with values that do not change. We calculate
-		// CoC values and store them into alpha during this pass as this is the
-		// only place where whole scene is drawn.
-		mAmbientShader.useProgram();
-		mLightPositionBuffer.position(0);
-		GLES20.glUniform1f(mAmbientShader.getHandle("uAperture"),
-				mCamera.mAperture);
-		GLES20.glUniform1f(mAmbientShader.getHandle("uFocalLength"),
-				mCamera.mFocalLength);
-		GLES20.glUniform1f(mAmbientShader.getHandle("uPlaneInFocus"),
-				mCamera.mPlaneInFocus);
-		mScene.render(mAmbientShaderIds);
-
-		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
-		for (int i = 0; i < lightCount; ++i) {
-			if (i > 0) {
-				GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT);
-			}
-			// Draw shadow volume into stencil buffer.
-			mShadowShader.useProgram();
-			GLES20.glDepthMask(false);
-			GLES20.glColorMask(false, false, false, false);
-			GLES20.glDisable(GLES20.GL_CULL_FACE);
-			GLES20.glStencilFunc(GLES20.GL_ALWAYS, 0x0, 0xFFFFFFFF);
-			GLES20.glStencilOpSeparate(GLES20.GL_FRONT, GLES20.GL_KEEP,
-					GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
-			GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
-					GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
-			GLES20.glUniformMatrix4fv(mShadowShader.getHandle("uPMatrix"), 1,
-					false, mCamera.mProjM, 0);
-			mLightPositionBuffer.position(i * 3);
-			GLES20.glUniform3fv(mShadowShader.getHandle("uLightPosition"), 1,
-					mLightPositionBuffer);
-			mScene.renderShadow(mShadowShader.getHandle("uMVMatrix"),
-					mShadowShader.getHandle("uMVPMatrix"),
-					mShadowShader.getHandle("uNormalMatrix"),
-					mShadowShader.getHandle("aPosition"),
-					mShadowShader.getHandle("aNormal"));
-			GLES20.glDepthMask(true);
-			GLES20.glColorMask(true, true, true, true);
-			GLES20.glEnable(GLES20.GL_CULL_FACE);
-
-			// Initiate diffuse/specular shader with values that do not change.
-			// We add these color values into scene using blending during this
-			// pass.
-			mDiffuseSpecularShader.useProgram();
-			mLightPositionBuffer.position(0);
-			GLES20.glEnable(GLES20.GL_BLEND);
-			GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
-			GLES20.glColorMask(true, true, true, false);
-			GLES20.glStencilFunc(GLES20.GL_EQUAL, 0x00, 0xFFFFFFFF);
-			GLES20.glStencilOp(GLES20.GL_KEEP, GLES20.GL_KEEP, GLES20.GL_KEEP);
-			mLightPositionBuffer.position(i * 3);
-			GLES20.glUniform3fv(
-					mDiffuseSpecularShader.getHandle("uLightPosition"), 1,
-					mLightPositionBuffer);
-			mScene.render(mDiffuseSpecularShaderIds);
-			GLES20.glDisable(GLES20.GL_BLEND);
-			GLES20.glColorMask(true, true, true, true);
-		}
-		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
-
+		// Render ambient lighted scene. Ambient color covers all objects no
+		// matter are they in shadow or not. Also depth information stored
+		// during this pass is used for rendering shadow volumes.
+		renderAmbient();
+		// Render diffuse and specular lighted scene. This pass includes also
+		// optional
+		// shadow volume calculations.
+		renderDiffuseSpecular();
 		// Render light objects into scene.
-		mLightShader.useProgram();
-		mLightPositionBuffer.position(0);
-		GLES20.glEnable(GLES20.GL_BLEND);
-		GLES20.glBlendFunc(GLES20.GL_SRC_COLOR, GLES20.GL_ONE_MINUS_SRC_COLOR);
-		GLES20.glUniformMatrix4fv(mLightShader.getHandle("uPMatrix"), 1, false,
-				mCamera.mProjM, 0);
-		GLES20.glVertexAttribPointer(mLightShader.getHandle("aPosition"), 3,
-				GLES20.GL_FLOAT, false, 0, mLightPositionBuffer);
-		GLES20.glEnableVertexAttribArray(mLightShader.getHandle("aPosition"));
-		GLES20.glUniform1f(mLightShader.getHandle("uPointRadius"), 0.1f);
-		GLES20.glUniform1f(mLightShader.getHandle("uViewWidth"),
-				mFbo.getWidth());
-		GLES20.glUniform1f(mLightShader.getHandle("uAperture"),
-				mCamera.mAperture);
-		GLES20.glUniform1f(mLightShader.getHandle("uFocalLength"),
-				mCamera.mFocalLength);
-		GLES20.glUniform1f(mLightShader.getHandle("uPlaneInFocus"),
-				mCamera.mPlaneInFocus);
-		GLES20.glDrawArrays(GLES20.GL_POINTS, 0, lightCount);
-		GLES20.glDisable(GLES20.GL_BLEND);
+		renderLightObjects();
 
 		// Variables for flipping input/output textures. Input texture should
 		// always point to texture index used as source and output texture is
 		// the one for rendering into.
 		int texIdxIn = TEX_IDX_SCENE;
 		int texIdxOut = TEX_IDX_OUT_1;
+
 		// If lens blur is enabled.
 		if (mLensBlurEnabled) {
 			mFilter.lensBlur(mFbo.getTexture(texIdxIn), mFbo, texIdxOut,
@@ -278,8 +185,8 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 			texIdxOut = texIdxIn == TEX_IDX_OUT_1 ? TEX_IDX_OUT_2
 					: TEX_IDX_OUT_1;
 		}
-		// Apply tonemapping before anti-aliasing.
-		// TODO: It may be better if tonemapping was done as part of bloom or
+		// Apply tone mapping before anti-aliasing.
+		// TODO: It may be better if tone mapping was done as part of bloom and
 		// within else -clause if bloom is disabled.
 		mFbo.bind();
 		mFbo.bindTexture(texIdxOut);
@@ -300,10 +207,11 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 					: TEX_IDX_OUT_1;
 		}
 
-		// Bind "screen FBO" into use.
+		// Bind "screen FBO" into use. This is the final pass where FBOs are
+		// rendered on screen.
 		GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 		GLES20.glViewport(0, 0, mCamera.mViewWidth, mCamera.mViewHeight);
-		// If screen is divided copy original scene on left side.
+		// If screen is divided copy original scene texture on left side.
 		if (mDivideScreen) {
 			mFilter.setClipCoords(-1f, 1f, 0f, -1f);
 			mFilter.tonemap(mFbo.getTexture(TEX_IDX_SCENE));
@@ -399,10 +307,6 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		mAmbientShader.setProgram(
 				mOwnerActivity.getString(R.string.shader_scene_vs),
 				mOwnerActivity.getString(R.string.shader_scene_ambient_fs));
-		// Find/add required uniforms/attributes into shader.
-		mAmbientShader.addHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
-				"aPosition", "aNormal", "aColor", "uAperture", "uFocalLength",
-				"uPlaneInFocus");
 		// Get ids for uniforms/attributes needed for rendering.
 		int shaderIds[] = mAmbientShader.getHandles("uMVMatrix", "uMVPMatrix",
 				"uNormalMatrix", "aPosition", "aNormal", "aColor");
@@ -427,10 +331,6 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 					mOwnerActivity.getString(R.string.shader_scene_phong_fs));
 		}
 
-		// Find/add required uniforms/attributes into shader.
-		mDiffuseSpecularShader.addHandles("uMVMatrix", "uMVPMatrix",
-				"uNormalMatrix", "aPosition", "aNormal", "aColor",
-				"uLightPosition");
 		// Get ids for uniforms/attributes needed for rendering.
 		shaderIds = mDiffuseSpecularShader
 				.getHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
@@ -446,14 +346,10 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		mLightShader.setProgram(
 				mOwnerActivity.getString(R.string.shader_light_vs),
 				mOwnerActivity.getString(R.string.shader_light_fs));
-		mLightShader.addHandles("uPMatrix", "uPointRadius", "uViewWidth",
-				"aPosition", "uAperture", "uFocalLength", "uPlaneInFocus");
-
+		// Instantiate shadow rendering shader.
 		mShadowShader.setProgram(
 				mOwnerActivity.getString(R.string.shader_shadow_volume_vs),
 				mOwnerActivity.getString(R.string.shader_shadow_volume_fs));
-		mShadowShader.addHandles("uPMatrix", "uMVMatrix", "uMVPMatrix",
-				"uNormalMatrix", "uLightPosition", "aPosition", "aNormal");
 	}
 
 	@Override
@@ -509,6 +405,110 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	 */
 	public void setOwnerActivity(Activity activity) {
 		mOwnerActivity = activity;
+	}
+
+	/**
+	 * Renders ambient lighted scene.
+	 */
+	private void renderAmbient() {
+		// Initiate ambient shader with values that do not change. We calculate
+		// CoC values and store them into alpha during this pass. Make sure
+		// alpha values are unaffected after this pass until lens blur has been
+		// applied.
+		mAmbientShader.useProgram();
+		GLES20.glUniform1f(mAmbientShader.getHandle("uAperture"),
+				mCamera.mAperture);
+		GLES20.glUniform1f(mAmbientShader.getHandle("uFocalLength"),
+				mCamera.mFocalLength);
+		GLES20.glUniform1f(mAmbientShader.getHandle("uPlaneInFocus"),
+				mCamera.mPlaneInFocus);
+		mScene.render(mAmbientShaderIds);
+	}
+
+	/**
+	 * Renders diffuse and specular lighted scene plus applies optional shadow
+	 * volumes.
+	 */
+	private void renderDiffuseSpecular() {
+		GLES20.glDepthMask(false);
+		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
+		for (GlslLight light : mScene.getLights()) {
+			// Draw shadow volume into stencil buffer.
+			mShadowShader.useProgram();
+			GLES20.glColorMask(false, false, false, false);
+			GLES20.glDisable(GLES20.GL_CULL_FACE);
+			GLES20.glStencilFunc(GLES20.GL_ALWAYS, 0x00, 0xFFFFFFFF);
+			GLES20.glStencilOpSeparate(GLES20.GL_FRONT, GLES20.GL_KEEP,
+					GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
+			GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
+					GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
+			GLES20.glUniformMatrix4fv(mShadowShader.getHandle("uPMatrix"), 1,
+					false, mCamera.mProjM, 0);
+			GLES20.glUniform3fv(mShadowShader.getHandle("uLightPosition"), 1,
+					light.getPosition(), 0);
+			mScene.renderShadow(mShadowShader.getHandle("uMVMatrix"),
+					mShadowShader.getHandle("uMVPMatrix"),
+					mShadowShader.getHandle("uNormalMatrix"),
+					mShadowShader.getHandle("aPosition"),
+					mShadowShader.getHandle("aNormal"));
+			GLES20.glEnable(GLES20.GL_CULL_FACE);
+
+			// Initiate diffuse/specular shader with values that do not change.
+			// We add these color values into scene using blending during this
+			// pass.
+			mDiffuseSpecularShader.useProgram();
+			GLES20.glEnable(GLES20.GL_BLEND);
+			GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
+			GLES20.glColorMask(true, true, true, false);
+			// This is a minor optimization. Clear stencil buffer during
+			// rendering the stencilled scene so we don't have to call
+			// glClear(..) separarately. This shouldn't cause any visible
+			// artifacts as we assume that stencil buffer is the same size as
+			// render target texture.
+			GLES20.glStencilFunc(GLES20.GL_EQUAL, 0x00, 0xFFFFFFFF);
+			GLES20.glStencilOp(GLES20.GL_ZERO, GLES20.GL_ZERO, GLES20.GL_ZERO);
+			GLES20.glUniform3fv(
+					mDiffuseSpecularShader.getHandle("uLightPosition"), 1,
+					light.getPosition(), 0);
+			mScene.render(mDiffuseSpecularShaderIds);
+			GLES20.glDisable(GLES20.GL_BLEND);
+		}
+		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
+		GLES20.glDepthMask(true);
+		GLES20.glColorMask(true, true, true, true);
+	}
+
+	/**
+	 * Renders light objects into the scene.
+	 */
+	private void renderLightObjects() {
+		ByteBuffer b = ByteBuffer.allocateDirect(3 * 4);
+		FloatBuffer buffer = b.order(ByteOrder.nativeOrder()).asFloatBuffer();
+
+		mLightShader.useProgram();
+		GLES20.glEnable(GLES20.GL_BLEND);
+		GLES20.glBlendFunc(GLES20.GL_SRC_COLOR, GLES20.GL_ONE_MINUS_SRC_COLOR);
+		GLES20.glUniformMatrix4fv(mLightShader.getHandle("uPMatrix"), 1, false,
+				mCamera.mProjM, 0);
+		GLES20.glUniform1f(mLightShader.getHandle("uPointRadius"), 0.1f);
+		GLES20.glUniform1f(mLightShader.getHandle("uViewWidth"),
+				mFbo.getWidth());
+		GLES20.glUniform1f(mLightShader.getHandle("uAperture"),
+				mCamera.mAperture);
+		GLES20.glUniform1f(mLightShader.getHandle("uFocalLength"),
+				mCamera.mFocalLength);
+		GLES20.glUniform1f(mLightShader.getHandle("uPlaneInFocus"),
+				mCamera.mPlaneInFocus);
+		GLES20.glVertexAttribPointer(mLightShader.getHandle("aPosition"), 3,
+				GLES20.GL_FLOAT, false, 0, buffer);
+		GLES20.glEnableVertexAttribArray(mLightShader.getHandle("aPosition"));
+		for (GlslLight light : mScene.getLights()) {
+			buffer.position(0);
+			buffer.put(light.getPosition(), 0, 3);
+			buffer.position(0);
+			GLES20.glDrawArrays(GLES20.GL_POINTS, 0, 1);
+		}
+		GLES20.glDisable(GLES20.GL_BLEND);
 	}
 
 	/**
