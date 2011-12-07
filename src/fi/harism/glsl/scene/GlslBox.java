@@ -22,6 +22,10 @@ import java.nio.FloatBuffer;
 
 import android.opengl.GLES20;
 
+/**
+ * TODO: This class will go through major rewriting once I get to writing a new
+ * class for geometry handling.
+ */
 public final class GlslBox extends GlslObject {
 
 	private static final int FACE_COUNT = 6;
