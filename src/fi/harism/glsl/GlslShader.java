@@ -48,9 +48,14 @@ public final class GlslShader {
 			handle = GLES20.glGetUniformLocation(mProgram, name);
 		}
 		if (handle == -1) {
+			// One should never leave log messages but am not going to follow
+			// this rule. This line comes handy if you see repeating 'not found'
+			// messages on LogCat - usually for typos otherwise annoying to
+			// spot from shader code.
 			Log.d("GlslShader", "Could not get attrib location for " + name);
+		} else {
+			mShaderHandleMap.put(name, handle);
 		}
-		mShaderHandleMap.put(name, handle);
 		return handle;
 	}
 

@@ -119,10 +119,10 @@ public final class GlslBox extends GlslObject {
 				stride, mColorBuffer);
 		GLES20.glEnableVertexAttribArray(ids.aColor);
 
-		GLES20.glUniformMatrix4fv(ids.uMVMatrix, 1, false, getModelViewM(), 0);
-		GLES20.glUniformMatrix4fv(ids.uMVPMatrix, 1, false,
+		GLES20.glUniformMatrix4fv(ids.uModelViewM, 1, false, getModelViewM(), 0);
+		GLES20.glUniformMatrix4fv(ids.uModelViewProjM, 1, false,
 				getModelViewProjM(), 0);
-		GLES20.glUniformMatrix4fv(ids.uNormalMatrix, 1, false, getNormalM(), 0);
+		GLES20.glUniformMatrix4fv(ids.uNormalM, 1, false, getNormalM(), 0);
 
 		mIndexBuffer.position(0);
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, 6 * 6,
@@ -130,25 +130,24 @@ public final class GlslBox extends GlslObject {
 	}
 
 	@Override
-	public void renderShadow(int uMVMatrix, int uMVPMatrix, int uNormalMatrix,
-			int aPosition, int aNormal) {
-		super.renderShadow(uMVMatrix, uMVPMatrix, uNormalMatrix, aPosition,
-				aNormal);
+	public void renderShadow(GlslShaderIds ids) {
+		super.renderShadow(ids);
 
 		int stride = FLOATS_PER_VERTEX * FLOAT_SIZE_BYTES;
 		mVertexBuffer.position(0);
-		GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_FLOAT, false,
+		GLES20.glVertexAttribPointer(ids.aPosition, 3, GLES20.GL_FLOAT, false,
 				stride, mVertexBuffer);
-		GLES20.glEnableVertexAttribArray(aPosition);
+		GLES20.glEnableVertexAttribArray(ids.aPosition);
 
 		mNormalBuffer.position(0);
-		GLES20.glVertexAttribPointer(aNormal, 3, GLES20.GL_FLOAT, false,
+		GLES20.glVertexAttribPointer(ids.aNormal, 3, GLES20.GL_FLOAT, false,
 				stride, mNormalBuffer);
-		GLES20.glEnableVertexAttribArray(aNormal);
+		GLES20.glEnableVertexAttribArray(ids.aNormal);
 
-		GLES20.glUniformMatrix4fv(uMVMatrix, 1, false, getModelViewM(), 0);
-		GLES20.glUniformMatrix4fv(uMVPMatrix, 1, false, getModelViewProjM(), 0);
-		GLES20.glUniformMatrix4fv(uNormalMatrix, 1, false, getNormalM(), 0);
+		GLES20.glUniformMatrix4fv(ids.uModelViewM, 1, false, getModelViewM(), 0);
+		GLES20.glUniformMatrix4fv(ids.uModelViewProjM, 1, false,
+				getModelViewProjM(), 0);
+		GLES20.glUniformMatrix4fv(ids.uNormalM, 1, false, getNormalM(), 0);
 
 		mShadowIndexBuffer.position(0);
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, 6 * 4 * 6,

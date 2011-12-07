@@ -3,9 +3,9 @@
 
     <!-- Common vertex shader for scene rendering -->
     <string name="shader_scene_vs">
-        uniform mat4 uMVMatrix;
-        uniform mat4 uMVPMatrix;
-        uniform mat4 uNormalMatrix;
+        uniform mat4 uModelViewM;
+        uniform mat4 uModelViewProjM;
+        uniform mat4 uNormalM;
         
         attribute vec3 aPosition;
         attribute vec3 aNormal;
@@ -17,11 +17,11 @@
         
         void main() {
             /* Projected position */
-            gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
+            gl_Position = uModelViewProjM * vec4(aPosition, 1.0);
             /* Normal */
-            vNormal = vec3(uNormalMatrix * vec4(aNormal, 0.0));
+            vNormal = vec3(uNormalM * vec4(aNormal, 0.0));
             /* Position in View space */
-            vPosition = vec3(uMVMatrix * vec4(aPosition, 1.0));
+            vPosition = vec3(uModelViewM * vec4(aPosition, 1.0));
             vColor = aColor;
         }
     </string>
@@ -101,16 +101,16 @@
     </string>
     <!-- Vertex shader for rendering lights -->
     <string name="shader_light_vs">
-        uniform mat4 uPMatrix;
+        uniform mat4 uProjM;
         uniform float uPointRadius;
         uniform float uViewWidth;
         attribute vec3 aPosition;
         varying float vPositionZ;
         
         void main() {
-            gl_Position = uPMatrix * vec4(aPosition, 1.0);
+            gl_Position = uProjM * vec4(aPosition, 1.0);
             /* Map radius into screen pixels. */
-            vec4 sz = uPMatrix * vec4(uPointRadius, aPosition.yz, 1.0);
+            vec4 sz = uProjM * vec4(uPointRadius, aPosition.yz, 1.0);
             gl_PointSize = max(3.0, uViewWidth * (sz.x / sz.w));
             vPositionZ = aPosition.z;
         }
@@ -136,22 +136,22 @@
     </string>
     <!-- Vertex shader for shadow volume rendering -->
     <string name="shader_shadow_volume_vs">
-        uniform mat4 uPMatrix;
-        uniform mat4 uMVMatrix;
-        uniform mat4 uMVPMatrix;
-        uniform mat4 uNormalMatrix;
+        uniform mat4 uProjM;
+        uniform mat4 uModelViewM;
+        uniform mat4 uModelViewProjM;
+        uniform mat4 uNormalM;
         uniform vec3 uLightPosition;
         attribute vec3 aPosition;
         attribute vec3 aNormal;
         
         void main() {
-            vec3 position = vec3(uMVMatrix * vec4(aPosition, 1.0));
+            vec3 position = vec3(uModelViewM * vec4(aPosition, 1.0));
             vec3 lightDir = normalize(uLightPosition - position);
-            vec3 normal = normalize(vec3(uNormalMatrix * vec4(aNormal, 0.0)));
+            vec3 normal = normalize(vec3(uNormalM * vec4(aNormal, 0.0)));
             if (dot(normal, lightDir) > 0.0) {
-                gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
+                gl_Position = uModelViewProjM * vec4(aPosition, 1.0);
             } else {
-                gl_Position = uPMatrix * vec4(-lightDir, 0.0);
+                gl_Position = uProjM * vec4(-lightDir, 0.0);
             }
         }
     </string>

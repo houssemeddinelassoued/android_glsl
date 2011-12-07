@@ -97,6 +97,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 	private GlslShader mLightShader = new GlslShader();
 	// Shader for rendering shadow volumes.
 	private GlslShader mShadowShader = new GlslShader();
+	private GlslShaderIds mShadowShaderIds = new GlslShaderIds();
 
 	/**
 	 * Constructor.
@@ -308,11 +309,12 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 				mOwnerActivity.getString(R.string.shader_scene_vs),
 				mOwnerActivity.getString(R.string.shader_scene_ambient_fs));
 		// Get ids for uniforms/attributes needed for rendering.
-		int shaderIds[] = mAmbientShader.getHandles("uMVMatrix", "uMVPMatrix",
-				"uNormalMatrix", "aPosition", "aNormal", "aColor");
-		mAmbientShaderIds.uMVMatrix = shaderIds[0];
-		mAmbientShaderIds.uMVPMatrix = shaderIds[1];
-		mAmbientShaderIds.uNormalMatrix = shaderIds[2];
+		int shaderIds[] = mAmbientShader
+				.getHandles("uModelViewM", "uModelViewProjM", "uNormalM",
+						"aPosition", "aNormal", "aColor");
+		mAmbientShaderIds.uModelViewM = shaderIds[0];
+		mAmbientShaderIds.uModelViewProjM = shaderIds[1];
+		mAmbientShaderIds.uNormalM = shaderIds[2];
 		mAmbientShaderIds.aPosition = shaderIds[3];
 		mAmbientShaderIds.aNormal = shaderIds[4];
 		mAmbientShaderIds.aColor = shaderIds[5];
@@ -333,11 +335,11 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 
 		// Get ids for uniforms/attributes needed for rendering.
 		shaderIds = mDiffuseSpecularShader
-				.getHandles("uMVMatrix", "uMVPMatrix", "uNormalMatrix",
+				.getHandles("uModelViewM", "uModelViewProjM", "uNormalM",
 						"aPosition", "aNormal", "aColor");
-		mDiffuseSpecularShaderIds.uMVMatrix = shaderIds[0];
-		mDiffuseSpecularShaderIds.uMVPMatrix = shaderIds[1];
-		mDiffuseSpecularShaderIds.uNormalMatrix = shaderIds[2];
+		mDiffuseSpecularShaderIds.uModelViewM = shaderIds[0];
+		mDiffuseSpecularShaderIds.uModelViewProjM = shaderIds[1];
+		mDiffuseSpecularShaderIds.uNormalM = shaderIds[2];
 		mDiffuseSpecularShaderIds.aPosition = shaderIds[3];
 		mDiffuseSpecularShaderIds.aNormal = shaderIds[4];
 		mDiffuseSpecularShaderIds.aColor = shaderIds[5];
@@ -350,6 +352,13 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		mShadowShader.setProgram(
 				mOwnerActivity.getString(R.string.shader_shadow_volume_vs),
 				mOwnerActivity.getString(R.string.shader_shadow_volume_fs));
+		shaderIds = mShadowShader.getHandles("uModelViewM", "uModelViewProjM",
+				"uNormalM", "aPosition", "aNormal");
+		mShadowShaderIds.uModelViewM = shaderIds[0];
+		mShadowShaderIds.uModelViewProjM = shaderIds[1];
+		mShadowShaderIds.uNormalM = shaderIds[2];
+		mShadowShaderIds.aPosition = shaderIds[3];
+		mShadowShaderIds.aNormal = shaderIds[4];
 	}
 
 	@Override
@@ -443,15 +452,11 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 					GLES20.GL_KEEP, GLES20.GL_INCR_WRAP);
 			GLES20.glStencilOpSeparate(GLES20.GL_BACK, GLES20.GL_KEEP,
 					GLES20.GL_KEEP, GLES20.GL_DECR_WRAP);
-			GLES20.glUniformMatrix4fv(mShadowShader.getHandle("uPMatrix"), 1,
+			GLES20.glUniformMatrix4fv(mShadowShader.getHandle("uProjM"), 1,
 					false, mCamera.mProjM, 0);
 			GLES20.glUniform3fv(mShadowShader.getHandle("uLightPosition"), 1,
 					light.getPosition(), 0);
-			mScene.renderShadow(mShadowShader.getHandle("uMVMatrix"),
-					mShadowShader.getHandle("uMVPMatrix"),
-					mShadowShader.getHandle("uNormalMatrix"),
-					mShadowShader.getHandle("aPosition"),
-					mShadowShader.getHandle("aNormal"));
+			mScene.renderShadow(mShadowShaderIds);
 			GLES20.glEnable(GLES20.GL_CULL_FACE);
 
 			// Initiate diffuse/specular shader with values that do not change.
@@ -491,7 +496,7 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		mLightShader.useProgram();
 		GLES20.glEnable(GLES20.GL_BLEND);
 		GLES20.glBlendFunc(GLES20.GL_SRC_COLOR, GLES20.GL_ONE_MINUS_SRC_COLOR);
-		GLES20.glUniformMatrix4fv(mLightShader.getHandle("uPMatrix"), 1, false,
+		GLES20.glUniformMatrix4fv(mLightShader.getHandle("uProjM"), 1, false,
 				mCamera.mProjM, 0);
 		GLES20.glUniform1f(mLightShader.getHandle("uPointRadius"), 0.1f);
 		GLES20.glUniform1f(mLightShader.getHandle("uViewWidth"),
@@ -502,10 +507,10 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 				mCamera.mFocalLength);
 		GLES20.glUniform1f(mLightShader.getHandle("uPlaneInFocus"),
 				mCamera.mPlaneInFocus);
+
 		GLES20.glVertexAttribPointer(mLightShader.getHandle("aPosition"), 3,
 				GLES20.GL_FLOAT, false, 0, buffer);
 		GLES20.glEnableVertexAttribArray(mLightShader.getHandle("aPosition"));
-
 		for (GlslLight light : mScene.getLights()) {
 			buffer.position(0);
 			buffer.put(light.getPosition(), 0, 3);

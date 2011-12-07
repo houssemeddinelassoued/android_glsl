@@ -92,22 +92,12 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 	/**
 	 * Method for rendering shadow silhouette.
 	 * 
-	 * @param uMVMatrix
-	 *            Model View matrix uniform handle
-	 * @param uMVPMatrix
-	 *            Model View Projection matrix uniform handle
-	 * @param uNormalMatrix
-	 *            Normal matrix uniform handle
-	 * @param aPosition
-	 *            Position attribute handle
-	 * @param aNormal
-	 *            Normal attribute handle
+	 * @param ids
+	 *            Shader attribute/uniform ids needed for rendering
 	 */
-	public void renderShadow(int uMVMatrix, int uMVPMatrix, int uNormalMatrix,
-			int aPosition, int aNormal) {
+	public void renderShadow(GlslShaderIds ids) {
 		for (GlslObject object : mChildObjects) {
-			object.renderShadow(uMVMatrix, uMVPMatrix, uNormalMatrix,
-					aPosition, aNormal);
+			object.renderShadow(ids);
 		}
 	}
 

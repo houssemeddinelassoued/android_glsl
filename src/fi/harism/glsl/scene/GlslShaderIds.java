@@ -20,10 +20,9 @@ package fi.harism.glsl.scene;
  * Holder class for shader ids to use for rendering scene.
  */
 public final class GlslShaderIds {
-	// Main shader ids
-	public int uMVMatrix = -1;
-	public int uMVPMatrix = -1;
-	public int uNormalMatrix = -1;
+	public int uModelViewM = -1;
+	public int uModelViewProjM = -1;
+	public int uNormalM = -1;
 	public int aPosition = -1;
 	public int aNormal = -1;
 	public int aColor = -1;
