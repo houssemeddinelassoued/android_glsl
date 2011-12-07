@@ -40,24 +40,12 @@ public final class GlslScene {
 	}
 
 	/**
-	 * Returns light with given index. Index is a value between [0,
-	 * getLightCount() - 1].
+	 * Getter for scene light objects.
 	 * 
-	 * @param idx
-	 *            Light index
-	 * @return Light with given index
+	 * @return Vector containing lights in the scene
 	 */
-	public GlslLight getLight(int idx) {
-		return mLights.get(idx);
-	}
-
-	/**
-	 * Returns current light count
-	 * 
-	 * @return number of lights
-	 */
-	public int getLightCount() {
-		return mLights.size();
+	public Vector<GlslLight> getLights() {
+		return mLights;
 	}
 
 	/**
@@ -120,7 +108,7 @@ public final class GlslScene {
 					j * 4000);
 		}
 		path.addPosition(x, y, z, 40000);
-		// mAnimator.setPath(camera, path);
+		mAnimator.setPath(camera, path);
 	}
 
 	/**
