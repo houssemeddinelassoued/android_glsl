@@ -59,7 +59,6 @@ public final class GlslBox extends GlslObject {
 		mShadowIndexBuffer = ByteBuffer.allocateDirect(6 * 6 * 6);
 		mShadowIndexBuffer.position(0);
 		for (int i = 0; i < 6; ++i) {
-
 			mShadowIndexBuffer.put((byte) (i * 8 + 0));
 			mShadowIndexBuffer.put((byte) (i * 8 + 1));
 			mShadowIndexBuffer.put((byte) (i * 8 + 2));
@@ -87,21 +86,6 @@ public final class GlslBox extends GlslObject {
 			mShadowIndexBuffer.put((byte) (i * 8 + 5));
 			mShadowIndexBuffer.put((byte) (i * 8 + 1));
 			mShadowIndexBuffer.put((byte) (i * 8 + 0));
-			/*
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 0));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 2));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 4));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 2));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 6));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 4)); /*
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 7));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 5));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 3));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 5));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 1));
-			 * mShadowIndexBuffer.put((byte) (i * 8 + 3));
-			 */
-
 		}
 
 		setNormal(0, 0f, 0f, 1f);
