@@ -220,56 +220,38 @@ public class GlslFilter {
 		// Initialize copy shader.
 		mCopy.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_copy_fs));
-		mCopy.addHandles("aPosition", "sTexture");
 
 		// Initialize displace shader.
 		mDisplace.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_displace_fs));
-		mDisplace.addHandles("aPosition", "sTexture", "uPosition", "uDiff");
 
 		// Initialize tonemapping shader.
 		mTonemap.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_tonemap_fs));
-		mTonemap.addHandles("aPosition", "sTexture");
 
 		// Initialize FXAA shader.
 		mFxaa.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_fxaa_fs));
-		mFxaa.addHandles("aPosition", "sTexture", "uFxaaConsoleRcpFrameOpt",
-				"uFxaaConsoleRcpFrameOpt2", "uFrameSize");
 
 		// Initialize bloom shaders.
 		mBloomPass1.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass1_fs));
-		mBloomPass1.addHandles("aPosition", "sTextureSource");
 		mBloomPass2.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass2_fs));
-		mBloomPass2.addHandles("aPosition", "sTextureBloom",
-				"uIncrementalGaussian", "uBlurOffset", "uNumBlurPixelsPerSide");
 		mBloomPass3.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_bloom_pass3_fs));
-		mBloomPass3.addHandles("aPosition", "sTextureSource", "sTextureBloom");
 
 		// Initialize lens blur shaders.
 		mLensBlurPass1.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass1_fs));
-		mLensBlurPass1.addHandles("aPosition", "sTextureSource");
 		mLensBlurPass2.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass2_fs));
-		mLensBlurPass2.addHandles("aPosition", "uSteps", "sTexturePass1",
-				"uDelta0");
 		mLensBlurPass3.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass3_fs));
-		mLensBlurPass3.addHandles("aPosition", "uSteps", "sTexturePass1",
-				"sTexturePass2", "uDelta0", "uDelta1");
 		mLensBlurPass4.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass4_fs));
-		mLensBlurPass4.addHandles("aPosition", "uSteps", "sTexturePass2",
-				"sTexturePass3", "uDelta1", "uDelta2");
 		mLensBlurPass5.setProgram(ctx.getString(R.string.shader_filter_vs),
 				ctx.getString(R.string.shader_lensblur_pass5_fs));
-		mLensBlurPass5.addHandles("aPosition", "sTextureSource",
-				"sTexturePass4");
 	}
 
 	/**
