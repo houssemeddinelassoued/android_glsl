@@ -143,17 +143,22 @@ public final class GlslRenderer implements GLSurfaceView.Renderer,
 		// Update render time and calculate FPS.
 		long lastRenderTime = mRenderTime;
 		mRenderTime = SystemClock.uptimeMillis();
-		mFps = 1000f / (mRenderTime - lastRenderTime);
+		//mFps = 1000f / (mRenderTime - lastRenderTime);
 
 		// If animation is not paused, increment it with new/last render time
 		// difference.
 		if (!mAnimationPaused) {
 			mAnimationTime += mRenderTime - lastRenderTime;
 		}
+
+		long t = SystemClock.uptimeMillis();
+
 		// Call scene for applying animation.
 		mScene.animate(mAnimationTime);
 		// Sets/calculates matrices for child objects etc.
-		mScene.setMVP(mCamera.mViewM, mCamera.mProjM);
+		mScene.updateMatrices(mCamera.mViewM, mCamera.mProjM);
+
+		mFps = Math.max(mFps, SystemClock.uptimeMillis() - t);
 
 		// Render ambient lighted scene. Ambient color covers all objects no
 		// matter are they in shadow or not. Also depth information stored

@@ -59,39 +59,45 @@ public class GlslMatrix {
 	}
 
 	/**
-	 * Sets given matrix to x-y-z -rotation matrix.
+	 * Calculates rotation matrix into given matrix array.
 	 * 
 	 * @param m
-	 *            Matrix to contain rotation matrix. Should be float[16] or
-	 *            bigger.
-	 * @param r
-	 *            Rotation values, float[3] where { x, y, z } is rotation around
-	 *            corresponding axis.
+	 *            Matrix float array
+	 * @param offset
+	 *            Matrix start offset
+	 * @param x
+	 *            Rotation around x axis
+	 * @param y
+	 *            Rotation around y axis
+	 * @param z
+	 *            Rotation around z axis
 	 */
-	public static final void setRotateM(float[] m, float[] r) {
-
+	public static final void setRotateM(float[] m, int offset, float x,
+			float y, float z) {
 		double toRadians = Math.PI * 2 / 360;
-		float sin0 = (float) Math.sin(r[0] * toRadians);
-		float cos0 = (float) Math.cos(r[0] * toRadians);
-		float sin1 = (float) Math.sin(r[1] * toRadians);
-		float cos1 = (float) Math.cos(r[1] * toRadians);
-		float sin2 = (float) Math.sin(r[2] * toRadians);
-		float cos2 = (float) Math.cos(r[2] * toRadians);
+		double sin0 = Math.sin(x * toRadians);
+		double cos0 = Math.cos(x * toRadians);
+		double sin1 = Math.sin(y * toRadians);
+		double cos1 = Math.cos(y * toRadians);
+		double sin2 = Math.sin(z * toRadians);
+		double cos2 = Math.cos(z * toRadians);
 
-		Matrix.setIdentityM(m, 0);
+		Matrix.setIdentityM(m, offset);
 
-		m[0] = cos1 * cos2;
-		m[1] = cos1 * sin2;
-		m[2] = -sin1;
+		double sin1_cos2 = sin1 * cos2;
+		double sin1_sin2 = sin1 * sin2;
 
-		m[4] = (-cos0 * sin2) + (sin0 * sin1 * cos2);
-		m[5] = (cos0 * cos2) + (sin0 * sin1 * sin2);
-		m[6] = sin0 * cos1;
+		m[0 + offset] = (float) (cos1 * cos2);
+		m[1 + offset] = (float) (cos1 * sin2);
+		m[2 + offset] = (float) (-sin1);
 
-		m[8] = (sin0 * sin2) + (cos0 * sin1 * cos2);
-		m[9] = (-sin0 * cos2) + (cos0 * sin1 * sin2);
-		m[10] = cos0 * cos1;
+		m[4 + offset] = (float) ((-cos0 * sin2) + (sin0 * sin1_cos2));
+		m[5 + offset] = (float) ((cos0 * cos2) + (sin0 * sin1_sin2));
+		m[6 + offset] = (float) (sin0 * cos1);
 
+		m[8 + offset] = (float) ((sin0 * sin2) + (cos0 * sin1_cos2));
+		m[9 + offset] = (float) ((-sin0 * cos2) + (cos0 * sin1_sin2));
+		m[10 + offset] = (float) (cos0 * cos1);
 	}
 
 }

@@ -36,19 +36,6 @@ public class GlslLight implements GlslAnimator.PathInterface {
 		return mViewPos;
 	}
 
-	/**
-	 * Calculates view position for light.
-	 * 
-	 * @param viewM
-	 *            View matrix.
-	 */
-	public void setMVP(float[] viewM) {
-		Matrix.multiplyMV(mViewPos, 0, viewM, 0, mPosition, 0);
-		for (int i = 0; i < 3; ++i) {
-			mViewPos[i] /= mViewPos[3];
-		}
-	}
-
 	@Override
 	public void setPosition(float position[]) {
 		mPosition[0] = position[0];
@@ -62,5 +49,18 @@ public class GlslLight implements GlslAnimator.PathInterface {
 		mPosition[1] = y;
 		mPosition[2] = z;
 		mPosition[3] = 1;
+	}
+
+	/**
+	 * Calculates view position for light.
+	 * 
+	 * @param viewM
+	 *            View matrix.
+	 */
+	public void updateMatrices(float[] viewM) {
+		Matrix.multiplyMV(mViewPos, 0, viewM, 0, mPosition, 0);
+		for (int i = 0; i < 3; ++i) {
+			mViewPos[i] /= mViewPos[3];
+		}
 	}
 }

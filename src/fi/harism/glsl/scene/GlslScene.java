@@ -239,12 +239,12 @@ public final class GlslScene {
 	 * @param projM
 	 *            Projection matrix
 	 */
-	public void setMVP(float[] viewM, float[] projM) {
+	public void updateMatrices(float[] viewM, float[] projM) {
 		for (GlslObject object : mObjects) {
-			object.setMVP(viewM, projM);
+			object.updateMatrices(viewM, projM);
 		}
 		for (GlslLight light : mLights) {
-			light.setMVP(viewM);
+			light.updateMatrices(viewM);
 		}
 	}
 

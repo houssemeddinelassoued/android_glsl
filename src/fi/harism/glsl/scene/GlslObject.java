@@ -27,24 +27,39 @@ import fi.harism.glsl.GlslMatrix;
 public class GlslObject implements GlslAnimator.RotationInterface,
 		GlslAnimator.PathInterface {
 
-	// Scaling factor.
-	private float mScaling = 1f;
-	// Model matrix, only needed temporarily.
-	private static final float[] mModelM = new float[16];
-	// Model View matrix.
+	// Local model matrix.
+	private final float[] mModelM = new float[16];
+	// World model-view matrix.
 	private final float[] mModelViewM = new float[16];
-	// Model View Projection matrix.
+	// World model-view-projection matrix.
 	private final float[] mModelViewProjM = new float[16];
-	// Normal matrix.
+	// World normal matrix.
 	private final float[] mNormalM = new float[16];
-	// Temporary matrix.
+	// Temporary matrix needed for normal matrix calculation.
 	private static final float[] mTempM = new float[16];
-	// Position { x, y, z }.
-	private final float[] mPosition = new float[3];
-	// Rotation { x, y, z }.
-	private final float[] mRotation = new float[3];
+
+	// If true, mModelM will be recalculated on next call to updateMatrices().
+	private boolean mRecalculateModelM;
+	// Local scaling matrix.
+	private final float[] mScaleM = new float[16];
+	// Local rotation matrix.
+	private final float[] mRotateM = new float[16];
+	// Local translation matrix.
+	private final float[] mTranslateM = new float[16];
+
 	// Child objects.
 	private final Vector<GlslObject> mChildObjects = new Vector<GlslObject>();
+
+	/**
+	 * Default constructor.
+	 */
+	public GlslObject() {
+		// Simply set all matrices to identity.
+		Matrix.setIdentityM(mModelM, 0);
+		Matrix.setIdentityM(mScaleM, 0);
+		Matrix.setIdentityM(mRotateM, 0);
+		Matrix.setIdentityM(mTranslateM, 0);
+	}
 
 	/**
 	 * Add child object to this object.
@@ -52,48 +67,29 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 	 * @param obj
 	 *            Child object to add
 	 */
-	public final void addChild(GlslObject obj) {
+	public void addChild(GlslObject obj) {
 		mChildObjects.add(obj);
 	}
 
 	/**
-	 * Getter for position.
-	 * 
-	 * @param position
-	 *            Array to which copy position { x, y, z }
-	 */
-	public final void getPosition(float[] position) {
-		copy(mPosition, position, 3);
-	}
-
-	/**
-	 * Getter for rotation.
-	 * 
-	 * @param rotation
-	 *            Array to which copy rotation { x, y, z }
-	 */
-	public final void getRotation(float[] rotation) {
-		copy(mRotation, rotation, 3);
-	}
-
-	/**
-	 * Render object. Classes that implement this method should call
+	 * Render object. Classes that overwrite this method should call
 	 * super.render(..).
 	 * 
-	 * @param mData
-	 *            Shader handles for rendering.
+	 * @param ids
+	 *            Shader attribute/uniform handles for rendering.
 	 */
-	public void render(GlslShaderIds mData) {
+	public void render(GlslShaderIds ids) {
 		for (GlslObject obj : mChildObjects) {
-			obj.render(mData);
+			obj.render(ids);
 		}
 	}
 
 	/**
-	 * Method for rendering shadow silhouette.
+	 * Method for rendering shadow silhouette. Classes that override this method
+	 * should call super.renderShadow(..).
 	 * 
 	 * @param ids
-	 *            Shader attribute/uniform ids needed for rendering
+	 *            Shader attribute/uniform handles for rendering
 	 */
 	public void renderShadow(GlslShaderIds ids) {
 		for (GlslObject object : mChildObjects) {
@@ -102,19 +98,76 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 	}
 
 	/**
-	 * Update matrices based on given Model View and Projection matrices.
+	 * Set position for this object. Object position is relative to its parent
+	 * object, and camera view if this is the root object.
+	 * 
+	 * @param x
+	 *            Object x coordinate
+	 * @param y
+	 *            Object y coordinate
+	 * @param z
+	 *            Object z coordinate
+	 */
+	public final void setPosition(float x, float y, float z) {
+		Matrix.setIdentityM(mTranslateM, 0);
+		Matrix.translateM(mTranslateM, 0, x, y, z);
+		mRecalculateModelM = true;
+	}
+
+	@Override
+	public final void setPosition(float[] position) {
+		setPosition(position[0], position[1], position[2]);
+	}
+
+	/**
+	 * Sets rotation for this object. Rotation is relative to object's parent
+	 * object.
+	 * 
+	 * @param x
+	 *            Rotation around x axis
+	 * @param y
+	 *            Rotation around y axis
+	 * @param z
+	 *            Rotation around z axis
+	 */
+	public final void setRotation(float x, float y, float z) {
+		GlslMatrix.setRotateM(mRotateM, 0, x, y, z);
+		mRecalculateModelM = true;
+	}
+
+	@Override
+	public final void setRotation(float[] rotation) {
+		setRotation(rotation[0], rotation[1], rotation[2]);
+	}
+
+	/**
+	 * Set scaling factor for this object.
+	 * 
+	 * @param scale
+	 *            Scaling factor
+	 */
+	public final void setScaling(float scale) {
+		Matrix.setIdentityM(mScaleM, 0);
+		Matrix.scaleM(mScaleM, 0, scale, scale, scale);
+		mRecalculateModelM = true;
+	}
+
+	/**
+	 * Updates matrices based on given Model View and Projection matrices. This
+	 * method should be called before any rendering takes place, and most likely
+	 * after scene has been animated.
 	 * 
 	 * @param mvM
 	 *            Model View matrix
 	 * @param projM
 	 *            Projection matrix
 	 */
-	public final void setMVP(float[] mvM, float[] projM) {
-		GlslMatrix.setRotateM(mModelM, mRotation);
-		Matrix.scaleM(mModelM, 0, mScaling, mScaling, mScaling);
-		Matrix.setIdentityM(mTempM, 0);
-		Matrix.translateM(mTempM, 0, mPosition[0], mPosition[1], mPosition[2]);
-		Matrix.multiplyMM(mModelM, 0, mTempM, 0, mModelM, 0);
+	public void updateMatrices(float[] mvM, float[] projM) {
+		if (mRecalculateModelM) {
+			Matrix.multiplyMM(mModelM, 0, mScaleM, 0, mRotateM, 0);
+			Matrix.multiplyMM(mModelM, 0, mTranslateM, 0, mModelM, 0);
+			mRecalculateModelM = false;
+		}
 
 		Matrix.multiplyMM(mModelViewM, 0, mvM, 0, mModelM, 0);
 		Matrix.multiplyMM(mModelViewProjM, 0, projM, 0, mModelViewM, 0);
@@ -123,100 +176,40 @@ public class GlslObject implements GlslAnimator.RotationInterface,
 		Matrix.transposeM(mNormalM, 0, mTempM, 0);
 
 		for (GlslObject obj : mChildObjects) {
-			obj.setMVP(mModelViewM, projM);
+			obj.updateMatrices(mModelViewM, projM);
 		}
 	}
 
 	/**
-	 * Set position for this object.
+	 * Getter for model-view matrix. This matrix is calculated on call to
+	 * updateMatrices(..) which should be called before actual rendering takes
+	 * place.
 	 * 
-	 * @param x
-	 *            X coordinate
-	 * @param y
-	 *            y coordinate
-	 * @param z
-	 *            z coordinate
+	 * @return Current model-view matrix
 	 */
-	public final void setPosition(float x, float y, float z) {
-		float[] position = { x, y, z };
-		copy(position, mPosition, 3);
-	}
-
-	@Override
-	public final void setPosition(float[] position) {
-		copy(position, mPosition, 3);
-	}
-
-	/**
-	 * Set rotation for this object.
-	 * 
-	 * @param x
-	 *            Rotation around x -axis
-	 * @param y
-	 *            Rotation around y -axis
-	 * @param z
-	 *            Rotation around z -axis
-	 */
-	public final void setRotation(float x, float y, float z) {
-		float[] rotation = { x, y, z };
-		copy(rotation, mRotation, 3);
-	}
-
-	@Override
-	public final void setRotation(float[] rotation) {
-		copy(rotation, mRotation, 3);
-	}
-
-	/**
-	 * Set scaling factor for this object.
-	 * 
-	 * @param scaling
-	 *            Scaling factor
-	 */
-	public final void setScaling(float scaling) {
-		mScaling = scaling;
-	}
-
-	/**
-	 * Helper method for copying float arrays.
-	 * 
-	 * @param src
-	 *            Source values
-	 * @param dst
-	 *            Destination values
-	 * @param count
-	 *            Number of items
-	 */
-	private final void copy(float[] src, float[] dst, int count) {
-		for (int i = 0; i < count; ++i) {
-			dst[i] = src[i];
-		}
-	}
-
-	/**
-	 * Getter for Model View matrix.
-	 * 
-	 * @return Model View matrix
-	 */
-	protected final float[] getModelViewM() {
+	protected float[] getModelViewM() {
 		return mModelViewM;
 	}
 
 	/**
-	 * Getter for Model View Projection matrix.
+	 * Getter for model-view-projection matrix. This matrix is calculated on
+	 * call to updateMatrices(..) which should be called before actual rendering
+	 * takes place.
 	 * 
-	 * @return Model View Projection matrix
+	 * @return Current model-view-projection matrix
 	 */
-	protected final float[] getModelViewProjM() {
+	protected float[] getModelViewProjM() {
 		return mModelViewProjM;
 	}
 
 	/**
-	 * Getter for Normal matrix.
+	 * Getter for normal matrix. This matrix is calculated on call to
+	 * updateMatrices(..) which should be called before actual rendering takes
+	 * place.
 	 * 
-	 * @return Normal matrix
+	 * @return Current normal matrix
 	 */
-	protected final float[] getNormalM() {
+	protected float[] getNormalM() {
 		return mNormalM;
 	}
 }
