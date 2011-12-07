@@ -24,7 +24,10 @@ ToDo
 ====
 
 - Add proper comments
-- Shadows (most likely will give shadow volumes a go)
+- Improve shadows. Current implementation, the so called zPass shadow volumes technique,
+  suffers from the situations where camera is inside a shadow volume. Fixing this requires
+  somewhat new implementation for rendering as zFail shadow volumes aren't as
+  straightforward to implement (not to forget there's possible patent issue.. sigh).
 - Ideas yet to come..
 
 Useful Links/Resources
@@ -47,3 +50,5 @@ http://timothylottes.blogspot.com/2011/07/fxaa-311-released.html
 - Incremental Gaussian blur<br>
 http://developer.nvidia.com/node/197<br>
 http://callumhay.blogspot.com/2010/09/gaussian-blur-shader-glsl.html
+- Stencil shadow volumes<br>
+http://www.gamedev.net/page/resources/_/technical/graphics-programming-and-theory/the-theory-of-stencil-shadow-volumes-r1873
