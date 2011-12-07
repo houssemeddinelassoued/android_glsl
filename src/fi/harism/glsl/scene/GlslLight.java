@@ -33,7 +33,7 @@ public class GlslLight implements GlslAnimator.PathInterface {
 	 * @return float[] array containing { x, y, z, w }
 	 */
 	public float[] getPosition() {
-		return mPosition;
+		return mViewPos;
 	}
 
 	/**
